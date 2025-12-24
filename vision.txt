@@ -1,0 +1,102 @@
+Vision
+Core Mechanic: go Rogue Lite
+See Play Modes for context.
+
+This is a play mode variant on Rush. Here there are many interesting game mechanics to modify the play. Essentially, we treat all meta game elements as potential mechanics.
+
+The core idea is to make a different type of engagement with various fun meta activities around the solving.
+
+The score is the total number of problems solved, just like Rush.
+
+The player has a couple of resources. Just like in Rush, there is a time they have to fit inside, plus a number of “lives” they have left. Or alternatively, like lichess Puzzle Storm, they only have the “time” resource, and making mistakes has a time penalty.
+
+The target audience is go players and studiers. It’s not meant to be a way of making a go-themed new game that uses thematic elements of go in a way that can be played by anyone. (See Balatro etc for the other approach.) This is fundamentally using go skill and developing go skill in a fun way.
+
+Problem types
+By adding different problem types, it can increase the variety and interest
+Normal l&d and tesuji problems (canon set as per Rush)
+Local choice problems https://www.goproblems.com/problems/collections/252
+Joseki problems from Josekipedia trainer
+Invasion problems (survive or kill an invasion, KataGo responses)
+Dragon killing problems (survive or kill a dragon, KataGo responses)
+Full board, play X moves against KataGo (at various levels) and score above a threshold (and modifications can include things like blocking certain moves)
+However to start we will only do the basic standard canon problems
+
+Bonuses and Abilities
+The player may have certain bonuses and special abilities, such as:
+Eliminate a given starting move as a potential solution
+Eliminate a random starting move as a potential solution
+Show the first move
+Show one of X first moves
+Show X first moves, one of which is a solution
+Hint a starting move
+Hint the next move
+Getting bonus time
+Give a row or column for next move, or 2x2 block
+Time freeze: stop the clock just for the current position 
+Show two moves, one of which is correct and one wrong
+Allow entry of multiple moves in same board, only one of which must be correct 
+Allow trying multiple moves and a single failure will be illuminated
+Swap out a problem for another of same difficulty (maybe only have a few seconds to choose this)
+Show a problem with a similar solution pattern (use solution signatures to search, find a canon that is easier, radius 1)
+Allow a quick retry: if you make a wrong move you have X (2?) seconds try another one time
+Reveal parts of upcoming puzzles on the tree, maybe not the full board
+Slow down difficulty progression of puzzles
+Abilities can be earned through some types of activity, such as:
+Solving X problems in a row without a mistake
+Solving quickly
+Marking all correct answers
+Laying down a multi-step solution path manually (this gets a little tricky because it’s hard to predict how the problem creator will respond)
+High stakes move: if you fail on this you lose all lives, but you get double credit
+High stakes move: every response must be within X seconds
+Quick moves even spanning between problems
+Ko counts as a solution even tho you could kill cleanly – hard to implement
+Options to retry problems if you miss – but potentially higher stakes if you miss again
+Some stones could get marked as special bonus stones, if you capture (or save them) you get extra bonus something. This could in theory be calculated by looking at different solution paths, some of which capture certain stones.
+If you make a mistake, problem could flip and you have to then refute the mistake (hard to implement, since refutations are not completely defined)
+Adding some special extra challenges, such as:
+you see all the stones for a few seconds, then they all disappear
+they all turn gray
+each move placed down disappears after placing, etc.
+Stones start to wobble and melt over time
+Parts of the board turn to mist
+Forces you to refute multiple lines
+Some stones gray, but not all
+One intersection mystery. Given solution path, what was it?
+Rotated lines on the board. Ie each row is offset a random amount
+Ghost mode ala Go Magic: stones disappear after being played
+Fire starts consuming the board
+Switch sides at some point – you have to refute the player
+
+
+I expect one or more bars to be building up, visible to the user. Such as a combo bar you can see building towards some rewards.
+
+Some interesting questions about UI – how do you enable challenges? Some ideas:
+After solving a problem, there’s a prompt from the game master giving you options
+Long press brings up some types of options
+
+
+You essentially gain a type of currency during the Wildrun game that you can use to purchase specific powerups abilities. These would be unlocked in an ability tree between games.
+
+Maybe a player navigates through a tree like Slay the Spire where there are different paths with different challenges and rewards, shops where you buy something. This could be considered a rogue lite.
+
+The game rules should be completely configurable through a configuration file. We will have a period of exploring different game rule types.
+
+
+It may be possible to do it untimed if some solves are only probabilistic, such as having to guess what color stones are to solve. But that may not be ideal anyway.
+
+Note (from Leo): it’s important to have some bonuses that are passive. This way you have more of a sense of progress, and avoid complete hoarding situations.
+
+In Dead Cells, you unlock more weapon types over time. The downside is that some of them are crap, and by unlocking them you actually water down the good options. This is a mechanic that would be nice to avoid with a good design. (One option: you build your overall deck from what you have unlocked, and the random upgrades and shop items you get etc would only come from the deck you built.)
+
+Your Build
+As you play through a Wildrun game, you want an implicit story/narrative, so that each problem isn’t a separate event, but there’s some arc to the playthrough. This can be achieved through some kind of “build” of your character. It’s not clear how to accomplish this. Perhaps by grouping powerups in ways that combine in interesting ways. (Eg Dead Cells, you combine a weapon with bonuses that help that weapon. In FTL you might do a fire build of a ship’s offense.)
+
+Build ideas
+Time build: bonuses for solving quickly that stack
+Accuracy build: making no mistakes
+
+Learning Curve
+All this craziness could be overwhelming. Potentially it could be progressively unlocked, which in itself adds a fun mechanic. You would unlock by leveling up your “Wildrun level”, which would come from playing it, plus achieving certain metrics or using some mechanics. The important thing is to not make it dependent on just go skill, so that anyone can unlock everything.
+Card system
+One option for play is to manage abilities (and challenges?) through a card system, where you have a hand you draw and you can play cards from that hand. Cards could be added to the deck at shops or from bonuses. Cards could get upgraded. New cards could be purchased between games. 
