@@ -23,6 +23,7 @@
   var sgfSelect = document.getElementById("sgfSelect");
   var hintOneBtn = document.getElementById("hintOne");
   var hintTwoBtn = document.getElementById("hintTwo");
+  var hintNeighborBtn = document.getElementById("hintNeighbor");
   var elimRandomBtn = document.getElementById("elimRandom");
   var clearHintsBtn = document.getElementById("clearHints");
   var resetPuzzleBtn = document.getElementById("resetPuzzle");
@@ -39,6 +40,7 @@
     combo: 0,
     blockedMoves: new Set(),
     hintMoves: { correct: [], wrong: [] },
+    hintNeighborStones: [],
     hintMode: "none",
     extraAllowedMoves: new Set(),
     lastNodeId: null,
@@ -116,6 +118,7 @@
 
   function clearHints() {
     state.hintMoves = { correct: [], wrong: [] };
+    state.hintNeighborStones = [];
     state.hintMode = "none";
     state.extraAllowedMoves = new Set();
     logMessage("Hints cleared.");
@@ -124,6 +127,7 @@
   function clearTemporaryState() {
     state.blockedMoves = new Set();
     state.hintMoves = { correct: [], wrong: [] };
+    state.hintNeighborStones = [];
     state.hintMode = "none";
     state.extraAllowedMoves = new Set();
   }
@@ -219,6 +223,14 @@
         return;
       }
       appendMarkup(markup, idx.i, idx.j, wrongMark);
+    });
+
+    state.hintNeighborStones.forEach(function (coord) {
+      var idx = sgfToIndex(coord);
+      if (!idx || mat[idx.i][idx.j] === GB.Ki.Empty) {
+        return;
+      }
+      appendMarkup(markup, idx.i, idx.j, GB.Markup.Highlight);
     });
 
     state.blockedMoves.forEach(function (coord) {
@@ -363,6 +375,7 @@
     correct = correct || state.childMoves[0];
 
     state.hintMoves = { correct: [correct.sgf], wrong: [] };
+    state.hintNeighborStones = [];
     state.hintMode = "single";
     logMessage("Hinted correct move: " + sgfToA1(correct.sgf));
     updateBoard();
@@ -407,12 +420,14 @@
     if (!wrong || !wrong.sgf) {
       logMessage("Unable to find a wrong move for hint.");
       state.hintMoves = { correct: [correct.sgf], wrong: [] };
+      state.hintNeighborStones = [];
       state.hintMode = "single";
     } else {
       state.hintMoves = {
         correct: [correct.sgf],
         wrong: [wrong.sgf],
       };
+      state.hintNeighborStones = [];
       state.hintMode = "double";
       var hinted = [correct.sgf, wrong.sgf];
       if (Math.random() > 0.5) {
@@ -426,6 +441,75 @@
       );
     }
 
+    updateBoard();
+  }
+
+  function hintWaveNeighbor() {
+    if (state.lives <= 0) {
+      setStatus("Out of lives. Reset to continue.", "error");
+      return;
+    }
+
+    updateChildMoves();
+    if (state.childMoves.length === 0) {
+      logMessage("No moves available to hint.");
+      return;
+    }
+
+    var rightMoves = state.childMoves.filter(function (move) {
+      return GB.inRightPath(move.node);
+    });
+    if (rightMoves.length === 0) {
+      logMessage("No solution moves to hint.");
+      return;
+    }
+
+    var size = GB.extractBoardSize(state.currentNode, 19);
+    var res = GB.calcMatAndMarkup(state.currentNode, size);
+    var mat = res.mat;
+
+    function neighborStones(move) {
+      var neighbors = [];
+      var offsets = [
+        [1, 0],
+        [-1, 0],
+        [0, 1],
+        [0, -1],
+      ];
+      for (var k = 0; k < offsets.length; k += 1) {
+        var ni = move.i + offsets[k][0];
+        var nj = move.j + offsets[k][1];
+        if (ni < 0 || nj < 0 || ni >= size || nj >= size) {
+          continue;
+        }
+        if (mat[ni][nj] !== GB.Ki.Empty) {
+          neighbors.push(GB.SGF_LETTERS[ni] + GB.SGF_LETTERS[nj]);
+        }
+      }
+      return neighbors;
+    }
+
+    var eligible = rightMoves
+      .map(function (move) {
+        return { move: move, neighbors: neighborStones(move) };
+      })
+      .filter(function (entry) {
+        return entry.neighbors.length > 0;
+      });
+
+    if (eligible.length === 0) {
+      logMessage("No neighbor stones next to a solution move.");
+      return;
+    }
+
+    var pick = eligible[Math.floor(Math.random() * eligible.length)];
+    var neighbor =
+      pick.neighbors[Math.floor(Math.random() * pick.neighbors.length)];
+
+    state.hintMoves = { correct: [], wrong: [] };
+    state.hintNeighborStones = [neighbor];
+    state.hintMode = "single";
+    logMessage("Neighbor hint: " + sgfToA1(neighbor));
     updateBoard();
   }
 
@@ -571,6 +655,7 @@
 
   hintOneBtn.addEventListener("click", hintFirstMove);
   hintTwoBtn.addEventListener("click", hintTwoMoves);
+  hintNeighborBtn.addEventListener("click", hintWaveNeighbor);
   elimRandomBtn.addEventListener("click", eliminateRandomMove);
   clearHintsBtn.addEventListener("click", function () {
     clearHints();
