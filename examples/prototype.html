@@ -308,6 +308,7 @@
           combo: 0,
           blockedMoves: new Set(),
           hintMoves: { correct: [], wrong: [] },
+          hintMode: "none",
           extraAllowedMoves: new Set(),
           mode: "play",
           lastNodeId: null,
@@ -385,6 +386,7 @@
 
         function clearHints() {
           state.hintMoves = { correct: [], wrong: [] };
+          state.hintMode = "none";
           state.extraAllowedMoves = new Set();
           logMessage("Hints cleared.");
         }
@@ -392,6 +394,7 @@
         function clearTemporaryState() {
           state.blockedMoves = new Set();
           state.hintMoves = { correct: [], wrong: [] };
+          state.hintMode = "none";
           state.extraAllowedMoves = new Set();
           state.mode = "play";
         }
@@ -416,7 +419,7 @@
             zoom: true,
             extent: 3,
             theme: GB.Theme.Flat,
-            padding: 16,
+            padding: 24,
           });
           board.init(mount);
         }
@@ -469,12 +472,20 @@
         }
 
         function applyHintMarkup(markup, mat) {
+          var neutral = state.hintMode === "double";
+          var correctMark = neutral
+            ? GB.Markup.NeutralNode
+            : GB.Markup.PositiveNode;
+          var wrongMark = neutral
+            ? GB.Markup.NeutralNode
+            : GB.Markup.NegativeNode;
+
           state.hintMoves.correct.forEach(function (coord) {
             var idx = sgfToIndex(coord);
             if (!idx || mat[idx.i][idx.j] !== GB.Ki.Empty) {
               return;
             }
-            appendMarkup(markup, idx.i, idx.j, GB.Markup.PositiveNode);
+            appendMarkup(markup, idx.i, idx.j, correctMark);
           });
 
           state.hintMoves.wrong.forEach(function (coord) {
@@ -482,7 +493,7 @@
             if (!idx || mat[idx.i][idx.j] !== GB.Ki.Empty) {
               return;
             }
-            appendMarkup(markup, idx.i, idx.j, GB.Markup.NegativeNode);
+            appendMarkup(markup, idx.i, idx.j, wrongMark);
           });
 
           state.blockedMoves.forEach(function (coord) {
@@ -635,13 +646,14 @@
           correct = correct || state.childMoves[0];
 
           state.hintMoves = { correct: [correct.sgf], wrong: [] };
+          state.hintMode = "single";
           logMessage("Hinted correct move: " + sgfToA1(correct.sgf));
           updateBoard();
         }
 
         function hintTwoMoves() {
           if (state.lives <= 0) {
-            setStatus("Out of lives. Reset to continue.");
+            setStatus("Out of lives. Reset to continue.", "error");
             return;
           }
 
@@ -651,44 +663,134 @@
             return;
           }
 
-          var correct = state.childMoves.find(function (move) {
+          var rightMoves = state.childMoves.filter(function (move) {
             return GB.inRightPath(move.node);
           });
-          correct = correct || state.childMoves[0];
+          var correct =
+            rightMoves[Math.floor(Math.random() * rightMoves.length)] ||
+            state.childMoves[Math.floor(Math.random() * state.childMoves.length)];
 
-          var wrong = state.childMoves.find(function (move) {
-            return move.sgf !== correct.sgf && !GB.inRightPath(move.node);
+          var wrongMoves = state.childMoves.filter(function (move) {
+            return (
+              move.sgf !== correct.sgf &&
+              !GB.inRightPath(move.node) &&
+              !GB.inVariantPath(move.node)
+            );
           });
 
+          var wrong =
+            wrongMoves[Math.floor(Math.random() * wrongMoves.length)] || null;
           if (!wrong) {
-            logMessage("Only correct moves found. Showing one.");
+            var nearby = pickRandomNearbyWrongMove(correct.sgf);
+            if (nearby) {
+              wrong = { sgf: nearby };
+            }
+          }
+
+          if (!wrong || !wrong.sgf) {
+            logMessage("Unable to find a wrong move for hint.");
             state.hintMoves = { correct: [correct.sgf], wrong: [] };
+            state.hintMode = "single";
           } else {
             state.hintMoves = {
               correct: [correct.sgf],
               wrong: [wrong.sgf],
             };
+            state.hintMode = "double";
+            var hinted = [correct.sgf, wrong.sgf];
+            if (Math.random() > 0.5) {
+              hinted.reverse();
+            }
             logMessage(
               "Hinted two moves: " +
-                sgfToA1(correct.sgf) +
+                sgfToA1(hinted[0]) +
                 " / " +
-                sgfToA1(wrong.sgf)
+                sgfToA1(hinted[1])
             );
           }
 
           updateBoard();
         }
 
+        function pickRandomNearbyWrongMove(correctSgf) {
+          var size = GB.extractBoardSize(state.currentNode, 19);
+          var res = GB.calcMatAndMarkup(state.currentNode, size);
+          var mat = res.mat;
+          var idx = sgfToIndex(correctSgf);
+          if (!idx || !mat) {
+            return null;
+          }
+
+          var exclude = new Set();
+          state.childMoves.forEach(function (move) {
+            exclude.add(move.sgf);
+          });
+          exclude.add(correctSgf);
+
+          function collectCandidates(radius) {
+            var candidates = [];
+            for (var di = -radius; di <= radius; di++) {
+              for (var dj = -radius; dj <= radius; dj++) {
+                if (di === 0 && dj === 0) {
+                  continue;
+                }
+                var i = idx.i + di;
+                var j = idx.j + dj;
+                if (i < 0 || j < 0 || i >= size || j >= size) {
+                  continue;
+                }
+                if (mat[i][j] !== GB.Ki.Empty) {
+                  continue;
+                }
+                var coord = GB.SGF_LETTERS[i] + GB.SGF_LETTERS[j];
+                if (exclude.has(coord)) {
+                  continue;
+                }
+                candidates.push(coord);
+              }
+            }
+            return candidates;
+          }
+
+          var candidates = [];
+          for (var radius = 1; radius <= 3 && candidates.length === 0; radius++) {
+            candidates = collectCandidates(radius);
+          }
+
+          if (candidates.length === 0) {
+            for (var x = 0; x < size; x++) {
+              for (var y = 0; y < size; y++) {
+                if (mat[x][y] !== GB.Ki.Empty) {
+                  continue;
+                }
+                var sgf = GB.SGF_LETTERS[x] + GB.SGF_LETTERS[y];
+                if (!exclude.has(sgf)) {
+                  candidates.push(sgf);
+                }
+              }
+            }
+          }
+
+          if (candidates.length === 0) {
+            return null;
+          }
+          return candidates[Math.floor(Math.random() * candidates.length)];
+        }
+
         function eliminateRandomMove() {
           updateChildMoves();
-          var available = state.childMoves.filter(function (move) {
-            return !state.blockedMoves.has(move.sgf);
+          var wrongMoves = state.childMoves.filter(function (move) {
+            return (
+              !state.blockedMoves.has(move.sgf) &&
+              !GB.inRightPath(move.node) &&
+              !GB.inVariantPath(move.node)
+            );
           });
-          if (available.length === 0) {
-            logMessage("No moves left to eliminate.");
+          if (wrongMoves.length === 0) {
+            logMessage("No wrong-path moves left to eliminate.");
             return;
           }
-          var pick = available[Math.floor(Math.random() * available.length)];
+          var pick = wrongMoves[Math.floor(Math.random() * wrongMoves.length)];
           state.blockedMoves.add(pick.sgf);
           logMessage("Eliminated move: " + sgfToA1(pick.sgf));
           updateBoard();
