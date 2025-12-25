@@ -105,6 +105,18 @@
         font-size: 13px;
       }
 
+      .status.success {
+        border-color: rgba(45, 135, 75, 0.4);
+        background: rgba(62, 179, 104, 0.18);
+        color: #1e4d30;
+      }
+
+      .status.error {
+        border-color: rgba(188, 60, 60, 0.45);
+        background: rgba(225, 79, 79, 0.18);
+        color: #6a1f1f;
+      }
+
       .panel {
         display: grid;
         gap: 12px;
@@ -196,6 +208,7 @@
       <div class="shell">
         <div class="layout">
           <div class="board-panel">
+            <div id="status" class="status">Loading puzzle…</div>
             <div id="board" class="board"></div>
             <div class="hud">
               <div class="hud-card">
@@ -205,7 +218,6 @@
                 Combo <span id="combo">0</span>
               </div>
             </div>
-            <div id="status" class="status">Loading puzzle…</div>
           </div>
 
           <div class="panel">
@@ -301,7 +313,6 @@
           lastNodeId: null,
           childMoves: [],
           childMoveMap: new Map(),
-          allowedMoves: new Set(),
         };
 
         function logMessage(message) {
@@ -314,8 +325,14 @@
           }
         }
 
-        function setStatus(text) {
+        function setStatus(text, tone) {
           statusEl.textContent = text;
+          statusEl.classList.remove("success", "error");
+          if (tone === "success") {
+            statusEl.classList.add("success");
+          } else if (tone === "error") {
+            statusEl.classList.add("error");
+          }
         }
 
         function updateHud() {
@@ -336,11 +353,22 @@
         }
 
         function sgfToA1(coord) {
-          try {
-            return GB.sgfToA1(coord);
-          } catch (err) {
-            return coord.toUpperCase();
+          if (!coord) {
+            return "??";
           }
+          if (coord.includes("[")) {
+            try {
+              return GB.sgfToA1(coord);
+            } catch (err) {
+              return "??";
+            }
+          }
+          var i = GB.SGF_LETTERS.indexOf(coord[0]);
+          var j = GB.SGF_LETTERS.indexOf(coord[1]);
+          if (i >= 0 && j >= 0) {
+            return GB.A1_LETTERS[i] + GB.A1_NUMBERS[j];
+          }
+          return String(coord).toUpperCase();
         }
 
         function getTurn(node, firstTurn) {
@@ -427,32 +455,7 @@
         }
 
         function buildPreventMoveMat(size) {
-          var mat = GB.zeros([size, size]);
-          mat.forEach(function (row) {
-            row.fill(1);
-          });
-
-          state.allowedMoves = new Set();
-
-          state.childMoves.forEach(function (move) {
-            if (!state.blockedMoves.has(move.sgf)) {
-              mat[move.i][move.j] = 0;
-              state.allowedMoves.add(move.sgf);
-            }
-          });
-
-          state.extraAllowedMoves.forEach(function (coord) {
-            var idx = sgfToIndex(coord);
-            if (!idx) {
-              return;
-            }
-            if (!state.blockedMoves.has(coord)) {
-              mat[idx.i][idx.j] = 0;
-              state.allowedMoves.add(coord);
-            }
-          });
-
-          return mat;
+          return GB.zeros([size, size]);
         }
 
         function appendMarkup(markup, i, j, mark) {
@@ -527,15 +530,15 @@
 
         function evaluatePosition() {
           if (state.lives <= 0) {
-            setStatus("Out of lives. Reset to continue.");
+            setStatus("Out of lives. Reset to continue.", "error");
             return;
           }
 
           if (!state.currentNode.hasChildren()) {
             if (GB.isRightNode(state.currentNode)) {
-              setStatus("Correct. Puzzle solved.");
+              setStatus("Correct. Puzzle solved.", "success");
             } else {
-              setStatus("Line over. Reset to try again.");
+              setStatus("Line over. Reset to try again.", "error");
             }
             return;
           }
@@ -616,7 +619,7 @@
 
         function hintFirstMove() {
           if (state.lives <= 0) {
-            setStatus("Out of lives. Reset to continue.");
+            setStatus("Out of lives. Reset to continue.", "error");
             return;
           }
 
@@ -698,7 +701,7 @@
           }
           state.mode = "elim-pick";
           updateControls();
-          setStatus("Click a legal move to eliminate.");
+            setStatus("Click a legal move to eliminate.");
         }
 
         function handleMoveSelection(i, j) {
@@ -726,11 +729,16 @@
             return;
           }
 
-          if (!state.allowedMoves.has(coord)) {
+          var chosen = state.childMoveMap.get(coord);
+          if (state.blockedMoves.has(coord)) {
+            state.lives -= 1;
+            state.combo = 0;
+            updateHud();
+            logMessage("Eliminated move selected: " + sgfToA1(coord));
+            evaluatePosition();
             return;
           }
 
-          var chosen = state.childMoveMap.get(coord);
           if (!chosen) {
             state.lives -= 1;
             state.combo = 0;
@@ -783,6 +791,15 @@
           updateHud();
           evaluatePosition();
           logMessage("Lives reset.");
+        });
+
+        document.addEventListener("keydown", function (event) {
+          if (event.target && event.target.tagName === "SELECT") {
+            return;
+          }
+          if (event.key === "r" || event.key === "R") {
+            resetPuzzle();
+          }
         });
 
         updateHud();
