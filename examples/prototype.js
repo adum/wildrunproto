@@ -23,7 +23,6 @@
   var sgfSelect = document.getElementById("sgfSelect");
   var hintOneBtn = document.getElementById("hintOne");
   var hintTwoBtn = document.getElementById("hintTwo");
-  var elimPickBtn = document.getElementById("elimPick");
   var elimRandomBtn = document.getElementById("elimRandom");
   var clearHintsBtn = document.getElementById("clearHints");
   var resetPuzzleBtn = document.getElementById("resetPuzzle");
@@ -42,7 +41,6 @@
     hintMoves: { correct: [], wrong: [] },
     hintMode: "none",
     extraAllowedMoves: new Set(),
-    mode: "play",
     lastNodeId: null,
     childMoves: [],
     childMoveMap: new Map(),
@@ -128,7 +126,6 @@
     state.hintMoves = { correct: [], wrong: [] };
     state.hintMode = "none";
     state.extraAllowedMoves = new Set();
-    state.mode = "play";
   }
 
   function setCurrentNode(node) {
@@ -257,14 +254,6 @@
 
     board.render();
     board.renderInteractive();
-  }
-
-  function updateControls() {
-    if (state.mode === "elim-pick") {
-      elimPickBtn.classList.add("active");
-    } else {
-      elimPickBtn.classList.remove("active");
-    }
   }
 
   function evaluatePosition() {
@@ -524,16 +513,6 @@
     updateBoard();
   }
 
-  function startEliminatePick() {
-    if (state.lives <= 0) {
-      setStatus("Out of lives. Reset to continue.");
-      return;
-    }
-    state.mode = "elim-pick";
-    updateControls();
-    setStatus("Click a legal move to eliminate.");
-  }
-
   function handleMoveSelection(i, j) {
     if (state.lives <= 0) {
       return;
@@ -541,23 +520,6 @@
 
     var coord = GB.SGF_LETTERS[i] + GB.SGF_LETTERS[j];
     updateChildMoves();
-
-    if (state.mode === "elim-pick") {
-      var moveInfo = state.childMoveMap.get(coord);
-      if (!moveInfo) {
-        logMessage("Not a candidate move.");
-      } else if (state.blockedMoves.has(coord)) {
-        logMessage("Move already eliminated: " + sgfToA1(coord));
-      } else {
-        state.blockedMoves.add(coord);
-        logMessage("Eliminated move: " + sgfToA1(coord));
-      }
-      state.mode = "play";
-      updateControls();
-      updateBoard();
-      evaluatePosition();
-      return;
-    }
 
     var chosen = state.childMoveMap.get(coord);
     if (state.blockedMoves.has(coord)) {
@@ -609,7 +571,6 @@
 
   hintOneBtn.addEventListener("click", hintFirstMove);
   hintTwoBtn.addEventListener("click", hintTwoMoves);
-  elimPickBtn.addEventListener("click", startEliminatePick);
   elimRandomBtn.addEventListener("click", eliminateRandomMove);
   clearHintsBtn.addEventListener("click", function () {
     clearHints();
