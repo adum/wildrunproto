@@ -1,0 +1,840 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Wildrun Prototype Sandbox</title>
+    <style>
+      :root {
+        color-scheme: light;
+        --ink: #1f1a14;
+        --muted: #5c5448;
+        --accent: #d97b3b;
+        --accent-ink: #5a3416;
+        --panel: #fff6e7;
+        --panel-edge: #ead6be;
+        --wash-1: #f0e6d6;
+        --wash-2: #e4efe1;
+        --shadow: rgba(65, 46, 21, 0.16);
+        --chip: rgba(217, 123, 59, 0.14);
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        min-height: 100vh;
+        font-family: "Avenir Next", "Futura", "Gill Sans", sans-serif;
+        color: var(--ink);
+        background: radial-gradient(
+            circle at 15% 20%,
+            rgba(255, 255, 255, 0.7),
+            rgba(255, 255, 255, 0)
+          ),
+          radial-gradient(
+            circle at 85% 0%,
+            rgba(255, 255, 255, 0.4),
+            rgba(255, 255, 255, 0)
+          ),
+          linear-gradient(130deg, var(--wash-1), var(--wash-2));
+      }
+
+      .page {
+        min-height: 100vh;
+        display: grid;
+        place-items: center;
+        padding: 32px 20px 40px;
+      }
+
+      .shell {
+        width: min(1200px, 96vw);
+        background: var(--panel);
+        border: 1px solid var(--panel-edge);
+        border-radius: 22px;
+        padding: 26px 28px;
+        box-shadow: 0 18px 44px var(--shadow);
+        animation: rise 0.6s ease-out;
+      }
+
+      @keyframes rise {
+        from {
+          opacity: 0;
+          transform: translateY(16px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      .header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 12px;
+        flex-wrap: wrap;
+        margin-bottom: 18px;
+      }
+
+      .title {
+        margin: 0;
+        font-size: 24px;
+        font-weight: 700;
+        letter-spacing: 0.02em;
+      }
+
+      .subtitle {
+        margin: 6px 0 0;
+        color: var(--muted);
+        font-size: 14px;
+      }
+
+      .layout {
+        display: grid;
+        grid-template-columns: minmax(280px, 1fr) minmax(260px, 320px);
+        gap: 24px;
+        align-items: start;
+      }
+
+      .board-panel {
+        display: grid;
+        gap: 14px;
+      }
+
+      .board {
+        width: min(70vw, 560px);
+        aspect-ratio: 1 / 1;
+        position: relative;
+        border-radius: 16px;
+        overflow: hidden;
+      }
+
+      .hud {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 12px;
+      }
+
+      .hud-card {
+        padding: 10px 12px;
+        border-radius: 12px;
+        background: #fff;
+        border: 1px solid var(--panel-edge);
+        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.6);
+        font-size: 13px;
+        display: flex;
+        align-items: baseline;
+        justify-content: space-between;
+      }
+
+      .hud-card span {
+        font-size: 18px;
+        font-weight: 700;
+      }
+
+      .status {
+        padding: 10px 12px;
+        border-radius: 12px;
+        border: 1px solid rgba(217, 123, 59, 0.3);
+        background: var(--chip);
+        color: var(--accent-ink);
+        font-size: 13px;
+      }
+
+      .panel {
+        display: grid;
+        gap: 16px;
+        padding: 14px;
+        border-radius: 16px;
+        background: #fffdfa;
+        border: 1px solid var(--panel-edge);
+      }
+
+      label {
+        font-size: 13px;
+        color: var(--muted);
+        display: block;
+        margin-bottom: 6px;
+      }
+
+      select {
+        width: 100%;
+        padding: 8px 10px;
+        border-radius: 10px;
+        border: 1px solid var(--panel-edge);
+        background: #fff;
+        font-size: 14px;
+      }
+
+      .controls {
+        display: grid;
+        gap: 10px;
+      }
+
+      .button {
+        border: 1px solid var(--panel-edge);
+        background: #fff;
+        color: var(--ink);
+        padding: 8px 12px;
+        border-radius: 999px;
+        font-size: 13px;
+        cursor: pointer;
+        transition: transform 0.15s ease, box-shadow 0.15s ease;
+      }
+
+      .button:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 6px 14px rgba(90, 60, 30, 0.15);
+      }
+
+      .button.active {
+        background: var(--chip);
+        border-color: rgba(217, 123, 59, 0.5);
+        color: var(--accent-ink);
+      }
+
+      .log {
+        max-height: 220px;
+        overflow-y: auto;
+        display: grid;
+        gap: 8px;
+        padding: 10px;
+        border-radius: 12px;
+        border: 1px dashed var(--panel-edge);
+        background: #fff;
+        font-size: 12px;
+        color: var(--muted);
+      }
+
+      .log-item {
+        padding-bottom: 6px;
+        border-bottom: 1px dashed rgba(234, 214, 190, 0.6);
+      }
+
+      .log-item:last-child {
+        border-bottom: none;
+        padding-bottom: 0;
+      }
+
+      @media (max-width: 960px) {
+        .layout {
+          grid-template-columns: 1fr;
+        }
+
+        .board {
+          width: min(92vw, 560px);
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="page">
+      <div class="shell">
+        <div class="header">
+          <div>
+            <h1 class="title">Wildrun Prototype Sandbox</h1>
+            <p class="subtitle">
+              Manual mechanics testing against small SGF puzzles.
+            </p>
+          </div>
+        </div>
+
+        <div class="layout">
+          <div class="board-panel">
+            <div id="board" class="board"></div>
+            <div class="hud">
+              <div class="hud-card">
+                Lives <span id="lives">3</span>
+              </div>
+              <div class="hud-card">
+                Combo <span id="combo">0</span>
+              </div>
+            </div>
+            <div id="status" class="status">Loading puzzle…</div>
+          </div>
+
+          <div class="panel">
+            <div>
+              <label for="sgfSelect">Puzzle SGF</label>
+              <select id="sgfSelect">
+                <option value="27k">27k</option>
+                <option value="23k">23k</option>
+                <option value="17k">17k</option>
+                <option value="4k">4k</option>
+              </select>
+            </div>
+
+            <div class="controls">
+              <button id="hintOne" class="button" type="button">
+                Hint: First Move
+              </button>
+              <button id="hintTwo" class="button" type="button">
+                Hint: Two Moves
+              </button>
+              <button id="elimPick" class="button" type="button">
+                Eliminate Move (Pick)
+              </button>
+              <button id="elimRandom" class="button" type="button">
+                Eliminate Random Move
+              </button>
+              <button id="clearHints" class="button" type="button">
+                Clear Hints
+              </button>
+              <button id="resetPuzzle" class="button" type="button">
+                Reset Puzzle
+              </button>
+              <button id="resetLives" class="button" type="button">
+                Reset Lives
+              </button>
+            </div>
+
+            <div>
+              <label>Event Log</label>
+              <div id="log" class="log"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script src="../build/index.min.js"></script>
+    <script>
+      (function () {
+        var GB = window.ghostban;
+        if (!GB) {
+          return;
+        }
+
+        var sgfSources = {
+          "27k":
+            "(;AB[ca]AB[cb]AB[db]AB[ec]AB[fc]AB[gb]AB[hb]AB[ha]AW[bb]AW[bc]AW[cc]AW[dc]AW[ed]AW[fd]AW[gc]AW[hc]AW[ic]AW[ib]AW[ea]AP[goproblems](;B[fa];W[eb];B[fb]C[RIGHT])(;B[eb];W[fa]C[])(;B[fb](;W[fa]C[CHOICE])(;W[eb];B[fa];W[ba];B[da])))",
+          "23k":
+            "(;FF[4]GM[1]CA[UTF-8]AP[goproblems:0.1.0]SZ[19]ST[0]AW[fs][fr][hr][ir][jr][is][ls][lr][mr][nr]AB[or][oq][nq][mq][lq][ks][jq][iq][hq][fq][eq][er][gs][ds][ko][go](;W[kr](;B[ns];W[gr]C[RIGHT])(;B[gr];W[ns]C[RIGHT]))(;W[ns];B[kr])(;W[gr];B[kr])(;W[kq];B[gr]))",
+          "17k":
+            "(;FF[4]GM[1]CA[UTF-8]AP[goproblems:0.1.0]SZ[19]ST[0]AB[jr][jq][iq][hq][gq][fq][ko][lp][lq]AW[fr][gr][hr][ir][eq][ep][jp][kp][lo][mp][mq][nq][oq][hl][gl][fl][en][eo][ik][jk]TR[jp]TR[kp](;B[jo];W[ip](;B[ho];W[kq](;B[lr];W[io](;B[in];W[jn];B[kn];W[hn];B[im];W[hp];B[go]C[RIGHT])(;B[kr];W[in]))(;B[kr];W[lr]))(;B[io];W[hp](;B[go];W[kq](;B[lr];W[ho];B[hn];W[in](;B[gp]C[RIGHT])(;B[kr]C[RIGHT])(;B[jn];W[gn];B[im];W[gp]))(;B[kr];W[lr]))(;B[ho];W[gp])(;B[gp];W[ho])))(;B[kq];W[jo])(;B[io];W[jo])(;B[lr];W[jo])(;B[ip];W[jo])(;B[ho];W[jo]))",
+          "4k":
+            "(;FF[4]GM[1]CA[UTF-8]AP[goproblems:0.1.0]SZ[19]ST[0]AB[bs][cr][dr][er][eq][ep][do][co][cn][bn][bl][fq]AW[br][ar][bp][bo][cp][dp][dq][eo][fo][fp][gp][gq][gr]LB[ar:1](;B[bq];W[cq](;B[ao];W[aq](;B[an];W[ap](;B[cs]C[RIGHT])(;B[fr];W[cs];B[ds];W[fs]))(;B[cs];W[fr];B[an]C[RIGHT]))(;B[an];W[aq];B[ao]C[RIGHT])(;B[aq];W[ap]))(;B[cq];W[bq];B[cs];W[es])(;B[ao];W[ap](;B[bq];W[an])(;B[an];W[bq]))(;B[aq];W[bq])(;B[ap];W[bq];B[ao];W[fr])(;B[cs];W[bq](;B[ao];W[ap])(;B[ap];W[ao])))",
+        };
+
+        var mount = document.getElementById("board");
+        var statusEl = document.getElementById("status");
+        var logEl = document.getElementById("log");
+        var livesEl = document.getElementById("lives");
+        var comboEl = document.getElementById("combo");
+        var sgfSelect = document.getElementById("sgfSelect");
+        var hintOneBtn = document.getElementById("hintOne");
+        var hintTwoBtn = document.getElementById("hintTwo");
+        var elimPickBtn = document.getElementById("elimPick");
+        var elimRandomBtn = document.getElementById("elimRandom");
+        var clearHintsBtn = document.getElementById("clearHints");
+        var resetPuzzleBtn = document.getElementById("resetPuzzle");
+        var resetLivesBtn = document.getElementById("resetLives");
+
+        var board = null;
+
+        var state = {
+          sgfKey: "27k",
+          rootNode: null,
+          currentNode: null,
+          playerColor: GB.Ki.Black,
+          lives: 3,
+          combo: 0,
+          blockedMoves: new Set(),
+          hintMoves: { correct: [], wrong: [] },
+          extraAllowedMoves: new Set(),
+          mode: "play",
+          lastNodeId: null,
+          childMoves: [],
+          childMoveMap: new Map(),
+          allowedMoves: new Set(),
+        };
+
+        function logMessage(message) {
+          var item = document.createElement("div");
+          item.className = "log-item";
+          item.textContent = message;
+          logEl.prepend(item);
+          while (logEl.childNodes.length > 12) {
+            logEl.removeChild(logEl.lastChild);
+          }
+        }
+
+        function setStatus(text) {
+          statusEl.textContent = text;
+        }
+
+        function updateHud() {
+          livesEl.textContent = String(state.lives);
+          comboEl.textContent = String(state.combo);
+        }
+
+        function sgfToIndex(coord) {
+          if (!coord || coord.length < 2) {
+            return null;
+          }
+          var i = GB.SGF_LETTERS.indexOf(coord[0]);
+          var j = GB.SGF_LETTERS.indexOf(coord[1]);
+          if (i < 0 || j < 0) {
+            return null;
+          }
+          return { i: i, j: j };
+        }
+
+        function sgfToA1(coord) {
+          try {
+            return GB.sgfToA1(coord);
+          } catch (err) {
+            return coord.toUpperCase();
+          }
+        }
+
+        function getTurn(node, firstTurn) {
+          if (!node || node.model.moveProps.length === 0) {
+            return firstTurn;
+          }
+          var lastColor = GB.getMoveColor(node, firstTurn);
+          return lastColor === GB.Ki.Black ? GB.Ki.White : GB.Ki.Black;
+        }
+
+        function colorName(ki) {
+          return ki === GB.Ki.Black ? "Black" : "White";
+        }
+
+        function clearHints() {
+          state.hintMoves = { correct: [], wrong: [] };
+          state.extraAllowedMoves = new Set();
+          logMessage("Hints cleared.");
+        }
+
+        function clearTemporaryState() {
+          state.blockedMoves = new Set();
+          state.hintMoves = { correct: [], wrong: [] };
+          state.extraAllowedMoves = new Set();
+          state.mode = "play";
+        }
+
+        function setCurrentNode(node) {
+          if (!node) {
+            return;
+          }
+          var id = node.model && node.model.id ? node.model.id : null;
+          if (state.lastNodeId && id && state.lastNodeId !== id) {
+            clearTemporaryState();
+          }
+          state.currentNode = node;
+          state.lastNodeId = id;
+        }
+
+        function initBoard(boardSize) {
+          board = new GB.GhostBan({
+            boardSize: boardSize,
+            interactive: true,
+            coordinate: true,
+            zoom: true,
+            extent: 3,
+            theme: GB.Theme.Flat,
+            padding: 16,
+          });
+          board.init(mount);
+        }
+
+        function getChildMoves(node) {
+          if (!node || !node.hasChildren()) {
+            return [];
+          }
+          var moves = [];
+          node.children.forEach(function (child) {
+            var moveProp = child.model.moveProps[0];
+            if (!moveProp || !moveProp.value || moveProp.value.length < 2) {
+              return;
+            }
+            var coord = moveProp.value;
+            var idx = sgfToIndex(coord);
+            if (!idx) {
+              return;
+            }
+            moves.push({
+              node: child,
+              sgf: coord,
+              i: idx.i,
+              j: idx.j,
+            });
+          });
+          return moves;
+        }
+
+        function updateChildMoves() {
+          state.childMoves = getChildMoves(state.currentNode);
+          state.childMoveMap = new Map();
+          state.childMoves.forEach(function (move) {
+            state.childMoveMap.set(move.sgf, move);
+          });
+        }
+
+        function buildPreventMoveMat(size) {
+          var mat = GB.zeros([size, size]);
+          mat.forEach(function (row) {
+            row.fill(1);
+          });
+
+          state.allowedMoves = new Set();
+
+          state.childMoves.forEach(function (move) {
+            if (!state.blockedMoves.has(move.sgf)) {
+              mat[move.i][move.j] = 0;
+              state.allowedMoves.add(move.sgf);
+            }
+          });
+
+          state.extraAllowedMoves.forEach(function (coord) {
+            var idx = sgfToIndex(coord);
+            if (!idx) {
+              return;
+            }
+            if (!state.blockedMoves.has(coord)) {
+              mat[idx.i][idx.j] = 0;
+              state.allowedMoves.add(coord);
+            }
+          });
+
+          return mat;
+        }
+
+        function appendMarkup(markup, i, j, mark) {
+          var existing = markup[i][j] || "";
+          var parts = existing.split("|").filter(Boolean);
+          if (parts.indexOf(mark) >= 0) {
+            return;
+          }
+          parts.push(mark);
+          markup[i][j] = parts.join("|");
+        }
+
+        function applyHintMarkup(markup, mat) {
+          state.hintMoves.correct.forEach(function (coord) {
+            var idx = sgfToIndex(coord);
+            if (!idx || mat[idx.i][idx.j] !== GB.Ki.Empty) {
+              return;
+            }
+            appendMarkup(markup, idx.i, idx.j, GB.Markup.PositiveNode);
+          });
+
+          state.hintMoves.wrong.forEach(function (coord) {
+            var idx = sgfToIndex(coord);
+            if (!idx || mat[idx.i][idx.j] !== GB.Ki.Empty) {
+              return;
+            }
+            appendMarkup(markup, idx.i, idx.j, GB.Markup.NegativeNode);
+          });
+
+          state.blockedMoves.forEach(function (coord) {
+            var idx = sgfToIndex(coord);
+            if (!idx || mat[idx.i][idx.j] !== GB.Ki.Empty) {
+              return;
+            }
+            appendMarkup(markup, idx.i, idx.j, GB.Markup.Cross);
+          });
+        }
+
+        function updateBoard() {
+          var size = GB.extractBoardSize(state.currentNode, 19);
+          updateChildMoves();
+
+          var res = GB.calcMatAndMarkup(state.currentNode, size);
+          applyHintMarkup(res.markup, res.mat);
+
+          board.setMat(res.mat);
+          board.setVisibleAreaMat(res.visibleAreaMat);
+          board.setMarkup(res.markup);
+          board.setPreventMoveMat(buildPreventMoveMat(size));
+          board.setTurn(getTurn(state.currentNode, state.playerColor));
+
+          var turn = getTurn(state.currentNode, state.playerColor);
+          if (turn === state.playerColor) {
+            board.setCursor(
+              turn === GB.Ki.Black ? GB.Cursor.BlackStone : GB.Cursor.WhiteStone
+            );
+          } else {
+            board.setCursor(GB.Cursor.None);
+          }
+
+          board.render();
+          board.renderInteractive();
+        }
+
+        function updateControls() {
+          if (state.mode === "elim-pick") {
+            elimPickBtn.classList.add("active");
+          } else {
+            elimPickBtn.classList.remove("active");
+          }
+        }
+
+        function evaluatePosition() {
+          if (state.lives <= 0) {
+            setStatus("Out of lives. Reset to continue.");
+            return;
+          }
+
+          if (!state.currentNode.hasChildren()) {
+            if (GB.isRightNode(state.currentNode)) {
+              setStatus("Correct. Puzzle solved.");
+            } else {
+              setStatus("Line over. Reset to try again.");
+            }
+            return;
+          }
+
+          var turn = getTurn(state.currentNode, state.playerColor);
+          if (turn === state.playerColor) {
+            setStatus("Your move: " + colorName(turn));
+          } else {
+            setStatus("Opponent move…");
+          }
+        }
+
+        function pickOpponentMove() {
+          if (state.childMoves.length === 0) {
+            return null;
+          }
+          var correct = state.childMoves.find(function (move) {
+            return GB.inRightPath(move.node);
+          });
+          return correct || state.childMoves[0];
+        }
+
+        function autoPlayOpponent() {
+          var guard = 0;
+          var turn = getTurn(state.currentNode, state.playerColor);
+          while (turn !== state.playerColor && guard < 4) {
+            updateChildMoves();
+            var move = pickOpponentMove();
+            if (!move) {
+              break;
+            }
+            setCurrentNode(move.node);
+            turn = getTurn(state.currentNode, state.playerColor);
+            guard += 1;
+          }
+        }
+
+        function resetPuzzle() {
+          if (!state.rootNode) {
+            return;
+          }
+          setCurrentNode(state.rootNode);
+          state.combo = 0;
+          clearTemporaryState();
+          autoPlayOpponent();
+          updateBoard();
+          updateHud();
+          evaluatePosition();
+          logMessage("Puzzle reset.");
+        }
+
+        function loadSgf(key) {
+          var sgfText = sgfSources[key];
+          if (!sgfText) {
+            logMessage("SGF not found: " + key);
+            return;
+          }
+
+          var sgf = new GB.Sgf(sgfText);
+          if (!sgf.root) {
+            logMessage("Failed to parse SGF: " + key);
+            return;
+          }
+
+          state.sgfKey = key;
+          state.rootNode = sgf.root;
+          state.playerColor = GB.getFirstToMoveColorFromRoot(
+            sgf.root,
+            GB.Ki.Black
+          );
+          state.combo = 0;
+          state.lastNodeId = null;
+
+          initBoard(GB.extractBoardSize(sgf.root, 19));
+          resetPuzzle();
+          logMessage("Loaded SGF " + key + ".");
+        }
+
+        function hintFirstMove() {
+          if (state.lives <= 0) {
+            setStatus("Out of lives. Reset to continue.");
+            return;
+          }
+
+          updateChildMoves();
+          if (state.childMoves.length === 0) {
+            logMessage("No moves available to hint.");
+            return;
+          }
+
+          var correct = state.childMoves.find(function (move) {
+            return GB.inRightPath(move.node);
+          });
+          correct = correct || state.childMoves[0];
+
+          state.hintMoves = { correct: [correct.sgf], wrong: [] };
+          logMessage("Hinted correct move: " + sgfToA1(correct.sgf));
+          updateBoard();
+        }
+
+        function hintTwoMoves() {
+          if (state.lives <= 0) {
+            setStatus("Out of lives. Reset to continue.");
+            return;
+          }
+
+          updateChildMoves();
+          if (state.childMoves.length === 0) {
+            logMessage("No moves available to hint.");
+            return;
+          }
+
+          var correct = state.childMoves.find(function (move) {
+            return GB.inRightPath(move.node);
+          });
+          correct = correct || state.childMoves[0];
+
+          var wrong = state.childMoves.find(function (move) {
+            return move.sgf !== correct.sgf && !GB.inRightPath(move.node);
+          });
+
+          if (!wrong) {
+            logMessage("Only correct moves found. Showing one.");
+            state.hintMoves = { correct: [correct.sgf], wrong: [] };
+          } else {
+            state.hintMoves = {
+              correct: [correct.sgf],
+              wrong: [wrong.sgf],
+            };
+            logMessage(
+              "Hinted two moves: " +
+                sgfToA1(correct.sgf) +
+                " / " +
+                sgfToA1(wrong.sgf)
+            );
+          }
+
+          updateBoard();
+        }
+
+        function eliminateRandomMove() {
+          updateChildMoves();
+          var available = state.childMoves.filter(function (move) {
+            return !state.blockedMoves.has(move.sgf);
+          });
+          if (available.length === 0) {
+            logMessage("No moves left to eliminate.");
+            return;
+          }
+          var pick = available[Math.floor(Math.random() * available.length)];
+          state.blockedMoves.add(pick.sgf);
+          logMessage("Eliminated move: " + sgfToA1(pick.sgf));
+          updateBoard();
+        }
+
+        function startEliminatePick() {
+          if (state.lives <= 0) {
+            setStatus("Out of lives. Reset to continue.");
+            return;
+          }
+          state.mode = "elim-pick";
+          updateControls();
+          setStatus("Click a legal move to eliminate.");
+        }
+
+        function handleMoveSelection(i, j) {
+          if (state.lives <= 0) {
+            return;
+          }
+
+          var coord = GB.SGF_LETTERS[i] + GB.SGF_LETTERS[j];
+          updateChildMoves();
+
+          if (state.mode === "elim-pick") {
+            var moveInfo = state.childMoveMap.get(coord);
+            if (!moveInfo) {
+              logMessage("Not a candidate move.");
+            } else if (state.blockedMoves.has(coord)) {
+              logMessage("Move already eliminated: " + sgfToA1(coord));
+            } else {
+              state.blockedMoves.add(coord);
+              logMessage("Eliminated move: " + sgfToA1(coord));
+            }
+            state.mode = "play";
+            updateControls();
+            updateBoard();
+            evaluatePosition();
+            return;
+          }
+
+          if (!state.allowedMoves.has(coord)) {
+            return;
+          }
+
+          var chosen = state.childMoveMap.get(coord);
+          if (!chosen) {
+            state.lives -= 1;
+            state.combo = 0;
+            updateHud();
+            logMessage("Wrong move (not in tree): " + sgfToA1(coord));
+            evaluatePosition();
+            return;
+          }
+
+          var correct = GB.inRightPath(chosen.node);
+          if (correct) {
+            state.combo += 1;
+            logMessage("Correct move: " + sgfToA1(coord));
+          } else {
+            state.lives -= 1;
+            state.combo = 0;
+            logMessage("Wrong move: " + sgfToA1(coord));
+          }
+
+          updateHud();
+          setCurrentNode(chosen.node);
+          autoPlayOpponent();
+          updateBoard();
+          evaluatePosition();
+        }
+
+        mount.addEventListener("click", function () {
+          var pos = board.cursorPosition;
+          if (!pos || pos[0] < 0 || pos[1] < 0) {
+            return;
+          }
+          handleMoveSelection(pos[0], pos[1]);
+        });
+
+        sgfSelect.addEventListener("change", function (event) {
+          loadSgf(event.target.value);
+        });
+
+        hintOneBtn.addEventListener("click", hintFirstMove);
+        hintTwoBtn.addEventListener("click", hintTwoMoves);
+        elimPickBtn.addEventListener("click", startEliminatePick);
+        elimRandomBtn.addEventListener("click", eliminateRandomMove);
+        clearHintsBtn.addEventListener("click", function () {
+          clearHints();
+          updateBoard();
+        });
+        resetPuzzleBtn.addEventListener("click", resetPuzzle);
+        resetLivesBtn.addEventListener("click", function () {
+          state.lives = 3;
+          updateHud();
+          evaluatePosition();
+          logMessage("Lives reset.");
+        });
+
+        updateHud();
+        loadSgf(state.sgfKey);
+      })();
+    </script>
+  </body>
+</html>

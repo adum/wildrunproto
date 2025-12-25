@@ -1,0 +1,379 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>GhostBan Puzzle Example</title>
+    <style>
+      :root {
+        color-scheme: light;
+        --ink: #1f1a13;
+        --muted: #5b4f3e;
+        --accent: #c66b32;
+        --accent-ink: #552e12;
+        --panel: #fff7ea;
+        --panel-edge: #e7d2b8;
+        --wash-1: #efe4d2;
+        --wash-2: #e3f0de;
+        --shadow: rgba(63, 44, 20, 0.18);
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        min-height: 100vh;
+        font-family: "Avenir Next", "Futura", "Gill Sans", sans-serif;
+        color: var(--ink);
+        background: radial-gradient(
+            circle at 15% 20%,
+            rgba(255, 255, 255, 0.7),
+            rgba(255, 255, 255, 0)
+          ),
+          radial-gradient(
+            circle at 80% 10%,
+            rgba(255, 255, 255, 0.45),
+            rgba(255, 255, 255, 0)
+          ),
+          linear-gradient(130deg, var(--wash-1), var(--wash-2));
+      }
+
+      .page {
+        min-height: 100vh;
+        display: grid;
+        place-items: center;
+        padding: 32px 20px 40px;
+      }
+
+      .panel {
+        width: min(94vw, 820px);
+        background: var(--panel);
+        border: 1px solid var(--panel-edge);
+        border-radius: 20px;
+        padding: 24px 26px 26px;
+        box-shadow: 0 18px 40px var(--shadow);
+        animation: rise 0.6s ease-out;
+      }
+
+      @keyframes rise {
+        from {
+          opacity: 0;
+          transform: translateY(16px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      .header {
+        display: flex;
+        align-items: baseline;
+        gap: 12px;
+        flex-wrap: wrap;
+        margin-bottom: 12px;
+      }
+
+      .title {
+        margin: 0;
+        font-size: 22px;
+        font-weight: 700;
+        letter-spacing: 0.02em;
+      }
+
+      .tag {
+        padding: 4px 10px;
+        border-radius: 999px;
+        background: rgba(198, 107, 50, 0.15);
+        color: var(--accent-ink);
+        font-size: 12px;
+        text-transform: uppercase;
+        letter-spacing: 0.12em;
+      }
+
+      .subtitle {
+        margin: 0 0 18px;
+        color: var(--muted);
+        font-size: 14px;
+        max-width: 60ch;
+      }
+
+      .board-wrap {
+        display: grid;
+        gap: 16px;
+      }
+
+      .board {
+        --board-size: min(92vw, 520px);
+        width: var(--board-size);
+        height: var(--board-size);
+        position: relative;
+        border-radius: 14px;
+        overflow: hidden;
+      }
+
+      .status {
+        padding: 10px 12px;
+        border-radius: 12px;
+        background: rgba(198, 107, 50, 0.1);
+        border: 1px solid rgba(198, 107, 50, 0.3);
+        color: var(--accent-ink);
+        font-size: 13px;
+      }
+
+      .status.flash {
+        animation: statusFlash 0.45s ease-out;
+      }
+
+      @keyframes statusFlash {
+        from {
+          transform: translateY(6px);
+          opacity: 0;
+        }
+        to {
+          transform: translateY(0);
+          opacity: 1;
+        }
+      }
+
+      .controls {
+        display: flex;
+        gap: 12px;
+        align-items: center;
+        flex-wrap: wrap;
+      }
+
+      .button {
+        border: 1px solid var(--panel-edge);
+        background: #fff;
+        color: var(--ink);
+        padding: 8px 16px;
+        border-radius: 999px;
+        font-size: 13px;
+        cursor: pointer;
+        transition: transform 0.15s ease, box-shadow 0.15s ease;
+      }
+
+      .button:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 6px 14px rgba(90, 60, 30, 0.15);
+      }
+
+      .note {
+        margin: 0;
+        color: var(--muted);
+        font-size: 12px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="page">
+      <div class="panel">
+        <div class="header">
+          <h1 class="title">GhostBan Puzzle</h1>
+          <span class="tag">27k Sample</span>
+        </div>
+        <p class="subtitle">
+          Play the highlighted side to move. Opponent replies automatically when
+          forced.
+        </p>
+
+        <div class="board-wrap">
+          <div id="board" class="board"></div>
+          <div id="status" class="status"></div>
+          <div class="controls">
+            <button id="reset" class="button" type="button">Reset</button>
+            <p class="note">Only legal puzzle moves are clickable.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script src="../build/index.min.js"></script>
+    <script>
+      (function () {
+        var GB = window.ghostban;
+        if (!GB) {
+          return;
+        }
+
+        var sgfText = `(;AB[ca]AB[cb]AB[db]AB[ec]AB[fc]AB[gb]AB[hb]AB[ha]AW[bb]AW[bc]AW[cc]AW[dc]AW[ed]AW[fd]AW[gc]AW[hc]AW[ic]AW[ib]AW[ea]AP[goproblems]
+(;B[fa];W[eb];B[fb]C[RIGHT])
+(;B[eb];W[fa]C[])
+(;B[fb]
+(;W[fa]C[CHOICE])
+(;W[eb];B[fa];W[ba];B[da])))`;
+
+        var sgf = new GB.Sgf(sgfText);
+        if (!sgf.root) {
+          return;
+        }
+
+        var root = sgf.root;
+        var currentNode = root;
+        var firstTurn = GB.getFirstToMoveColorFromRoot(root, GB.Ki.Black);
+        var playerColor = firstTurn;
+
+        var status = document.getElementById("status");
+        var mount = document.getElementById("board");
+
+        var board = new GB.GhostBan({
+          boardSize: GB.extractBoardSize(root, 19),
+          interactive: true,
+          coordinate: true,
+          zoom: true,
+          extent: 3,
+          theme: GB.Theme.Flat,
+          padding: 16,
+        });
+
+        board.init(mount);
+
+        function colorName(ki) {
+          return ki === GB.Ki.Black ? "Black" : "White";
+        }
+
+        function getTurn(node) {
+          if (node.model.moveProps.length === 0) {
+            return firstTurn;
+          }
+          var lastColor = GB.getMoveColor(node, firstTurn);
+          return lastColor === GB.Ki.Black ? GB.Ki.White : GB.Ki.Black;
+        }
+
+        function flashStatus(text) {
+          status.textContent = text;
+          status.classList.remove("flash");
+          void status.offsetWidth;
+          status.classList.add("flash");
+        }
+
+        function pickOpponentMove(node) {
+          if (!node.hasChildren()) {
+            return null;
+          }
+          var children = node.children.slice();
+          var right = children.filter(function (child) {
+            return GB.inRightPath(child);
+          });
+          if (right.length > 0) {
+            return right[0];
+          }
+          var variants = children.filter(function (child) {
+            return GB.inVariantPath(child);
+          });
+          if (variants.length > 0) {
+            return variants[0];
+          }
+          return children[0];
+        }
+
+        function autoPlayOpponent() {
+          var guard = 0;
+          var turn = getTurn(currentNode);
+          while (turn !== playerColor && currentNode.hasChildren() && guard < 6) {
+            var nextNode = pickOpponentMove(currentNode);
+            if (!nextNode || nextNode === currentNode) {
+              break;
+            }
+            currentNode = nextNode;
+            turn = getTurn(currentNode);
+            guard += 1;
+          }
+        }
+
+        function updateBoard() {
+          var size = GB.extractBoardSize(root, 19);
+          var res = GB.calcMatAndMarkup(currentNode, size);
+          var turn = getTurn(currentNode);
+          var allowMoves = GB.calcPreventMoveMatForDisplayOnly(currentNode, size);
+
+          board.setMat(res.mat);
+          board.setVisibleAreaMat(res.visibleAreaMat);
+          board.setMarkup(res.markup);
+          board.setPreventMoveMat(allowMoves);
+          board.setTurn(turn);
+
+          if (turn === playerColor) {
+            board.setCursor(
+              turn === GB.Ki.Black ? GB.Cursor.BlackStone : GB.Cursor.WhiteStone
+            );
+          } else {
+            board.setCursor(GB.Cursor.None);
+          }
+
+          board.render();
+          board.renderInteractive();
+        }
+
+        function evaluatePosition() {
+          if (!currentNode.hasChildren()) {
+            if (GB.isRightNode(currentNode)) {
+              flashStatus("Correct. Puzzle solved.");
+            } else if (GB.isVariantNode(currentNode)) {
+              flashStatus("Variant reached. Try another line.");
+            } else {
+              flashStatus("Wrong. Try again.");
+            }
+            return;
+          }
+          var turn = getTurn(currentNode);
+          if (turn === playerColor) {
+            flashStatus("Your move: " + colorName(turn));
+          } else {
+            flashStatus("Opponent move...");
+          }
+        }
+
+        function resetPuzzle() {
+          currentNode = root;
+          autoPlayOpponent();
+          updateBoard();
+          evaluatePosition();
+        }
+
+        mount.addEventListener("click", function () {
+          var turn = getTurn(currentNode);
+          if (turn !== playerColor) {
+            return;
+          }
+
+          var pos = board.cursorPosition;
+          if (!pos || pos[0] < 0 || pos[1] < 0) {
+            return;
+          }
+
+          var i = pos[0];
+          var j = pos[1];
+          var token = turn === GB.Ki.Black ? "B" : "W";
+          var value = GB.SGF_LETTERS[i] + GB.SGF_LETTERS[j];
+          var hash = GB.calcHash(
+            currentNode,
+            [GB.MoveProp.from(token + "[" + value + "]")]
+          );
+          var nextNode = currentNode.children.find(function (node) {
+            return node.model.id === hash;
+          });
+
+          if (!nextNode) {
+            flashStatus("That move is not in this puzzle.");
+            return;
+          }
+
+          currentNode = nextNode;
+          autoPlayOpponent();
+          updateBoard();
+          evaluatePosition();
+        });
+
+        document
+          .getElementById("reset")
+          .addEventListener("click", resetPuzzle);
+
+        resetPuzzle();
+      })();
+    </script>
+  </body>
+</html>

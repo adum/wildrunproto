@@ -1,8 +1,7 @@
 import {filter, findLastIndex} from 'lodash';
 import {TNode} from './tree';
 import {MoveProp, SgfPropBase} from './props';
-
-const SparkMD5 = require('spark-md5');
+import SparkMD5 from 'spark-md5';
 
 export const calcHash = (
   node: TNode | null | undefined,

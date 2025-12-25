@@ -57,10 +57,9 @@ import {canMove, execCapture} from './boardcore';
 export {canMove, execCapture};
 
 import {Sgf} from './core/sgf';
+import SparkMD5 from 'spark-md5';
 
 type Strategy = 'post' | 'pre' | 'both';
-
-const SparkMD5 = require('spark-md5');
 
 export const calcDoubtfulMovesThresholdRange = (threshold: number) => {
   // 8D-9D
