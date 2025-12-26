@@ -19,6 +19,7 @@
   var statusEl = document.getElementById("status");
   var logEl = document.getElementById("log");
   var livesEl = document.getElementById("lives");
+  var livesBoxEl = document.getElementById("livesBox");
   var comboEl = document.getElementById("combo");
   var sgfSelect = document.getElementById("sgfSelect");
   var hintOneBtn = document.getElementById("hintOne");
@@ -46,6 +47,7 @@
     playerColor: GB.Ki.Black,
     lives: 3,
     combo: 0,
+    lastLives: null,
     blockedMoves: new Set(),
     hintMoves: { correct: [], wrong: [] },
     hintNeighborStones: [],
@@ -82,9 +84,38 @@
     }
   }
 
+  function flashLivesBox() {
+    if (!livesBoxEl) {
+      return;
+    }
+    livesBoxEl.classList.remove("is-flashing");
+    void livesBoxEl.offsetWidth;
+    livesBoxEl.classList.add("is-flashing");
+  }
+
+  function renderLivesHearts() {
+    if (!livesEl) {
+      return;
+    }
+    livesEl.textContent = "";
+    for (var i = 0; i < state.lives; i += 1) {
+      var heart = document.createElement("span");
+      heart.className = "heart";
+      heart.setAttribute("aria-hidden", "true");
+      livesEl.appendChild(heart);
+    }
+    livesEl.setAttribute("aria-label", state.lives + " lives");
+  }
+
   function updateHud() {
-    livesEl.textContent = String(state.lives);
+    var shouldFlash =
+      state.lastLives !== null && state.lives < state.lastLives;
+    renderLivesHearts();
     comboEl.textContent = String(state.combo);
+    state.lastLives = state.lives;
+    if (shouldFlash) {
+      flashLivesBox();
+    }
   }
 
   function sgfToIndex(coord) {

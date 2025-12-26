@@ -11,12 +11,17 @@
       <div class="shell">
         <div class="layout">
           <div class="board-panel">
-            <div id="status" class="status">Loading puzzle…</div>
+            <div class="status-row">
+              <div id="status" class="status status--fixed">
+                Loading puzzle…
+              </div>
+              <div id="livesBox" class="lives-box">
+                <span class="lives-label">Lives</span>
+                <div id="lives" class="lives-hearts" aria-live="polite"></div>
+              </div>
+            </div>
             <div id="board" class="board"></div>
             <div class="hud">
-              <div class="hud-card">
-                Lives <span id="lives">3</span>
-              </div>
               <div class="hud-card">
                 Combo <span id="combo">0</span>
               </div>
