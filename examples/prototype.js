@@ -29,6 +29,7 @@
   var hintColBtn = document.getElementById("hintCol");
   var hintDiagBtn = document.getElementById("hintDiag");
   var challengeGrayBtn = document.getElementById("challengeGray");
+  var challengeGhostBtn = document.getElementById("challengeGhost");
   var elimRandomBtn = document.getElementById("elimRandom");
   var clearHintsBtn = document.getElementById("clearHints");
   var resetPuzzleBtn = document.getElementById("resetPuzzle");
@@ -39,6 +40,8 @@
   var colHintEl = null;
   var diagHintEl = null;
   var grayCanvas = null;
+  var ghostCanvas = null;
+  var ghostAnimId = null;
 
   var state = {
     sgfKey: "27k",
@@ -56,6 +59,9 @@
     hintDiag: null,
     challengeGray: false,
     grayStones: new Set(),
+    challengeGhost: false,
+    ghostStones: new Set(),
+    ghostFlashes: [],
     currentMat: null,
     hintMode: "none",
     extraAllowedMoves: new Set(),
@@ -159,6 +165,126 @@
     state.grayStones.add(i + "," + j);
   }
 
+  function recordGhostStone(i, j, ki) {
+    if (!state.challengeGhost) {
+      return;
+    }
+    if (i < 0 || j < 0) {
+      return;
+    }
+    state.ghostStones.add(i + "," + j);
+    state.ghostFlashes.push({
+      i: i,
+      j: j,
+      ki: ki,
+      start: performance.now(),
+    });
+    startGhostAnimation();
+  }
+
+  function clearGhostCanvas() {
+    if (!ghostCanvas) {
+      return;
+    }
+    var ctx = ghostCanvas.getContext("2d");
+    if (ctx) {
+      ctx.setTransform(1, 0, 0, 1, 0, 0);
+      ctx.clearRect(0, 0, ghostCanvas.width, ghostCanvas.height);
+    }
+  }
+
+  function syncGhostCanvas() {
+    if (!ghostCanvas || !board) {
+      return;
+    }
+    var ref = board.canvas || board.cursorCanvas || board.board;
+    if (!ref) {
+      return;
+    }
+    var dpr = window.devicePixelRatio || 1;
+    ghostCanvas.width = ref.width;
+    ghostCanvas.height = ref.height;
+    ghostCanvas.style.width = ref.width / dpr + "px";
+    ghostCanvas.style.height = ref.height / dpr + "px";
+  }
+
+  function drawGhostFlashes(timestamp) {
+    if (!ghostCanvas || !board) {
+      ghostAnimId = null;
+      return;
+    }
+    syncGhostCanvas();
+    var ctx = ghostCanvas.getContext("2d");
+    if (!ctx) {
+      ghostAnimId = null;
+      return;
+    }
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    ctx.clearRect(0, 0, ghostCanvas.width, ghostCanvas.height);
+
+    if (!state.challengeGhost || state.ghostFlashes.length === 0) {
+      ghostAnimId = null;
+      return;
+    }
+
+    ctx.setTransform(board.transMat);
+    var spacing = board.calcSpaceAndPadding
+      ? board.calcSpaceAndPadding(board.canvas || board.cursorCanvas || board.board)
+      : { space: 0, scaledPadding: 0 };
+    var space = spacing.space;
+    var scaledPadding = spacing.scaledPadding;
+    var themeOptions = board.options.themeOptions || {};
+    var theme = board.options.theme;
+    var themeConfig = themeOptions[theme] || {};
+    var defaultConfig = themeOptions.default || {};
+    var black = themeConfig.flatBlackColor || defaultConfig.flatBlackColor || "#000";
+    var white = themeConfig.flatWhiteColor || defaultConfig.flatWhiteColor || "#fff";
+    var line = themeConfig.boardLineColor || defaultConfig.boardLineColor || "#5a4c3b";
+    var ratio =
+      themeConfig.stoneRatio ||
+      defaultConfig.stoneRatio ||
+      0.45;
+    var radius = space * ratio;
+
+    var duration = 500;
+    var remaining = [];
+    for (var i = 0; i < state.ghostFlashes.length; i += 1) {
+      var flash = state.ghostFlashes[i];
+      var elapsed = timestamp - flash.start;
+      if (elapsed >= duration) {
+        continue;
+      }
+      var alpha = 1 - elapsed / duration;
+      var cx = scaledPadding + flash.i * space;
+      var cy = scaledPadding + flash.j * space;
+      ctx.save();
+      ctx.globalAlpha = alpha;
+      ctx.fillStyle = flash.ki === GB.Ki.White ? white : black;
+      ctx.strokeStyle = line;
+      ctx.lineWidth = Math.max(space * 0.05, 1);
+      ctx.beginPath();
+      ctx.arc(cx, cy, radius, 0, Math.PI * 2, true);
+      ctx.fill();
+      ctx.stroke();
+      ctx.restore();
+      remaining.push(flash);
+    }
+
+    state.ghostFlashes = remaining;
+    if (remaining.length > 0) {
+      ghostAnimId = requestAnimationFrame(drawGhostFlashes);
+    } else {
+      ghostAnimId = null;
+    }
+  }
+
+  function startGhostAnimation() {
+    if (ghostAnimId) {
+      return;
+    }
+    ghostAnimId = requestAnimationFrame(drawGhostFlashes);
+  }
+
   function renderGrayStones(mat) {
     if (!grayCanvas || !board) {
       return;
@@ -221,11 +347,50 @@
     });
   }
 
+  function applyGhostMask(mat) {
+    if (!state.challengeGhost || state.ghostStones.size === 0) {
+      return mat;
+    }
+    var masked = mat.map(function (row) {
+      return row.slice();
+    });
+    var stale = [];
+    state.ghostStones.forEach(function (key) {
+      var parts = key.split(",");
+      var x = Number(parts[0]);
+      var y = Number(parts[1]);
+      if (Number.isNaN(x) || Number.isNaN(y)) {
+        return;
+      }
+      if (!masked[x] || masked[x][y] === GB.Ki.Empty) {
+        stale.push(key);
+        return;
+      }
+      masked[x][y] = GB.Ki.Empty;
+    });
+    stale.forEach(function (key) {
+      state.ghostStones.delete(key);
+    });
+    return masked;
+  }
+
   function setGrayPlay(active) {
     state.challengeGray = active;
     state.grayStones = new Set();
     updateChallengeControls();
     renderGrayStones(state.currentMat);
+  }
+
+  function setGhostPlay(active) {
+    state.challengeGhost = active;
+    state.ghostStones = new Set();
+    state.ghostFlashes = [];
+    if (ghostAnimId) {
+      cancelAnimationFrame(ghostAnimId);
+      ghostAnimId = null;
+    }
+    clearGhostCanvas();
+    updateChallengeControls();
   }
 
   function updateChallengeControls() {
@@ -239,11 +404,28 @@
       challengeGrayBtn.classList.remove("active");
       challengeGrayBtn.disabled = false;
     }
+    if (challengeGhostBtn) {
+      if (state.challengeGhost) {
+        challengeGhostBtn.classList.add("active");
+        challengeGhostBtn.disabled = true;
+      } else {
+        challengeGhostBtn.classList.remove("active");
+        challengeGhostBtn.disabled = false;
+      }
+    }
   }
 
   function resetChallenges() {
     state.challengeGray = false;
     state.grayStones = new Set();
+    state.challengeGhost = false;
+    state.ghostStones = new Set();
+    state.ghostFlashes = [];
+    if (ghostAnimId) {
+      cancelAnimationFrame(ghostAnimId);
+      ghostAnimId = null;
+    }
+    clearGhostCanvas();
     updateChallengeControls();
     renderGrayStones(state.currentMat);
   }
@@ -526,6 +708,11 @@
     grayCanvas.style.position = "absolute";
     grayCanvas.style.pointerEvents = "none";
     mount.appendChild(grayCanvas);
+    ghostCanvas = document.createElement("canvas");
+    ghostCanvas.id = "ghostban-ghost";
+    ghostCanvas.style.position = "absolute";
+    ghostCanvas.style.pointerEvents = "none";
+    mount.appendChild(ghostCanvas);
     rowHintEl = document.createElement("div");
     rowHintEl.className = "row-hint";
     rowHintEl.setAttribute("aria-hidden", "true");
@@ -636,7 +823,8 @@
     state.currentMat = res.mat;
     applyHintMarkup(res.markup, res.mat);
 
-    board.setMat(res.mat);
+    var visibleMat = applyGhostMask(res.mat);
+    board.setMat(visibleMat);
     board.setVisibleAreaMat(res.visibleAreaMat);
     board.setMarkup(res.markup);
     board.setPreventMoveMat(buildPreventMoveMat(size));
@@ -657,6 +845,9 @@
     positionColumnHint();
     positionDiagonalHint();
     renderGrayStones(state.currentMat);
+    if (!state.challengeGhost && state.ghostFlashes.length === 0) {
+      clearGhostCanvas();
+    }
   }
 
   function evaluatePosition() {
@@ -702,6 +893,7 @@
         break;
       }
       recordGrayStone(move.i, move.j);
+      recordGhostStone(move.i, move.j, turn);
       setCurrentNode(move.node);
       turn = getTurn(state.currentNode, state.playerColor);
       guard += 1;
@@ -1159,6 +1351,7 @@
       return;
     }
 
+    var turn = getTurn(state.currentNode, state.playerColor);
     var coord = GB.SGF_LETTERS[i] + GB.SGF_LETTERS[j];
     updateChildMoves();
 
@@ -1182,6 +1375,7 @@
     }
 
     recordGrayStone(i, j);
+    recordGhostStone(i, j, turn);
     var correct = GB.inRightPath(chosen.node);
     if (correct) {
       state.combo += 1;
@@ -1224,6 +1418,13 @@
     setGrayPlay(true);
     logMessage("Challenge enabled: Gray play.");
   });
+  challengeGhostBtn.addEventListener("click", function () {
+    if (state.challengeGhost) {
+      return;
+    }
+    setGhostPlay(true);
+    logMessage("Challenge enabled: Ghost play.");
+  });
   elimRandomBtn.addEventListener("click", eliminateRandomMove);
   clearHintsBtn.addEventListener("click", function () {
     clearHints();
@@ -1257,6 +1458,11 @@
       positionDiagonalHint();
     }
     renderGrayStones(state.currentMat);
+    if (state.challengeGhost && state.ghostFlashes.length > 0) {
+      startGhostAnimation();
+    } else {
+      clearGhostCanvas();
+    }
   });
 
   updateHud();
