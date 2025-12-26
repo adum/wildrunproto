@@ -27,6 +27,7 @@
   var hintRowBtn = document.getElementById("hintRow");
   var hintColBtn = document.getElementById("hintCol");
   var hintDiagBtn = document.getElementById("hintDiag");
+  var challengeGrayBtn = document.getElementById("challengeGray");
   var elimRandomBtn = document.getElementById("elimRandom");
   var clearHintsBtn = document.getElementById("clearHints");
   var resetPuzzleBtn = document.getElementById("resetPuzzle");
@@ -36,6 +37,7 @@
   var rowHintEl = null;
   var colHintEl = null;
   var diagHintEl = null;
+  var grayCanvas = null;
 
   var state = {
     sgfKey: "27k",
@@ -50,6 +52,9 @@
     hintRow: null,
     hintCol: null,
     hintDiag: null,
+    challengeGray: false,
+    grayStones: new Set(),
+    currentMat: null,
     hintMode: "none",
     extraAllowedMoves: new Set(),
     lastNodeId: null,
@@ -111,6 +116,105 @@
       return GB.A1_LETTERS[i] + GB.A1_NUMBERS[j];
     }
     return String(coord).toUpperCase();
+  }
+
+  function recordGrayStone(i, j) {
+    if (!state.challengeGray) {
+      return;
+    }
+    if (i < 0 || j < 0) {
+      return;
+    }
+    state.grayStones.add(i + "," + j);
+  }
+
+  function renderGrayStones(mat) {
+    if (!grayCanvas || !board) {
+      return;
+    }
+    var ref = board.canvas || board.cursorCanvas || board.board;
+    if (!ref) {
+      return;
+    }
+    var dpr = window.devicePixelRatio || 1;
+    grayCanvas.width = ref.width;
+    grayCanvas.height = ref.height;
+    grayCanvas.style.width = ref.width / dpr + "px";
+    grayCanvas.style.height = ref.height / dpr + "px";
+
+    var ctx = grayCanvas.getContext("2d");
+    if (!ctx) {
+      return;
+    }
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    ctx.clearRect(0, 0, grayCanvas.width, grayCanvas.height);
+
+    if (!state.challengeGray || !mat) {
+      return;
+    }
+
+    ctx.setTransform(board.transMat);
+    var spacing = board.calcSpaceAndPadding
+      ? board.calcSpaceAndPadding(ref)
+      : { space: 0, scaledPadding: 0 };
+    var space = spacing.space;
+    var scaledPadding = spacing.scaledPadding;
+    var themeOptions = board.options.themeOptions || {};
+    var theme = board.options.theme;
+    var ratio =
+      (themeOptions[theme] && themeOptions[theme].stoneRatio) ||
+      (themeOptions.default && themeOptions.default.stoneRatio) ||
+      0.45;
+    var radius = space * ratio;
+
+    ctx.fillStyle = "#b9b9b9";
+    ctx.strokeStyle = "rgba(80, 80, 80, 0.6)";
+    ctx.lineWidth = Math.max(space * 0.05, 1);
+
+    state.grayStones.forEach(function (key) {
+      var parts = key.split(",");
+      var x = Number(parts[0]);
+      var y = Number(parts[1]);
+      if (Number.isNaN(x) || Number.isNaN(y)) {
+        return;
+      }
+      if (!mat[x] || mat[x][y] === GB.Ki.Empty) {
+        return;
+      }
+      var cx = scaledPadding + x * space;
+      var cy = scaledPadding + y * space;
+      ctx.beginPath();
+      ctx.arc(cx, cy, radius, 0, Math.PI * 2, true);
+      ctx.fill();
+      ctx.stroke();
+    });
+  }
+
+  function setGrayPlay(active) {
+    state.challengeGray = active;
+    state.grayStones = new Set();
+    updateChallengeControls();
+    renderGrayStones(state.currentMat);
+  }
+
+  function updateChallengeControls() {
+    if (!challengeGrayBtn) {
+      return;
+    }
+    if (state.challengeGray) {
+      challengeGrayBtn.classList.add("active");
+      challengeGrayBtn.disabled = true;
+    } else {
+      challengeGrayBtn.classList.remove("active");
+      challengeGrayBtn.disabled = false;
+    }
+  }
+
+  function resetChallenges() {
+    state.challengeGray = false;
+    state.grayStones = new Set();
+    updateChallengeControls();
+    renderGrayStones(state.currentMat);
   }
 
   function resetRowHint() {
@@ -385,6 +489,12 @@
       padding: 24,
     });
     board.init(mount);
+    updateChallengeControls();
+    grayCanvas = document.createElement("canvas");
+    grayCanvas.id = "ghostban-gray";
+    grayCanvas.style.position = "absolute";
+    grayCanvas.style.pointerEvents = "none";
+    mount.appendChild(grayCanvas);
     rowHintEl = document.createElement("div");
     rowHintEl.className = "row-hint";
     rowHintEl.setAttribute("aria-hidden", "true");
@@ -492,6 +602,7 @@
     updateChildMoves();
 
     var res = GB.calcMatAndMarkup(state.currentNode, size);
+    state.currentMat = res.mat;
     applyHintMarkup(res.markup, res.mat);
 
     board.setMat(res.mat);
@@ -514,6 +625,7 @@
     positionRowHint();
     positionColumnHint();
     positionDiagonalHint();
+    renderGrayStones(state.currentMat);
   }
 
   function evaluatePosition() {
@@ -558,6 +670,7 @@
       if (!move) {
         break;
       }
+      recordGrayStone(move.i, move.j);
       setCurrentNode(move.node);
       turn = getTurn(state.currentNode, state.playerColor);
       guard += 1;
@@ -568,6 +681,7 @@
     if (!state.rootNode) {
       return;
     }
+    resetChallenges();
     setCurrentNode(state.rootNode);
     state.combo = 0;
     clearTemporaryState();
@@ -1036,6 +1150,7 @@
       return;
     }
 
+    recordGrayStone(i, j);
     var correct = GB.inRightPath(chosen.node);
     if (correct) {
       state.combo += 1;
@@ -1071,6 +1186,13 @@
   hintRowBtn.addEventListener("click", hintRowReveal);
   hintColBtn.addEventListener("click", hintColumnReveal);
   hintDiagBtn.addEventListener("click", hintDiagonalReveal);
+  challengeGrayBtn.addEventListener("click", function () {
+    if (state.challengeGray) {
+      return;
+    }
+    setGrayPlay(true);
+    logMessage("Challenge enabled: Gray play.");
+  });
   elimRandomBtn.addEventListener("click", eliminateRandomMove);
   clearHintsBtn.addEventListener("click", function () {
     clearHints();
@@ -1103,6 +1225,7 @@
     if (state.hintDiag) {
       positionDiagonalHint();
     }
+    renderGrayStones(state.currentMat);
   });
 
   updateHud();

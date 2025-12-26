@@ -66,6 +66,43 @@ body {
   overflow: hidden;
 }
 
+#board canvas {
+  top: 0;
+  left: 0;
+}
+
+#ghostban-board {
+  z-index: 1;
+}
+
+#ghostban-canvas {
+  z-index: 2;
+}
+
+#ghostban-gray {
+  z-index: 3;
+}
+
+#ghostban-ownership {
+  z-index: 4;
+}
+
+#ghostban-markup {
+  z-index: 5;
+}
+
+#ghostban-analysis {
+  z-index: 6;
+}
+
+#ghostban-cursor {
+  z-index: 7;
+}
+
+#ghostban-effect {
+  z-index: 8;
+}
+
 .hud {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -140,6 +177,13 @@ select {
   gap: 8px;
 }
 
+.controls--challenges {
+  padding: 8px;
+  border-radius: 12px;
+  border: 1px dashed rgba(90, 70, 50, 0.4);
+  background: rgba(90, 70, 50, 0.05);
+}
+
 .button {
   border: 1px solid var(--panel-edge);
   background: #fff;
@@ -160,6 +204,25 @@ select {
   background: var(--chip);
   border-color: rgba(217, 123, 59, 0.5);
   color: var(--accent-ink);
+}
+
+.button--challenge {
+  border-color: rgba(90, 70, 50, 0.55);
+  background: #f6f0e6;
+  color: #4b3d2c;
+}
+
+.button--challenge.active {
+  background: rgba(90, 70, 50, 0.18);
+  border-color: rgba(90, 70, 50, 0.7);
+  color: #3a2d1f;
+}
+
+.button--challenge:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
 }
 
 .log {
