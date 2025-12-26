@@ -71,6 +71,46 @@ body {
   left: 0;
 }
 
+.board-control {
+  position: absolute;
+  z-index: 10;
+}
+
+#mysteryTimerBtn {
+  right: 10px;
+  top: 10px;
+  border: 1px solid var(--panel-edge);
+  background: rgba(255, 255, 255, 0.92);
+  color: var(--ink);
+  padding: 6px 10px;
+  border-radius: 999px;
+  font-size: 11px;
+  cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+  box-shadow: 0 8px 18px rgba(70, 50, 30, 0.2);
+}
+
+#mysteryTimerBtn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 10px 20px rgba(70, 50, 30, 0.25);
+}
+
+#mysteryTimerCountdown {
+  left: 10px;
+  top: 10px;
+  min-width: 36px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  font-weight: 700;
+  font-size: 14px;
+  text-align: center;
+  color: #fff8ea;
+  background: rgba(31, 26, 20, 0.78);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  box-shadow: 0 6px 14px rgba(30, 20, 10, 0.35);
+  pointer-events: none;
+}
+
 #ghostban-board {
   z-index: 1;
 }
