@@ -24,12 +24,18 @@
   var hintOneBtn = document.getElementById("hintOne");
   var hintTwoBtn = document.getElementById("hintTwo");
   var hintNeighborBtn = document.getElementById("hintNeighbor");
+  var hintRowBtn = document.getElementById("hintRow");
+  var hintColBtn = document.getElementById("hintCol");
+  var hintDiagBtn = document.getElementById("hintDiag");
   var elimRandomBtn = document.getElementById("elimRandom");
   var clearHintsBtn = document.getElementById("clearHints");
   var resetPuzzleBtn = document.getElementById("resetPuzzle");
   var resetLivesBtn = document.getElementById("resetLives");
 
   var board = null;
+  var rowHintEl = null;
+  var colHintEl = null;
+  var diagHintEl = null;
 
   var state = {
     sgfKey: "27k",
@@ -41,6 +47,9 @@
     blockedMoves: new Set(),
     hintMoves: { correct: [], wrong: [] },
     hintNeighborStones: [],
+    hintRow: null,
+    hintCol: null,
+    hintDiag: null,
     hintMode: "none",
     extraAllowedMoves: new Set(),
     lastNodeId: null,
@@ -104,6 +113,221 @@
     return String(coord).toUpperCase();
   }
 
+  function resetRowHint() {
+    state.hintRow = null;
+    if (!rowHintEl) {
+      return;
+    }
+    rowHintEl.classList.remove("is-active");
+    rowHintEl.style.display = "none";
+  }
+
+  function resetColumnHint() {
+    state.hintCol = null;
+    if (!colHintEl) {
+      return;
+    }
+    colHintEl.classList.remove("is-active");
+    colHintEl.style.display = "none";
+  }
+
+  function resetDiagonalHint() {
+    state.hintDiag = null;
+    if (!diagHintEl) {
+      return;
+    }
+    diagHintEl.classList.remove("is-active");
+    diagHintEl.style.display = "none";
+  }
+
+  function positionRowHint() {
+    if (!rowHintEl || state.hintRow === null || !board) {
+      if (rowHintEl) {
+        rowHintEl.classList.remove("is-active");
+        rowHintEl.style.display = "none";
+      }
+      return;
+    }
+
+    var canvas = board.canvas || board.cursorCanvas || board.board;
+    if (!canvas || !canvas.getBoundingClientRect) {
+      return;
+    }
+
+    var rect = canvas.getBoundingClientRect();
+    if (!rect.width || !rect.height) {
+      return;
+    }
+
+    var scaleX = canvas.width / rect.width;
+    var scaleY = canvas.height / rect.height;
+    var size = board.options.boardSize || 19;
+    var spacing = board.calcSpaceAndPadding
+      ? board.calcSpaceAndPadding(canvas)
+      : { space: 0, scaledPadding: 0 };
+    var space = spacing.space;
+    var scaledPadding = spacing.scaledPadding;
+    var row = state.hintRow;
+    var rowHeight = space * 0.9;
+    var x0 = scaledPadding - space / 2;
+    var x1 = scaledPadding + space * (size - 1) + space / 2;
+    var y0 = scaledPadding + row * space - rowHeight / 2;
+    var y1 = scaledPadding + row * space + rowHeight / 2;
+
+    var topLeft = board.transMat.transformPoint(new DOMPoint(x0, y0));
+    var bottomRight = board.transMat.transformPoint(new DOMPoint(x1, y1));
+    var left = topLeft.x / scaleX;
+    var top = topLeft.y / scaleY;
+    var width = (bottomRight.x - topLeft.x) / scaleX;
+    var height = (bottomRight.y - topLeft.y) / scaleY;
+
+    rowHintEl.style.display = "block";
+    rowHintEl.style.left = left + "px";
+    rowHintEl.style.top = top + "px";
+    rowHintEl.style.width = width + "px";
+    rowHintEl.style.height = height + "px";
+    rowHintEl.classList.add("is-active");
+  }
+
+  function positionColumnHint() {
+    if (!colHintEl || state.hintCol === null || !board) {
+      if (colHintEl) {
+        colHintEl.classList.remove("is-active");
+        colHintEl.style.display = "none";
+      }
+      return;
+    }
+
+    var canvas = board.canvas || board.cursorCanvas || board.board;
+    if (!canvas || !canvas.getBoundingClientRect) {
+      return;
+    }
+
+    var rect = canvas.getBoundingClientRect();
+    if (!rect.width || !rect.height) {
+      return;
+    }
+
+    var scaleX = canvas.width / rect.width;
+    var scaleY = canvas.height / rect.height;
+    var size = board.options.boardSize || 19;
+    var spacing = board.calcSpaceAndPadding
+      ? board.calcSpaceAndPadding(canvas)
+      : { space: 0, scaledPadding: 0 };
+    var space = spacing.space;
+    var scaledPadding = spacing.scaledPadding;
+    var col = state.hintCol;
+    var colWidth = space * 0.9;
+    var x0 = scaledPadding + col * space - colWidth / 2;
+    var x1 = scaledPadding + col * space + colWidth / 2;
+    var y0 = scaledPadding - space / 2;
+    var y1 = scaledPadding + space * (size - 1) + space / 2;
+
+    var topLeft = board.transMat.transformPoint(new DOMPoint(x0, y0));
+    var bottomRight = board.transMat.transformPoint(new DOMPoint(x1, y1));
+    var left = topLeft.x / scaleX;
+    var top = topLeft.y / scaleY;
+    var width = (bottomRight.x - topLeft.x) / scaleX;
+    var height = (bottomRight.y - topLeft.y) / scaleY;
+
+    colHintEl.style.display = "block";
+    colHintEl.style.left = left + "px";
+    colHintEl.style.top = top + "px";
+    colHintEl.style.width = width + "px";
+    colHintEl.style.height = height + "px";
+    colHintEl.classList.add("is-active");
+  }
+
+  function positionDiagonalHint() {
+    if (!diagHintEl || !state.hintDiag || !board) {
+      if (diagHintEl) {
+        diagHintEl.classList.remove("is-active");
+        diagHintEl.style.display = "none";
+      }
+      return;
+    }
+
+    var canvas = board.canvas || board.cursorCanvas || board.board;
+    if (!canvas || !canvas.getBoundingClientRect) {
+      return;
+    }
+
+    var rect = canvas.getBoundingClientRect();
+    if (!rect.width || !rect.height) {
+      return;
+    }
+
+    var scaleX = canvas.width / rect.width;
+    var scaleY = canvas.height / rect.height;
+    var size = board.options.boardSize || 19;
+    var spacing = board.calcSpaceAndPadding
+      ? board.calcSpaceAndPadding(canvas)
+      : { space: 0, scaledPadding: 0 };
+    var space = spacing.space;
+    var scaledPadding = spacing.scaledPadding;
+    var diag = state.hintDiag;
+
+    var i0;
+    var j0;
+    var i1;
+    var j1;
+    if (diag.type === "backslash") {
+      var d = diag.value;
+      i0 = Math.max(0, -d);
+      i1 = Math.min(size - 1, size - 1 - d);
+      j0 = i0 + d;
+      j1 = i1 + d;
+    } else {
+      var s = diag.value;
+      i0 = Math.max(0, s - (size - 1));
+      i1 = Math.min(size - 1, s);
+      j0 = -i0 + s;
+      j1 = -i1 + s;
+    }
+
+    var x0 = scaledPadding + i0 * space;
+    var y0 = scaledPadding + j0 * space;
+    var x1 = scaledPadding + i1 * space;
+    var y1 = scaledPadding + j1 * space;
+
+    var dx = x1 - x0;
+    var dy = y1 - y0;
+    var length = Math.sqrt(dx * dx + dy * dy);
+    if (length <= 0) {
+      return;
+    }
+
+    var extend = space / 2;
+    var ux = dx / length;
+    var uy = dy / length;
+    x0 -= ux * extend;
+    y0 -= uy * extend;
+    x1 += ux * extend;
+    y1 += uy * extend;
+
+    var start = board.transMat.transformPoint(new DOMPoint(x0, y0));
+    var end = board.transMat.transformPoint(new DOMPoint(x1, y1));
+    var centerX = (start.x + end.x) / 2 / scaleX;
+    var centerY = (start.y + end.y) / 2 / scaleY;
+    var dxPx = (end.x - start.x) / scaleX;
+    var dyPx = (end.y - start.y) / scaleY;
+    var lengthPx = Math.sqrt(dxPx * dxPx + dyPx * dyPx);
+    var angle = Math.atan2(dyPx, dxPx) * (180 / Math.PI);
+
+    var base = board.transMat.transformPoint(new DOMPoint(0, 0));
+    var spacePoint = board.transMat.transformPoint(new DOMPoint(space, 0));
+    var spacePx = Math.abs(spacePoint.x - base.x) / scaleX;
+    var thickness = spacePx * 0.9;
+
+    diagHintEl.style.display = "block";
+    diagHintEl.style.left = centerX + "px";
+    diagHintEl.style.top = centerY + "px";
+    diagHintEl.style.width = lengthPx + "px";
+    diagHintEl.style.height = thickness + "px";
+    diagHintEl.style.transform = "translate(-50%, -50%) rotate(" + angle + "deg)";
+    diagHintEl.classList.add("is-active");
+  }
+
   function getTurn(node, firstTurn) {
     if (!node || node.model.moveProps.length === 0) {
       return firstTurn;
@@ -121,6 +345,9 @@
     state.hintNeighborStones = [];
     state.hintMode = "none";
     state.extraAllowedMoves = new Set();
+    resetRowHint();
+    resetColumnHint();
+    resetDiagonalHint();
     logMessage("Hints cleared.");
   }
 
@@ -130,6 +357,9 @@
     state.hintNeighborStones = [];
     state.hintMode = "none";
     state.extraAllowedMoves = new Set();
+    resetRowHint();
+    resetColumnHint();
+    resetDiagonalHint();
   }
 
   function setCurrentNode(node) {
@@ -155,6 +385,21 @@
       padding: 24,
     });
     board.init(mount);
+    rowHintEl = document.createElement("div");
+    rowHintEl.className = "row-hint";
+    rowHintEl.setAttribute("aria-hidden", "true");
+    rowHintEl.style.display = "none";
+    mount.appendChild(rowHintEl);
+    colHintEl = document.createElement("div");
+    colHintEl.className = "col-hint";
+    colHintEl.setAttribute("aria-hidden", "true");
+    colHintEl.style.display = "none";
+    mount.appendChild(colHintEl);
+    diagHintEl = document.createElement("div");
+    diagHintEl.className = "diag-hint";
+    diagHintEl.setAttribute("aria-hidden", "true");
+    diagHintEl.style.display = "none";
+    mount.appendChild(diagHintEl);
   }
 
   function getChildMoves(node) {
@@ -266,6 +511,9 @@
 
     board.render();
     board.renderInteractive();
+    positionRowHint();
+    positionColumnHint();
+    positionDiagonalHint();
   }
 
   function evaluatePosition() {
@@ -377,6 +625,9 @@
     state.hintMoves = { correct: [correct.sgf], wrong: [] };
     state.hintNeighborStones = [];
     state.hintMode = "single";
+    resetRowHint();
+    resetColumnHint();
+    resetDiagonalHint();
     logMessage("Hinted correct move: " + sgfToA1(correct.sgf));
     updateBoard();
   }
@@ -422,6 +673,9 @@
       state.hintMoves = { correct: [correct.sgf], wrong: [] };
       state.hintNeighborStones = [];
       state.hintMode = "single";
+      resetRowHint();
+      resetColumnHint();
+      resetDiagonalHint();
     } else {
       state.hintMoves = {
         correct: [correct.sgf],
@@ -429,6 +683,9 @@
       };
       state.hintNeighborStones = [];
       state.hintMode = "double";
+      resetRowHint();
+      resetColumnHint();
+      resetDiagonalHint();
       var hinted = [correct.sgf, wrong.sgf];
       if (Math.random() > 0.5) {
         hinted.reverse();
@@ -509,7 +766,162 @@
     state.hintMoves = { correct: [], wrong: [] };
     state.hintNeighborStones = [neighbor];
     state.hintMode = "single";
+    resetRowHint();
+    resetColumnHint();
+    resetDiagonalHint();
     logMessage("Neighbor hint: " + sgfToA1(neighbor));
+    updateBoard();
+  }
+
+  function hintRowReveal() {
+    if (state.lives <= 0) {
+      setStatus("Out of lives. Reset to continue.", "error");
+      return;
+    }
+
+    resetRowHint();
+    resetColumnHint();
+    resetDiagonalHint();
+    updateChildMoves();
+    if (state.childMoves.length === 0) {
+      logMessage("No moves available to hint.");
+      return;
+    }
+
+    var rightMoves = state.childMoves.filter(function (move) {
+      return GB.inRightPath(move.node);
+    });
+    if (rightMoves.length === 0) {
+      logMessage("No solution moves to hint.");
+      return;
+    }
+
+    var rowSet = new Set();
+    rightMoves.forEach(function (move) {
+      rowSet.add(move.j);
+    });
+    var rows = Array.from(rowSet);
+    if (rows.length === 0) {
+      logMessage("No solution rows to reveal.");
+      return;
+    }
+
+    var row = rows[Math.floor(Math.random() * rows.length)];
+    state.hintMoves = { correct: [], wrong: [] };
+    state.hintNeighborStones = [];
+    state.hintMode = "none";
+    state.hintRow = row;
+
+    var size = board && board.options ? board.options.boardSize : 19;
+    var label = size - row;
+    logMessage("Row reveal: row " + label);
+    updateBoard();
+  }
+
+  function hintColumnReveal() {
+    if (state.lives <= 0) {
+      setStatus("Out of lives. Reset to continue.", "error");
+      return;
+    }
+
+    resetRowHint();
+    resetColumnHint();
+    resetDiagonalHint();
+    updateChildMoves();
+    if (state.childMoves.length === 0) {
+      logMessage("No moves available to hint.");
+      return;
+    }
+
+    var rightMoves = state.childMoves.filter(function (move) {
+      return GB.inRightPath(move.node);
+    });
+    if (rightMoves.length === 0) {
+      logMessage("No solution moves to hint.");
+      return;
+    }
+
+    var colSet = new Set();
+    rightMoves.forEach(function (move) {
+      colSet.add(move.i);
+    });
+    var cols = Array.from(colSet);
+    if (cols.length === 0) {
+      logMessage("No solution columns to reveal.");
+      return;
+    }
+
+    var col = cols[Math.floor(Math.random() * cols.length)];
+    state.hintMoves = { correct: [], wrong: [] };
+    state.hintNeighborStones = [];
+    state.hintMode = "none";
+    state.hintCol = col;
+
+    var label = GB.A1_LETTERS[col] || col + 1;
+    logMessage("Column reveal: column " + label);
+    updateBoard();
+  }
+
+  function hintDiagonalReveal() {
+    if (state.lives <= 0) {
+      setStatus("Out of lives. Reset to continue.", "error");
+      return;
+    }
+
+    resetRowHint();
+    resetColumnHint();
+    resetDiagonalHint();
+    updateChildMoves();
+    if (state.childMoves.length === 0) {
+      logMessage("No moves available to hint.");
+      return;
+    }
+
+    var rightMoves = state.childMoves.filter(function (move) {
+      return GB.inRightPath(move.node);
+    });
+    if (rightMoves.length === 0) {
+      logMessage("No solution moves to hint.");
+      return;
+    }
+
+    var backslashSet = new Set();
+    var slashSet = new Set();
+    rightMoves.forEach(function (move) {
+      backslashSet.add(move.j - move.i);
+      slashSet.add(move.i + move.j);
+    });
+
+    var options = [];
+    if (backslashSet.size) {
+      options.push({
+        type: "backslash",
+        values: Array.from(backslashSet),
+      });
+    }
+    if (slashSet.size) {
+      options.push({
+        type: "slash",
+        values: Array.from(slashSet),
+      });
+    }
+
+    if (options.length === 0) {
+      logMessage("No solution diagonals to reveal.");
+      return;
+    }
+
+    var choice = options[Math.floor(Math.random() * options.length)];
+    var values = choice.values;
+    var value = values[Math.floor(Math.random() * values.length)];
+
+    state.hintMoves = { correct: [], wrong: [] };
+    state.hintNeighborStones = [];
+    state.hintMode = "none";
+    state.hintDiag = { type: choice.type, value: value };
+
+    var label = choice.type === "backslash" ? "\\" : "/";
+    logMessage("Diagonal reveal: " + label);
     updateBoard();
   }
 
@@ -656,6 +1068,9 @@
   hintOneBtn.addEventListener("click", hintFirstMove);
   hintTwoBtn.addEventListener("click", hintTwoMoves);
   hintNeighborBtn.addEventListener("click", hintWaveNeighbor);
+  hintRowBtn.addEventListener("click", hintRowReveal);
+  hintColBtn.addEventListener("click", hintColumnReveal);
+  hintDiagBtn.addEventListener("click", hintDiagonalReveal);
   elimRandomBtn.addEventListener("click", eliminateRandomMove);
   clearHintsBtn.addEventListener("click", function () {
     clearHints();
@@ -675,6 +1090,18 @@
     }
     if (event.key === "r" || event.key === "R") {
       resetPuzzle();
+    }
+  });
+
+  window.addEventListener("resize", function () {
+    if (state.hintRow !== null) {
+      positionRowHint();
+    }
+    if (state.hintCol !== null) {
+      positionColumnHint();
+    }
+    if (state.hintDiag) {
+      positionDiagonalHint();
     }
   });
 

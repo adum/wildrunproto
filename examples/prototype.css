@@ -185,6 +185,76 @@ select {
   padding-bottom: 0;
 }
 
+.row-hint {
+  position: absolute;
+  left: 0;
+  top: 0;
+  pointer-events: none;
+  opacity: 0;
+  border-radius: 999px;
+  background: linear-gradient(
+    90deg,
+    rgba(110, 200, 140, 0.14),
+    rgba(110, 200, 140, 0.34),
+    rgba(110, 200, 140, 0.14)
+  );
+  border: 1px solid rgba(78, 156, 102, 0.45);
+  box-shadow: 0 8px 16px rgba(45, 90, 60, 0.18);
+  transition: opacity 0.2s ease;
+  z-index: 5;
+}
+
+.row-hint.is-active {
+  opacity: 1;
+}
+
+.col-hint {
+  position: absolute;
+  left: 0;
+  top: 0;
+  pointer-events: none;
+  opacity: 0;
+  border-radius: 999px;
+  background: linear-gradient(
+    180deg,
+    rgba(98, 176, 206, 0.14),
+    rgba(98, 176, 206, 0.34),
+    rgba(98, 176, 206, 0.14)
+  );
+  border: 1px solid rgba(72, 138, 163, 0.45);
+  box-shadow: 0 8px 16px rgba(36, 74, 92, 0.18);
+  transition: opacity 0.2s ease;
+  z-index: 5;
+}
+
+.col-hint.is-active {
+  opacity: 1;
+}
+
+.diag-hint {
+  position: absolute;
+  left: 0;
+  top: 0;
+  pointer-events: none;
+  opacity: 0;
+  border-radius: 999px;
+  transform-origin: center;
+  background: linear-gradient(
+    90deg,
+    rgba(233, 196, 106, 0.14),
+    rgba(233, 196, 106, 0.34),
+    rgba(233, 196, 106, 0.14)
+  );
+  border: 1px solid rgba(194, 152, 70, 0.45);
+  box-shadow: 0 8px 16px rgba(120, 90, 40, 0.18);
+  transition: opacity 0.2s ease;
+  z-index: 5;
+}
+
+.diag-hint.is-active {
+  opacity: 1;
+}
+
 @media (max-width: 960px) {
   .layout {
     grid-template-columns: 1fr;
