@@ -40,28 +40,68 @@
             </div>
 
             <div class="controls">
-              <button id="hintOne" class="button" type="button">
+              <button
+                id="hintOne"
+                class="button"
+                type="button"
+                title="Marks the next correct move."
+              >
                 Hint: First Move
               </button>
-              <button id="hintTwo" class="button" type="button">
+              <button
+                id="hintTwo"
+                class="button"
+                type="button"
+                title="Marks one correct move and one wrong move."
+              >
                 Hint: Two Moves
               </button>
-              <button id="hintNeighbor" class="button" type="button">
+              <button
+                id="hintNeighbor"
+                class="button"
+                type="button"
+                title="Highlights a stone adjacent to a correct move."
+              >
                 Hint: Wave to Your Neighbor
               </button>
-              <button id="hintRow" class="button" type="button">
+              <button
+                id="hintRow"
+                class="button"
+                type="button"
+                title="Reveals a row containing a correct move."
+              >
                 Hint: Row Reveal
               </button>
-              <button id="hintCol" class="button" type="button">
+              <button
+                id="hintCol"
+                class="button"
+                type="button"
+                title="Reveals a column containing a correct move."
+              >
                 Hint: Column Reveal
               </button>
-              <button id="hintDiag" class="button" type="button">
+              <button
+                id="hintDiag"
+                class="button"
+                type="button"
+                title="Reveals a diagonal containing a correct move."
+              >
                 Hint: Diagonal Reveal
               </button>
-              <button id="elimRandom" class="button" type="button">
+              <button
+                id="elimRandom"
+                class="button"
+                type="button"
+                title="Blocks a random wrong-path move."
+              >
                 Eliminate Random Move
               </button>
-              <button id="clearHints" class="button" type="button">
+              <button
+                id="clearHints"
+                class="button"
+                type="button"
+                title="Clears all active hints."
+              >
                 Clear Hints
               </button>
             </div>
@@ -73,6 +113,7 @@
                   id="challengeGray"
                   class="button button--challenge"
                   type="button"
+                  title="New stones are shown as gray."
                 >
                   Gray Play
                 </button>
@@ -80,16 +121,34 @@
                   id="challengeGhost"
                   class="button button--challenge"
                   type="button"
+                  title="New stones flash, then become invisible."
                 >
                   Ghost Play
                 </button>
-                <button
-                  id="challengeMystery"
-                  class="button button--challenge"
-                  type="button"
-                >
-                  Mystery Timer
-                </button>
+                <div class="mystery-row">
+                  <button
+                    id="challengeMystery"
+                    class="button button--challenge"
+                    type="button"
+                    title="Hide stones; reveal them to start a timer."
+                  >
+                    Mystery Timer
+                  </button>
+                  <div class="mystery-level">
+                    <label for="mysteryLevel">Level</label>
+                    <input
+                      id="mysteryLevel"
+                      type="range"
+                      min="1"
+                      max="10"
+                      step="1"
+                      value="1"
+                    />
+                    <span id="mysteryLevelValue" class="mystery-level__value"
+                      >1</span
+                    >
+                  </div>
+                </div>
               </div>
             </div>
 

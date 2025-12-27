@@ -31,6 +31,8 @@
   var challengeGrayBtn = document.getElementById("challengeGray");
   var challengeGhostBtn = document.getElementById("challengeGhost");
   var challengeMysteryBtn = document.getElementById("challengeMystery");
+  var mysteryLevelInput = document.getElementById("mysteryLevel");
+  var mysteryLevelValue = document.getElementById("mysteryLevelValue");
   var elimRandomBtn = document.getElementById("elimRandom");
   var clearHintsBtn = document.getElementById("clearHints");
   var resetPuzzleBtn = document.getElementById("resetPuzzle");
@@ -66,11 +68,12 @@
     ghostStones: new Set(),
     ghostFlashes: [],
     challengeMystery: false,
-    mysteryStoneKey: null,
+    mysteryStoneKeys: [],
     mysteryRevealed: false,
     mysteryTimerActive: false,
     mysteryTimerEndsAt: 0,
     mysteryTimerId: null,
+    mysteryLevel: 1,
     currentMat: null,
     hintMode: "none",
     extraAllowedMoves: new Set(),
@@ -294,10 +297,20 @@
     ghostAnimId = requestAnimationFrame(drawGhostFlashes);
   }
 
-  function ensureMysteryStone(mat) {
+  function getMysteryStoneCount(level) {
+    var safeLevel = Math.max(1, Number(level) || 1);
+    return safeLevel;
+  }
+
+  function getMysteryTimerSeconds(level) {
+    var safeLevel = Math.max(1, Number(level) || 1);
+    return Math.max(5, 30 - (safeLevel - 1) * 5);
+  }
+
+  function ensureMysteryStones(mat) {
     if (
       !state.challengeMystery ||
-      state.mysteryStoneKey ||
+      state.mysteryStoneKeys.length > 0 ||
       state.mysteryRevealed
     ) {
       return;
@@ -314,19 +327,60 @@
       }
     }
     if (stones.length === 0) {
-      state.mysteryStoneKey = null;
+      state.mysteryStoneKeys = [];
       state.mysteryRevealed = true;
       return;
     }
-    state.mysteryStoneKey =
-      stones[Math.floor(Math.random() * stones.length)];
+    var count = getMysteryStoneCount(state.mysteryLevel);
+    var picked = [];
+    for (var k = stones.length - 1; k > 0; k -= 1) {
+      var swap = Math.floor(Math.random() * (k + 1));
+      var temp = stones[k];
+      stones[k] = stones[swap];
+      stones[swap] = temp;
+    }
+    for (var n = 0; n < stones.length && picked.length < count; n += 1) {
+      picked.push(stones[n]);
+    }
+    state.mysteryStoneKeys = picked;
+  }
+
+  function updateMysteryButtonLabel() {
+    if (!mysteryBtn) {
+      return;
+    }
+    var seconds = getMysteryTimerSeconds(state.mysteryLevel);
+    mysteryBtn.textContent = "Reveal & Start Timer " + seconds + "s";
+  }
+
+  function updateMysteryLevelUI() {
+    if (mysteryLevelInput) {
+      mysteryLevelInput.value = String(state.mysteryLevel);
+    }
+    if (mysteryLevelValue) {
+      mysteryLevelValue.textContent = String(state.mysteryLevel);
+    }
+    updateMysteryButtonLabel();
+  }
+
+  function setMysteryLevel(level) {
+    var nextLevel = Math.max(1, Number(level) || 1);
+    state.mysteryLevel = nextLevel;
+    updateMysteryLevelUI();
+    if (state.challengeMystery && !state.mysteryRevealed) {
+      state.mysteryStoneKeys = [];
+      ensureMysteryStones(state.currentMat);
+      renderGrayStones(state.currentMat);
+      updateMysteryUI();
+    }
   }
 
   function updateMysteryUI() {
+    updateMysteryButtonLabel();
     if (mysteryBtn) {
       if (
         state.challengeMystery &&
-        state.mysteryStoneKey &&
+        state.mysteryStoneKeys.length > 0 &&
         !state.mysteryRevealed
       ) {
         mysteryBtn.style.display = "inline-flex";
@@ -384,9 +438,10 @@
     if (state.mysteryTimerActive) {
       stopMysteryTimer(false);
     }
+    var duration = getMysteryTimerSeconds(state.mysteryLevel);
     state.mysteryTimerActive = true;
-    state.mysteryTimerEndsAt = performance.now() + 5000;
-    updateMysteryTimerDisplay(5);
+    state.mysteryTimerEndsAt = performance.now() + duration * 1000;
+    updateMysteryTimerDisplay(duration);
     updateMysteryUI();
     state.mysteryTimerId = setInterval(tickMysteryTimer, 100);
   }
@@ -395,7 +450,7 @@
     if (!state.challengeMystery || state.mysteryRevealed) {
       return;
     }
-    if (!state.mysteryStoneKey) {
+    if (state.mysteryStoneKeys.length === 0) {
       logMessage("No mystery stone available.");
       state.mysteryRevealed = true;
       updateMysteryUI();
@@ -431,7 +486,7 @@
 
     var hasMystery =
       state.challengeMystery &&
-      state.mysteryStoneKey &&
+      state.mysteryStoneKeys.length > 0 &&
       !state.mysteryRevealed;
     if ((!state.challengeGray && !hasMystery) || !mat) {
       return;
@@ -476,22 +531,25 @@
     }
 
     if (hasMystery) {
-      var parts = state.mysteryStoneKey.split(",");
-      var mx = Number(parts[0]);
-      var my = Number(parts[1]);
-      if (
-        !Number.isNaN(mx) &&
-        !Number.isNaN(my) &&
-        mat[mx] &&
-        mat[mx][my] !== GB.Ki.Empty
-      ) {
+      state.mysteryStoneKeys.forEach(function (key) {
+        var parts = key.split(",");
+        var mx = Number(parts[0]);
+        var my = Number(parts[1]);
+        if (
+          Number.isNaN(mx) ||
+          Number.isNaN(my) ||
+          !mat[mx] ||
+          mat[mx][my] === GB.Ki.Empty
+        ) {
+          return;
+        }
         var mxp = scaledPadding + mx * space;
         var myp = scaledPadding + my * space;
         ctx.beginPath();
         ctx.arc(mxp, myp, radius, 0, Math.PI * 2, true);
         ctx.fill();
         ctx.stroke();
-      }
+      });
     }
   }
 
@@ -543,13 +601,14 @@
 
   function setMysteryPlay(active) {
     state.challengeMystery = active;
-    state.mysteryStoneKey = null;
+    state.mysteryStoneKeys = [];
     state.mysteryRevealed = false;
     stopMysteryTimer(false);
     if (active) {
-      ensureMysteryStone(state.currentMat);
+      ensureMysteryStones(state.currentMat);
     }
     updateChallengeControls();
+    updateMysteryLevelUI();
     updateMysteryUI();
     renderGrayStones(state.currentMat);
   }
@@ -591,7 +650,7 @@
     state.ghostStones = new Set();
     state.ghostFlashes = [];
     state.challengeMystery = false;
-    state.mysteryStoneKey = null;
+    state.mysteryStoneKeys = [];
     state.mysteryRevealed = false;
     stopMysteryTimer(false);
     if (ghostAnimId) {
@@ -891,7 +950,7 @@
     mysteryBtn.id = "mysteryTimerBtn";
     mysteryBtn.className = "board-control";
     mysteryBtn.type = "button";
-    mysteryBtn.textContent = "Reveal & Start Timer 5s";
+    mysteryBtn.textContent = "Reveal & Start Timer";
     mysteryBtn.style.display = "none";
     mysteryBtn.addEventListener("click", function (event) {
       if (event) {
@@ -906,6 +965,7 @@
     mysteryTimerEl.setAttribute("aria-live", "polite");
     mysteryTimerEl.style.display = "none";
     mount.appendChild(mysteryTimerEl);
+    updateMysteryButtonLabel();
     rowHintEl = document.createElement("div");
     rowHintEl.className = "row-hint";
     rowHintEl.setAttribute("aria-hidden", "true");
@@ -1015,7 +1075,7 @@
     var res = GB.calcMatAndMarkup(state.currentNode, size);
     state.currentMat = res.mat;
     applyHintMarkup(res.markup, res.mat);
-    ensureMysteryStone(state.currentMat);
+    ensureMysteryStones(state.currentMat);
 
     var visibleMat = applyGhostMask(res.mat);
     board.setMat(visibleMat);
@@ -1105,7 +1165,7 @@
       return;
     }
     stopMysteryTimer(false);
-    state.mysteryStoneKey = null;
+    state.mysteryStoneKeys = [];
     state.mysteryRevealed = false;
     updateMysteryUI();
     resetChallenges();
@@ -1656,6 +1716,14 @@
     evaluatePosition();
     logMessage("Challenge enabled: Mystery timer.");
   });
+  if (mysteryLevelInput) {
+    mysteryLevelInput.addEventListener("input", function (event) {
+      if (!event || !event.target) {
+        return;
+      }
+      setMysteryLevel(event.target.value);
+    });
+  }
   elimRandomBtn.addEventListener("click", eliminateRandomMove);
   clearHintsBtn.addEventListener("click", function () {
     clearHints();
@@ -1697,5 +1765,10 @@
   });
 
   updateHud();
+  if (mysteryLevelInput) {
+    setMysteryLevel(mysteryLevelInput.value);
+  } else {
+    updateMysteryLevelUI();
+  }
   loadSgf(state.sgfKey);
 })();
