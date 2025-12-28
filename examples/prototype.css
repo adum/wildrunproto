@@ -348,14 +348,16 @@ select {
   box-shadow: none;
 }
 
-.mystery-row {
+.mystery-row,
+.ghost-row {
   display: grid;
   grid-template-columns: auto minmax(120px, 1fr);
   align-items: center;
   gap: 8px;
 }
 
-.mystery-level {
+.mystery-level,
+.ghost-level {
   display: flex;
   align-items: center;
   gap: 6px;
@@ -367,7 +369,8 @@ select {
   min-width: 0;
 }
 
-.mystery-level label {
+.mystery-level label,
+.ghost-level label {
   display: inline-flex;
   align-items: center;
   margin: 0;
@@ -375,12 +378,14 @@ select {
   color: var(--muted);
 }
 
-.mystery-level input[type="range"] {
+.mystery-level input[type="range"],
+.ghost-level input[type="range"] {
   width: 100%;
   min-width: 60px;
 }
 
-.mystery-level__value {
+.mystery-level__value,
+.ghost-level__value {
   min-width: 16px;
   text-align: right;
   font-weight: 700;

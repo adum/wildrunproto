@@ -117,14 +117,31 @@
                 >
                   Gray Play
                 </button>
-                <button
-                  id="challengeGhost"
-                  class="button button--challenge"
-                  type="button"
-                  title="New stones flash, then become invisible."
-                >
-                  Ghost Play
-                </button>
+                <div class="ghost-row">
+                  <button
+                    id="challengeGhost"
+                    class="button button--challenge"
+                    type="button"
+                    title="New stones flash, then become invisible."
+                  >
+                    Ghost Play
+                  </button>
+                  <div class="ghost-level">
+                    <label for="ghostLevel">Level</label>
+                    <input
+                      id="ghostLevel"
+                      type="range"
+                      min="1"
+                      max="10"
+                      step="1"
+                      value="1"
+                      title="Controls ghost flash time (L1=5s, -1s/level, min 0.5s) and reveal window for existing ghosts (L1=2s, L2=1s, L3+=0s)."
+                    />
+                    <span id="ghostLevelValue" class="ghost-level__value"
+                      >1</span
+                    >
+                  </div>
+                </div>
                 <div class="mystery-row">
                   <button
                     id="challengeMystery"
@@ -143,6 +160,7 @@
                       max="10"
                       step="1"
                       value="1"
+                      title="Controls hidden stones and timer (L1=1 stone/30s, +1 stone & -5s per level, min 5s)."
                     />
                     <span id="mysteryLevelValue" class="mystery-level__value"
                       >1</span

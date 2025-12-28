@@ -31,6 +31,8 @@
   var challengeGrayBtn = document.getElementById("challengeGray");
   var challengeGhostBtn = document.getElementById("challengeGhost");
   var challengeMysteryBtn = document.getElementById("challengeMystery");
+  var ghostLevelInput = document.getElementById("ghostLevel");
+  var ghostLevelValue = document.getElementById("ghostLevelValue");
   var mysteryLevelInput = document.getElementById("mysteryLevel");
   var mysteryLevelValue = document.getElementById("mysteryLevelValue");
   var elimRandomBtn = document.getElementById("elimRandom");
@@ -67,6 +69,8 @@
     challengeGhost: false,
     ghostStones: new Set(),
     ghostFlashes: [],
+    ghostLevel: 1,
+    ghostRevealUntil: 0,
     challengeMystery: false,
     mysteryStoneKeys: [],
     mysteryRevealed: false,
@@ -185,12 +189,16 @@
       return;
     }
     state.ghostStones.add(i + "," + j);
+    var now = performance.now();
+    var duration = getGhostVisibleDuration(state.ghostLevel);
     state.ghostFlashes.push({
       i: i,
       j: j,
       ki: ki,
-      start: performance.now(),
+      start: now,
+      duration: duration,
     });
+    triggerGhostReveal(now);
     startGhostAnimation();
   }
 
@@ -234,7 +242,7 @@
     ctx.setTransform(1, 0, 0, 1, 0, 0);
     ctx.clearRect(0, 0, ghostCanvas.width, ghostCanvas.height);
 
-    if (!state.challengeGhost || state.ghostFlashes.length === 0) {
+    if (!state.challengeGhost) {
       ghostAnimId = null;
       return;
     }
@@ -258,10 +266,47 @@
       0.45;
     var radius = space * ratio;
 
-    var duration = 500;
+    var hasActive = false;
     var remaining = [];
+    var revealActive =
+      state.ghostRevealUntil > 0 && state.ghostRevealUntil > timestamp;
+
+    if (revealActive && state.ghostStones.size > 0 && state.currentMat) {
+      ctx.save();
+      ctx.globalAlpha = 0.9;
+      state.ghostStones.forEach(function (key) {
+        var parts = key.split(",");
+        var x = Number(parts[0]);
+        var y = Number(parts[1]);
+        if (
+          Number.isNaN(x) ||
+          Number.isNaN(y) ||
+          !state.currentMat[x] ||
+          state.currentMat[x][y] === GB.Ki.Empty
+        ) {
+          return;
+        }
+        var cx = scaledPadding + x * space;
+        var cy = scaledPadding + y * space;
+        ctx.fillStyle = state.currentMat[x][y] === GB.Ki.White ? white : black;
+        ctx.strokeStyle = line;
+        ctx.lineWidth = Math.max(space * 0.05, 1);
+        ctx.beginPath();
+        ctx.arc(cx, cy, radius, 0, Math.PI * 2, true);
+        ctx.fill();
+        ctx.stroke();
+      });
+      ctx.restore();
+      hasActive = true;
+    }
+
+    if (state.ghostRevealUntil && state.ghostRevealUntil <= timestamp) {
+      state.ghostRevealUntil = 0;
+    }
+
     for (var i = 0; i < state.ghostFlashes.length; i += 1) {
       var flash = state.ghostFlashes[i];
+      var duration = flash.duration || 500;
       var elapsed = timestamp - flash.start;
       if (elapsed >= duration) {
         continue;
@@ -280,10 +325,11 @@
       ctx.stroke();
       ctx.restore();
       remaining.push(flash);
+      hasActive = true;
     }
 
     state.ghostFlashes = remaining;
-    if (remaining.length > 0) {
+    if (hasActive) {
       ghostAnimId = requestAnimationFrame(drawGhostFlashes);
     } else {
       ghostAnimId = null;
@@ -295,6 +341,46 @@
       return;
     }
     ghostAnimId = requestAnimationFrame(drawGhostFlashes);
+  }
+
+  function getGhostVisibleDuration(level) {
+    var safeLevel = Math.max(1, Number(level) || 1);
+    return Math.max(500, 5000 - (safeLevel - 1) * 1000);
+  }
+
+  function getGhostRevealDuration(level) {
+    var safeLevel = Math.max(1, Number(level) || 1);
+    var seconds = 2 - (safeLevel - 1);
+    return Math.max(0, seconds) * 1000;
+  }
+
+  function updateGhostLevelUI() {
+    if (ghostLevelInput) {
+      ghostLevelInput.value = String(state.ghostLevel);
+    }
+    if (ghostLevelValue) {
+      ghostLevelValue.textContent = String(state.ghostLevel);
+    }
+  }
+
+  function setGhostLevel(level) {
+    var nextLevel = Math.max(1, Number(level) || 1);
+    state.ghostLevel = nextLevel;
+    updateGhostLevelUI();
+  }
+
+  function triggerGhostReveal(now) {
+    if (!state.challengeGhost) {
+      return;
+    }
+    var duration = getGhostRevealDuration(state.ghostLevel);
+    if (duration <= 0) {
+      state.ghostRevealUntil = 0;
+      return;
+    }
+    var base = now || performance.now();
+    state.ghostRevealUntil = base + duration;
+    startGhostAnimation();
   }
 
   function getMysteryStoneCount(level) {
@@ -591,6 +677,7 @@
     state.challengeGhost = active;
     state.ghostStones = new Set();
     state.ghostFlashes = [];
+    state.ghostRevealUntil = 0;
     if (ghostAnimId) {
       cancelAnimationFrame(ghostAnimId);
       ghostAnimId = null;
@@ -649,6 +736,7 @@
     state.challengeGhost = false;
     state.ghostStones = new Set();
     state.ghostFlashes = [];
+    state.ghostRevealUntil = 0;
     state.challengeMystery = false;
     state.mysteryStoneKeys = [];
     state.mysteryRevealed = false;
@@ -1100,7 +1188,15 @@
     positionDiagonalHint();
     renderGrayStones(state.currentMat);
     updateMysteryUI();
-    if (!state.challengeGhost && state.ghostFlashes.length === 0) {
+    var revealActive =
+      state.ghostRevealUntil > 0 &&
+      state.ghostRevealUntil > performance.now();
+    if (
+      state.challengeGhost &&
+      (state.ghostFlashes.length > 0 || revealActive)
+    ) {
+      startGhostAnimation();
+    } else {
       clearGhostCanvas();
     }
   }
@@ -1707,6 +1803,14 @@
     setGhostPlay(true);
     logMessage("Challenge enabled: Ghost play.");
   });
+  if (ghostLevelInput) {
+    ghostLevelInput.addEventListener("input", function (event) {
+      if (!event || !event.target) {
+        return;
+      }
+      setGhostLevel(event.target.value);
+    });
+  }
   challengeMysteryBtn.addEventListener("click", function () {
     if (state.challengeMystery) {
       return;
@@ -1757,7 +1861,13 @@
       positionDiagonalHint();
     }
     renderGrayStones(state.currentMat);
-    if (state.challengeGhost && state.ghostFlashes.length > 0) {
+    var revealActive =
+      state.ghostRevealUntil > 0 &&
+      state.ghostRevealUntil > performance.now();
+    if (
+      state.challengeGhost &&
+      (state.ghostFlashes.length > 0 || revealActive)
+    ) {
       startGhostAnimation();
     } else {
       clearGhostCanvas();
@@ -1765,6 +1875,11 @@
   });
 
   updateHud();
+  if (ghostLevelInput) {
+    setGhostLevel(ghostLevelInput.value);
+  } else {
+    updateGhostLevelUI();
+  }
   if (mysteryLevelInput) {
     setMysteryLevel(mysteryLevelInput.value);
   } else {
