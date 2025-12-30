@@ -32,12 +32,15 @@
   var challengeGhostBtn = document.getElementById("challengeGhost");
   var challengeMysteryBtn = document.getElementById("challengeMystery");
   var challengeEnigmaBtn = document.getElementById("challengeEnigma");
+  var challengeInfectionBtn = document.getElementById("challengeInfection");
   var ghostLevelInput = document.getElementById("ghostLevel");
   var ghostLevelValue = document.getElementById("ghostLevelValue");
   var mysteryLevelInput = document.getElementById("mysteryLevel");
   var mysteryLevelValue = document.getElementById("mysteryLevelValue");
   var enigmaLevelInput = document.getElementById("enigmaLevel");
   var enigmaLevelValue = document.getElementById("enigmaLevelValue");
+  var infectionLevelInput = document.getElementById("infectionLevel");
+  var infectionLevelValue = document.getElementById("infectionLevelValue");
   var elimRandomBtn = document.getElementById("elimRandom");
   var clearHintsBtn = document.getElementById("clearHints");
   var resetPuzzleBtn = document.getElementById("resetPuzzle");
@@ -91,6 +94,9 @@
     enigmaTimerEndsAt: 0,
     enigmaTimerId: null,
     enigmaLevel: 1,
+    challengeInfection: false,
+    infectionPoints: new Set(),
+    infectionLevel: 1,
     currentMat: null,
     hintMode: "none",
     extraAllowedMoves: new Set(),
@@ -215,6 +221,56 @@
     startGhostAnimation();
   }
 
+  function recordInfection(i, j, isPlayerMove) {
+    if (!state.challengeInfection) {
+      return;
+    }
+    if (i < 0 || j < 0) {
+      return;
+    }
+    var counts = getInfectionCounts(state.infectionLevel);
+    var count = isPlayerMove ? counts.player : counts.opponent;
+    if (count <= 0) {
+      return;
+    }
+    var size =
+      (board && board.options && board.options.boardSize) ||
+      (state.currentMat ? state.currentMat.length : 0);
+    if (!size) {
+      return;
+    }
+    var neighbors = [];
+    if (i > 0) {
+      neighbors.push({ i: i - 1, j: j });
+    }
+    if (i < size - 1) {
+      neighbors.push({ i: i + 1, j: j });
+    }
+    if (j > 0) {
+      neighbors.push({ i: i, j: j - 1 });
+    }
+    if (j < size - 1) {
+      neighbors.push({ i: i, j: j + 1 });
+    }
+    if (neighbors.length === 0) {
+      return;
+    }
+    for (var k = neighbors.length - 1; k > 0; k -= 1) {
+      var swap = Math.floor(Math.random() * (k + 1));
+      var temp = neighbors[k];
+      neighbors[k] = neighbors[swap];
+      neighbors[swap] = temp;
+    }
+    var added = 0;
+    for (var n = 0; n < neighbors.length && added < count; n += 1) {
+      var key = neighbors[n].i + "," + neighbors[n].j;
+      if (!state.infectionPoints.has(key)) {
+        state.infectionPoints.add(key);
+        added += 1;
+      }
+    }
+  }
+
   function clearGhostCanvas() {
     if (!ghostCanvas) {
       return;
@@ -288,6 +344,9 @@
       ctx.save();
       ctx.globalAlpha = 0.9;
       state.ghostStones.forEach(function (key) {
+        if (state.challengeInfection && state.infectionPoints.has(key)) {
+          return;
+        }
         var parts = key.split(",");
         var x = Number(parts[0]);
         var y = Number(parts[1]);
@@ -319,6 +378,12 @@
 
     for (var i = 0; i < state.ghostFlashes.length; i += 1) {
       var flash = state.ghostFlashes[i];
+      if (
+        state.challengeInfection &&
+        state.infectionPoints.has(flash.i + "," + flash.j)
+      ) {
+        continue;
+      }
       var duration = flash.duration || 500;
       var elapsed = timestamp - flash.start;
       if (elapsed >= duration) {
@@ -572,6 +637,16 @@
     return Math.max(5, 30 - (safeLevel - 1) * 5);
   }
 
+  function getInfectionCounts(level) {
+    var safeLevel = Math.max(1, Math.min(4, Number(level) || 1));
+    var playerCount = safeLevel >= 3 ? 2 : 1;
+    var opponentCount = 0;
+    if (safeLevel >= 2) {
+      opponentCount = safeLevel >= 4 ? 2 : 1;
+    }
+    return { player: playerCount, opponent: opponentCount };
+  }
+
   function updateEnigmaButtonLabel() {
     if (!enigmaBtn) {
       return;
@@ -599,6 +674,21 @@
       renderEnigmaOverlay();
       updateEnigmaUI();
     }
+  }
+
+  function updateInfectionLevelUI() {
+    if (infectionLevelInput) {
+      infectionLevelInput.value = String(state.infectionLevel);
+    }
+    if (infectionLevelValue) {
+      infectionLevelValue.textContent = String(state.infectionLevel);
+    }
+  }
+
+  function setInfectionLevel(level) {
+    var nextLevel = Math.max(1, Math.min(4, Number(level) || 1));
+    state.infectionLevel = nextLevel;
+    updateInfectionLevelUI();
   }
 
   function updateEnigmaTimerDisplay(seconds) {
@@ -803,13 +893,15 @@
     ctx.setTransform(1, 0, 0, 1, 0, 0);
     ctx.clearRect(0, 0, enigmaCanvas.width, enigmaCanvas.height);
 
-    if (!state.challengeEnigma || state.enigmaRevealed) {
+    var showEnigma = state.challengeEnigma && !state.enigmaRevealed;
+    var showInfection =
+      state.challengeInfection && state.infectionPoints.size > 0;
+    if (!showEnigma && !showInfection) {
       return;
     }
 
-    ensureEnigmaPoints(state.currentMat);
-    if (state.enigmaPoints.length === 0) {
-      return;
+    if (showEnigma) {
+      ensureEnigmaPoints(state.currentMat);
     }
 
     ctx.setTransform(board.transMat);
@@ -818,6 +910,9 @@
       : { space: 0, scaledPadding: 0 };
     var space = spacing.space;
     var scaledPadding = spacing.scaledPadding;
+    var radius = space * 0.32;
+    var ringLineWidth = Math.max(space * 0.045, 1);
+    var ringDash = [space * 0.12, space * 0.08];
     var themeOptions = board.options.themeOptions || {};
     var theme = board.options.theme;
     var themeConfig = themeOptions[theme] || {};
@@ -832,46 +927,94 @@
       defaultConfig.stoneRatio ||
       0.45;
     var stoneRadius = space * stoneRatio;
-    var radius = space * 0.32;
     var maskRadius = Math.max(stoneRadius * 1.05, radius + space * 0.08);
 
-    state.enigmaPoints.forEach(function (point) {
-      var cx = scaledPadding + point.i * space;
-      var cy = scaledPadding + point.j * space;
-      var hasStone =
-        state.currentMat &&
-        state.currentMat[point.i] &&
-        state.currentMat[point.i][point.j] !== GB.Ki.Empty;
+    if (showEnigma && state.enigmaPoints.length > 0) {
+      state.enigmaPoints.forEach(function (point) {
+        var cx = scaledPadding + point.i * space;
+        var cy = scaledPadding + point.j * space;
+        var hasStone =
+          state.currentMat &&
+          state.currentMat[point.i] &&
+          state.currentMat[point.i][point.j] !== GB.Ki.Empty;
 
-      if (hasStone) {
+        if (hasStone) {
+          ctx.save();
+          ctx.fillStyle = background;
+          ctx.beginPath();
+          ctx.arc(cx, cy, maskRadius, 0, Math.PI * 2, true);
+          ctx.fill();
+          ctx.strokeStyle = line;
+          ctx.lineWidth = Math.max(space * 0.04, 1);
+          ctx.setLineDash([]);
+          ctx.beginPath();
+          ctx.moveTo(cx - maskRadius, cy);
+          ctx.lineTo(cx + maskRadius, cy);
+          ctx.stroke();
+          ctx.beginPath();
+          ctx.moveTo(cx, cy - maskRadius);
+          ctx.lineTo(cx, cy + maskRadius);
+          ctx.stroke();
+          ctx.restore();
+        }
+
         ctx.save();
-        ctx.fillStyle = background;
+        ctx.strokeStyle = "rgba(110, 120, 130, 0.7)";
+        ctx.lineWidth = ringLineWidth;
+        ctx.setLineDash(ringDash);
         ctx.beginPath();
-        ctx.arc(cx, cy, maskRadius, 0, Math.PI * 2, true);
-        ctx.fill();
-        ctx.strokeStyle = line;
-        ctx.lineWidth = Math.max(space * 0.04, 1);
-        ctx.setLineDash([]);
-        ctx.beginPath();
-        ctx.moveTo(cx - maskRadius, cy);
-        ctx.lineTo(cx + maskRadius, cy);
-        ctx.stroke();
-        ctx.beginPath();
-        ctx.moveTo(cx, cy - maskRadius);
-        ctx.lineTo(cx, cy + maskRadius);
+        ctx.arc(cx, cy, radius, 0, Math.PI * 2, true);
         ctx.stroke();
         ctx.restore();
-      }
+      });
+    }
 
+    if (showInfection && state.infectionPoints.size > 0) {
       ctx.save();
       ctx.strokeStyle = "rgba(110, 120, 130, 0.7)";
-      ctx.lineWidth = Math.max(space * 0.045, 1);
-      ctx.setLineDash([space * 0.12, space * 0.08]);
-      ctx.beginPath();
-      ctx.arc(cx, cy, radius, 0, Math.PI * 2, true);
-      ctx.stroke();
+      ctx.lineWidth = ringLineWidth;
+      ctx.setLineDash(ringDash);
+      state.infectionPoints.forEach(function (key) {
+        var parts = key.split(",");
+        var x = Number(parts[0]);
+        var y = Number(parts[1]);
+        if (Number.isNaN(x) || Number.isNaN(y)) {
+          return;
+        }
+        var cx = scaledPadding + x * space;
+        var cy = scaledPadding + y * space;
+        var hasStone =
+          state.currentMat &&
+          state.currentMat[x] &&
+          state.currentMat[x][y] !== GB.Ki.Empty;
+        if (hasStone) {
+          ctx.save();
+          ctx.fillStyle = background;
+          ctx.beginPath();
+          ctx.arc(cx, cy, maskRadius, 0, Math.PI * 2, true);
+          ctx.fill();
+          ctx.strokeStyle = line;
+          ctx.lineWidth = Math.max(space * 0.04, 1);
+          ctx.setLineDash([]);
+          ctx.beginPath();
+          ctx.moveTo(cx - maskRadius, cy);
+          ctx.lineTo(cx + maskRadius, cy);
+          ctx.stroke();
+          ctx.beginPath();
+          ctx.moveTo(cx, cy - maskRadius);
+          ctx.lineTo(cx, cy + maskRadius);
+          ctx.stroke();
+          ctx.restore();
+          ctx.strokeStyle = "rgba(110, 120, 130, 0.7)";
+          ctx.lineWidth = ringLineWidth;
+          ctx.setLineDash(ringDash);
+        }
+        ctx.beginPath();
+        ctx.arc(cx, cy, radius, 0, Math.PI * 2, true);
+        ctx.stroke();
+      });
       ctx.restore();
-    });
+    }
   }
 
   function revealEnigmaAndStart() {
@@ -903,6 +1046,14 @@
     updateChallengeControls();
     updateEnigmaLevelUI();
     updateEnigmaUI();
+    renderEnigmaOverlay();
+  }
+
+  function setInfectionPlay(active) {
+    state.challengeInfection = active;
+    state.infectionPoints = new Set();
+    updateChallengeControls();
+    updateInfectionLevelUI();
     renderEnigmaOverlay();
   }
 
@@ -964,6 +1115,9 @@
         if (!mat[x] || mat[x][y] === GB.Ki.Empty) {
           return;
         }
+        if (state.challengeInfection && state.infectionPoints.has(key)) {
+          return;
+        }
         var cx = scaledPadding + x * space;
         var cy = scaledPadding + y * space;
         ctx.beginPath();
@@ -984,6 +1138,9 @@
           !mat[mx] ||
           mat[mx][my] === GB.Ki.Empty
         ) {
+          return;
+        }
+        if (state.challengeInfection && state.infectionPoints.has(key)) {
           return;
         }
         var mxp = scaledPadding + mx * space;
@@ -1094,6 +1251,15 @@
         challengeEnigmaBtn.disabled = false;
       }
     }
+    if (challengeInfectionBtn) {
+      if (state.challengeInfection) {
+        challengeInfectionBtn.classList.add("active");
+        challengeInfectionBtn.disabled = true;
+      } else {
+        challengeInfectionBtn.classList.remove("active");
+        challengeInfectionBtn.disabled = false;
+      }
+    }
   }
 
   function resetChallenges() {
@@ -1111,6 +1277,8 @@
     state.enigmaPoints = [];
     state.enigmaRevealed = false;
     stopEnigmaTimer(false);
+    state.challengeInfection = false;
+    state.infectionPoints = new Set();
     if (ghostAnimId) {
       cancelAnimationFrame(ghostAnimId);
       ghostAnimId = null;
@@ -1653,6 +1821,7 @@
       }
       recordGrayStone(move.i, move.j);
       recordGhostStone(move.i, move.j, turn);
+      recordInfection(move.i, move.j, false);
       setCurrentNode(move.node);
       turn = getTurn(state.currentNode, state.playerColor);
       guard += 1;
@@ -2159,6 +2328,9 @@
 
     recordGrayStone(i, j);
     recordGhostStone(i, j, turn);
+    if (turn === state.playerColor) {
+      recordInfection(i, j, true);
+    }
     var correct = GB.inRightPath(chosen.node);
     if (correct) {
       state.combo += 1;
@@ -2242,6 +2414,14 @@
     evaluatePosition();
     logMessage("Challenge enabled: Enigma timer.");
   });
+  challengeInfectionBtn.addEventListener("click", function () {
+    if (state.challengeInfection) {
+      return;
+    }
+    setInfectionPlay(true);
+    updateBoard();
+    logMessage("Challenge enabled: Infection.");
+  });
   if (mysteryLevelInput) {
     mysteryLevelInput.addEventListener("input", function (event) {
       if (!event || !event.target) {
@@ -2256,6 +2436,14 @@
         return;
       }
       setEnigmaLevel(event.target.value);
+    });
+  }
+  if (infectionLevelInput) {
+    infectionLevelInput.addEventListener("input", function (event) {
+      if (!event || !event.target) {
+        return;
+      }
+      setInfectionLevel(event.target.value);
     });
   }
   elimRandomBtn.addEventListener("click", eliminateRandomMove);
@@ -2320,6 +2508,11 @@
     setEnigmaLevel(enigmaLevelInput.value);
   } else {
     updateEnigmaLevelUI();
+  }
+  if (infectionLevelInput) {
+    setInfectionLevel(infectionLevelInput.value);
+  } else {
+    updateInfectionLevelUI();
   }
   loadSgf(state.sgfKey);
 })();

@@ -389,7 +389,8 @@ select {
 
 .mystery-row,
 .ghost-row,
-.enigma-row {
+.enigma-row,
+.infection-row {
   display: grid;
   grid-template-columns: auto minmax(120px, 1fr);
   align-items: center;
@@ -398,7 +399,8 @@ select {
 
 .mystery-level,
 .ghost-level,
-.enigma-level {
+.enigma-level,
+.infection-level {
   display: flex;
   align-items: center;
   gap: 6px;
@@ -412,7 +414,8 @@ select {
 
 .mystery-level label,
 .ghost-level label,
-.enigma-level label {
+.enigma-level label,
+.infection-level label {
   display: inline-flex;
   align-items: center;
   margin: 0;
@@ -422,14 +425,16 @@ select {
 
 .mystery-level input[type="range"],
 .ghost-level input[type="range"],
-.enigma-level input[type="range"] {
+.enigma-level input[type="range"],
+.infection-level input[type="range"] {
   width: 100%;
   min-width: 60px;
 }
 
 .mystery-level__value,
 .ghost-level__value,
-.enigma-level__value {
+.enigma-level__value,
+.infection-level__value {
   min-width: 16px;
   text-align: right;
   font-weight: 700;

@@ -192,6 +192,31 @@
                     >
                   </div>
                 </div>
+                <div class="infection-row">
+                  <button
+                    id="challengeInfection"
+                    class="button button--challenge"
+                    type="button"
+                    title="Adds hollow rings next to newly played stones."
+                  >
+                    Infection
+                  </button>
+                  <div class="infection-level">
+                    <label for="infectionLevel">Level</label>
+                    <input
+                      id="infectionLevel"
+                      type="range"
+                      min="1"
+                      max="4"
+                      step="1"
+                      value="1"
+                      title="L1: player 1 ring. L2: +1 ring on opponent. L3: player 2 rings. L4: opponent 2 rings."
+                    />
+                    <span id="infectionLevelValue" class="infection-level__value"
+                      >1</span
+                    >
+                  </div>
+                </div>
               </div>
             </div>
 
