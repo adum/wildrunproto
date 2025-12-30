@@ -95,9 +95,44 @@ body {
   box-shadow: 0 10px 20px rgba(70, 50, 30, 0.25);
 }
 
+#enigmaTimerBtn {
+  right: 10px;
+  top: 44px;
+  border: 1px solid var(--panel-edge);
+  background: rgba(255, 255, 255, 0.92);
+  color: var(--ink);
+  padding: 6px 10px;
+  border-radius: 999px;
+  font-size: 11px;
+  cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+  box-shadow: 0 8px 18px rgba(70, 50, 30, 0.2);
+}
+
+#enigmaTimerBtn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 10px 20px rgba(70, 50, 30, 0.25);
+}
+
 #mysteryTimerCountdown {
   left: 10px;
   top: 10px;
+  min-width: 36px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  font-weight: 700;
+  font-size: 14px;
+  text-align: center;
+  color: #fff8ea;
+  background: rgba(31, 26, 20, 0.78);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  box-shadow: 0 6px 14px rgba(30, 20, 10, 0.35);
+  pointer-events: none;
+}
+
+#enigmaTimerCountdown {
+  left: 10px;
+  top: 44px;
   min-width: 36px;
   padding: 6px 10px;
   border-radius: 999px;
@@ -123,28 +158,32 @@ body {
   z-index: 3;
 }
 
-#ghostban-ghost {
+#ghostban-enigma {
   z-index: 4;
 }
 
-#ghostban-ownership {
+#ghostban-ghost {
   z-index: 5;
 }
 
-#ghostban-markup {
+#ghostban-ownership {
   z-index: 6;
 }
 
-#ghostban-analysis {
+#ghostban-markup {
   z-index: 7;
 }
 
-#ghostban-cursor {
+#ghostban-analysis {
   z-index: 8;
 }
 
-#ghostban-effect {
+#ghostban-cursor {
   z-index: 9;
+}
+
+#ghostban-effect {
+  z-index: 10;
 }
 
 .status-row {
@@ -349,7 +388,8 @@ select {
 }
 
 .mystery-row,
-.ghost-row {
+.ghost-row,
+.enigma-row {
   display: grid;
   grid-template-columns: auto minmax(120px, 1fr);
   align-items: center;
@@ -357,7 +397,8 @@ select {
 }
 
 .mystery-level,
-.ghost-level {
+.ghost-level,
+.enigma-level {
   display: flex;
   align-items: center;
   gap: 6px;
@@ -370,7 +411,8 @@ select {
 }
 
 .mystery-level label,
-.ghost-level label {
+.ghost-level label,
+.enigma-level label {
   display: inline-flex;
   align-items: center;
   margin: 0;
@@ -379,13 +421,15 @@ select {
 }
 
 .mystery-level input[type="range"],
-.ghost-level input[type="range"] {
+.ghost-level input[type="range"],
+.enigma-level input[type="range"] {
   width: 100%;
   min-width: 60px;
 }
 
 .mystery-level__value,
-.ghost-level__value {
+.ghost-level__value,
+.enigma-level__value {
   min-width: 16px;
   text-align: right;
   font-weight: 700;

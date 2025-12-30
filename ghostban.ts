@@ -872,8 +872,6 @@ export class GhostBan {
 
     if (dynamicPadding) {
       this.calcDynamicPadding(visibleAreaSize);
-    } else {
-      this.options.padding = DEFAULT_OPTIONS.padding;
     }
 
     if (zoom) {
@@ -882,8 +880,6 @@ export class GhostBan {
 
       if (dynamicPadding) {
         this.calcDynamicPadding(visibleAreaSize);
-      } else {
-        this.options.padding = DEFAULT_OPTIONS.padding;
       }
 
       let extraVisibleSize = boardLineExtent * 2 + 1;

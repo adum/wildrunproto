@@ -167,6 +167,31 @@
                     >
                   </div>
                 </div>
+                <div class="enigma-row">
+                  <button
+                    id="challengeEnigma"
+                    class="button button--challenge"
+                    type="button"
+                    title="Marks stones or adjacent empties with rings; reveal to start a timer."
+                  >
+                    Enigma Timer
+                  </button>
+                  <div class="enigma-level">
+                    <label for="enigmaLevel">Level</label>
+                    <input
+                      id="enigmaLevel"
+                      type="range"
+                      min="1"
+                      max="10"
+                      step="1"
+                      value="1"
+                      title="Controls ring count and timer (L1=1 ring/30s, +1 ring & -5s per level, min 5s)."
+                    />
+                    <span id="enigmaLevelValue" class="enigma-level__value"
+                      >1</span
+                    >
+                  </div>
+                </div>
               </div>
             </div>
 
