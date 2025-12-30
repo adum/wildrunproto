@@ -47,6 +47,13 @@ function positionRowHint() {
     return;
   }
 
+  var rect = canvas.getBoundingClientRect();
+  if (!rect.width || !rect.height) {
+    return;
+  }
+
+  var scaleX = canvas.width / rect.width;
+  var scaleY = canvas.height / rect.height;
   var size = refs.board.options.boardSize || 19;
   var spacing = refs.board.calcSpaceAndPadding
     ? refs.board.calcSpaceAndPadding(canvas)
@@ -54,25 +61,24 @@ function positionRowHint() {
   var space = spacing.space;
   var scaledPadding = spacing.scaledPadding;
   var row = state.hintRow;
-  var x0 = scaledPadding;
-  var x1 = scaledPadding + (size - 1) * space;
-  var y = scaledPadding + row * space;
+  var rowHeight = space * 0.9;
+  var x0 = scaledPadding - space / 2;
+  var x1 = scaledPadding + space * (size - 1) + space / 2;
+  var y0 = scaledPadding + row * space - rowHeight / 2;
+  var y1 = scaledPadding + row * space + rowHeight / 2;
 
-  var topLeft = refs.board.transMat.transformPoint(new DOMPoint(x0, y));
-  var bottomRight = refs.board.transMat.transformPoint(new DOMPoint(x1, y));
-  var rect = canvas.getBoundingClientRect();
-  var scaleX = rect.width / canvas.width;
-  var scaleY = rect.height / canvas.height;
-
-  var left = topLeft.x * scaleX;
-  var right = bottomRight.x * scaleX;
-  var top = topLeft.y * scaleY;
-  var width = Math.abs(right - left);
+  var topLeft = refs.board.transMat.transformPoint(new DOMPoint(x0, y0));
+  var bottomRight = refs.board.transMat.transformPoint(new DOMPoint(x1, y1));
+  var left = topLeft.x / scaleX;
+  var top = topLeft.y / scaleY;
+  var width = (bottomRight.x - topLeft.x) / scaleX;
+  var height = (bottomRight.y - topLeft.y) / scaleY;
 
   refs.rowHintEl.style.display = "block";
-  refs.rowHintEl.style.width = width + "px";
-  refs.rowHintEl.style.left = Math.min(left, right) + "px";
+  refs.rowHintEl.style.left = left + "px";
   refs.rowHintEl.style.top = top + "px";
+  refs.rowHintEl.style.width = width + "px";
+  refs.rowHintEl.style.height = height + "px";
   refs.rowHintEl.classList.add("is-active");
 }
 
@@ -90,6 +96,13 @@ function positionColumnHint() {
     return;
   }
 
+  var rect = canvas.getBoundingClientRect();
+  if (!rect.width || !rect.height) {
+    return;
+  }
+
+  var scaleX = canvas.width / rect.width;
+  var scaleY = canvas.height / rect.height;
   var size = refs.board.options.boardSize || 19;
   var spacing = refs.board.calcSpaceAndPadding
     ? refs.board.calcSpaceAndPadding(canvas)
@@ -97,25 +110,24 @@ function positionColumnHint() {
   var space = spacing.space;
   var scaledPadding = spacing.scaledPadding;
   var col = state.hintCol;
-  var y0 = scaledPadding;
-  var y1 = scaledPadding + (size - 1) * space;
-  var x = scaledPadding + col * space;
+  var colWidth = space * 0.9;
+  var x0 = scaledPadding + col * space - colWidth / 2;
+  var x1 = scaledPadding + col * space + colWidth / 2;
+  var y0 = scaledPadding - space / 2;
+  var y1 = scaledPadding + space * (size - 1) + space / 2;
 
-  var topLeft = refs.board.transMat.transformPoint(new DOMPoint(x, y0));
-  var bottomRight = refs.board.transMat.transformPoint(new DOMPoint(x, y1));
-  var rect = canvas.getBoundingClientRect();
-  var scaleX = rect.width / canvas.width;
-  var scaleY = rect.height / canvas.height;
-
-  var top = topLeft.y * scaleY;
-  var bottom = bottomRight.y * scaleY;
-  var left = topLeft.x * scaleX;
-  var height = Math.abs(bottom - top);
+  var topLeft = refs.board.transMat.transformPoint(new DOMPoint(x0, y0));
+  var bottomRight = refs.board.transMat.transformPoint(new DOMPoint(x1, y1));
+  var left = topLeft.x / scaleX;
+  var top = topLeft.y / scaleY;
+  var width = (bottomRight.x - topLeft.x) / scaleX;
+  var height = (bottomRight.y - topLeft.y) / scaleY;
 
   refs.colHintEl.style.display = "block";
-  refs.colHintEl.style.height = height + "px";
-  refs.colHintEl.style.top = Math.min(top, bottom) + "px";
   refs.colHintEl.style.left = left + "px";
+  refs.colHintEl.style.top = top + "px";
+  refs.colHintEl.style.width = width + "px";
+  refs.colHintEl.style.height = height + "px";
   refs.colHintEl.classList.add("is-active");
 }
 
@@ -133,6 +145,13 @@ function positionDiagonalHint() {
     return;
   }
 
+  var rect = canvas.getBoundingClientRect();
+  if (!rect.width || !rect.height) {
+    return;
+  }
+
+  var scaleX = canvas.width / rect.width;
+  var scaleY = canvas.height / rect.height;
   var size = refs.board.options.boardSize || 19;
   var spacing = refs.board.calcSpaceAndPadding
     ? refs.board.calcSpaceAndPadding(canvas)
@@ -141,66 +160,46 @@ function positionDiagonalHint() {
   var scaledPadding = spacing.scaledPadding;
   var diag = state.hintDiag;
 
-  var rect = canvas.getBoundingClientRect();
-  var scaleX = rect.width / canvas.width;
-  var scaleY = rect.height / canvas.height;
-
-  var x0 = 0;
-  var y0 = 0;
-  var x1 = 0;
-  var y1 = 0;
+  var i0;
+  var j0;
+  var i1;
+  var j1;
   if (diag.type === "backslash") {
-    var offset = diag.value;
-    if (offset >= 0) {
-      x0 = 0;
-      y0 = offset;
-    } else {
-      x0 = -offset;
-      y0 = 0;
-    }
-    if (offset <= 0) {
-      x1 = size - 1;
-      y1 = size - 1 + offset;
-    } else {
-      x1 = size - 1 - offset;
-      y1 = size - 1;
-    }
+    var d = diag.value;
+    i0 = Math.max(0, -d);
+    i1 = Math.min(size - 1, size - 1 - d);
+    j0 = i0 + d;
+    j1 = i1 + d;
   } else {
-    var sum = diag.value;
-    if (sum <= size - 1) {
-      x0 = 0;
-      y0 = sum;
-    } else {
-      x0 = sum - (size - 1);
-      y0 = size - 1;
-    }
-    if (sum <= size - 1) {
-      x1 = sum;
-      y1 = 0;
-    } else {
-      x1 = size - 1;
-      y1 = sum - (size - 1);
-    }
+    var s = diag.value;
+    i0 = Math.max(0, s - (size - 1));
+    i1 = Math.min(size - 1, s);
+    j0 = -i0 + s;
+    j1 = -i1 + s;
   }
 
-  var startX = scaledPadding + x0 * space;
-  var startY = scaledPadding + y0 * space;
-  var endX = scaledPadding + x1 * space;
-  var endY = scaledPadding + y1 * space;
+  var x0 = scaledPadding + i0 * space;
+  var y0 = scaledPadding + j0 * space;
+  var x1 = scaledPadding + i1 * space;
+  var y1 = scaledPadding + j1 * space;
 
-  var dx = endX - startX;
-  var dy = endY - startY;
+  var dx = x1 - x0;
+  var dy = y1 - y0;
   var length = Math.sqrt(dx * dx + dy * dy);
-  var extend = space * 0.6;
+  if (length <= 0) {
+    return;
+  }
+
+  var extend = space / 2;
   var ux = dx / length;
   var uy = dy / length;
-  var x0e = startX - ux * extend;
-  var y0e = startY - uy * extend;
-  var x1e = endX + ux * extend;
-  var y1e = endY + uy * extend;
+  x0 -= ux * extend;
+  y0 -= uy * extend;
+  x1 += ux * extend;
+  y1 += uy * extend;
 
-  var start = refs.board.transMat.transformPoint(new DOMPoint(x0e, y0e));
-  var end = refs.board.transMat.transformPoint(new DOMPoint(x1e, y1e));
+  var start = refs.board.transMat.transformPoint(new DOMPoint(x0, y0));
+  var end = refs.board.transMat.transformPoint(new DOMPoint(x1, y1));
   var centerX = (start.x + end.x) / 2 / scaleX;
   var centerY = (start.y + end.y) / 2 / scaleY;
   var dxPx = (end.x - start.x) / scaleX;
