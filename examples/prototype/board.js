@@ -324,6 +324,22 @@ function handleMoveSelection(i, j) {
     return;
   }
 
+  var turn = utils.getTurn(state.currentNode, state.playerColor);
+  if (
+    !state.currentMat ||
+    !state.currentMat[i] ||
+    typeof state.currentMat[i][j] === "undefined"
+  ) {
+    return;
+  }
+  var previousBoardState =
+    refs.board && refs.board.getPreviousBoardState
+      ? refs.board.getPreviousBoardState()
+      : null;
+  if (!GB.canMove(state.currentMat, i, j, turn, previousBoardState)) {
+    return;
+  }
+
   if (state.mysteryTimerActive) {
     app.timers.stopMysteryTimer(false);
   }
@@ -334,7 +350,6 @@ function handleMoveSelection(i, j) {
     app.timers.stopSpeedTimer(false);
   }
 
-  var turn = utils.getTurn(state.currentNode, state.playerColor);
   var coord = GB.SGF_LETTERS[i] + GB.SGF_LETTERS[j];
   updateChildMoves();
 
