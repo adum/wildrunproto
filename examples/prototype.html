@@ -217,6 +217,31 @@
                     >
                   </div>
                 </div>
+                <div class="speed-row">
+                  <button
+                    id="challengeSpeed"
+                    class="button button--challenge"
+                    type="button"
+                    title="Limits time for each move after your first."
+                  >
+                    Speed Play
+                  </button>
+                  <div class="speed-level">
+                    <label for="speedLevel">Level</label>
+                    <input
+                      id="speedLevel"
+                      type="range"
+                      min="1"
+                      max="10"
+                      step="1"
+                      value="1"
+                      title="Controls per-move timer (L1=30s, -5s per level, min 2s)."
+                    />
+                    <span id="speedLevelValue" class="speed-level__value"
+                      >1</span
+                    >
+                  </div>
+                </div>
               </div>
             </div>
 

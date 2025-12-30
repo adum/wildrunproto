@@ -33,6 +33,7 @@
   var challengeMysteryBtn = document.getElementById("challengeMystery");
   var challengeEnigmaBtn = document.getElementById("challengeEnigma");
   var challengeInfectionBtn = document.getElementById("challengeInfection");
+  var challengeSpeedBtn = document.getElementById("challengeSpeed");
   var ghostLevelInput = document.getElementById("ghostLevel");
   var ghostLevelValue = document.getElementById("ghostLevelValue");
   var mysteryLevelInput = document.getElementById("mysteryLevel");
@@ -41,6 +42,8 @@
   var enigmaLevelValue = document.getElementById("enigmaLevelValue");
   var infectionLevelInput = document.getElementById("infectionLevel");
   var infectionLevelValue = document.getElementById("infectionLevelValue");
+  var speedLevelInput = document.getElementById("speedLevel");
+  var speedLevelValue = document.getElementById("speedLevelValue");
   var elimRandomBtn = document.getElementById("elimRandom");
   var clearHintsBtn = document.getElementById("clearHints");
   var resetPuzzleBtn = document.getElementById("resetPuzzle");
@@ -58,6 +61,7 @@
   var enigmaCanvas = null;
   var enigmaBtn = null;
   var enigmaTimerEl = null;
+  var speedTimerEl = null;
 
   var state = {
     sgfKey: "27k",
@@ -97,6 +101,12 @@
     challengeInfection: false,
     infectionPoints: new Set(),
     infectionLevel: 1,
+    challengeSpeed: false,
+    speedLevel: 1,
+    speedMoveCount: 0,
+    speedTimerActive: false,
+    speedTimerEndsAt: 0,
+    speedTimerId: null,
     currentMat: null,
     hintMode: "none",
     extraAllowedMoves: new Set(),
@@ -647,6 +657,11 @@
     return { player: playerCount, opponent: opponentCount };
   }
 
+  function getSpeedTimerSeconds(level) {
+    var safeLevel = Math.max(1, Number(level) || 1);
+    return Math.max(2, 30 - (safeLevel - 1) * 5);
+  }
+
   function updateEnigmaButtonLabel() {
     if (!enigmaBtn) {
       return;
@@ -689,6 +704,21 @@
     var nextLevel = Math.max(1, Math.min(4, Number(level) || 1));
     state.infectionLevel = nextLevel;
     updateInfectionLevelUI();
+  }
+
+  function updateSpeedLevelUI() {
+    if (speedLevelInput) {
+      speedLevelInput.value = String(state.speedLevel);
+    }
+    if (speedLevelValue) {
+      speedLevelValue.textContent = String(state.speedLevel);
+    }
+  }
+
+  function setSpeedLevel(level) {
+    var nextLevel = Math.max(1, Number(level) || 1);
+    state.speedLevel = nextLevel;
+    updateSpeedLevelUI();
   }
 
   function updateEnigmaTimerDisplay(seconds) {
@@ -759,6 +789,99 @@
       } else {
         enigmaTimerEl.style.display = "none";
       }
+    }
+  }
+
+  function updateSpeedTimerDisplay(seconds) {
+    if (!speedTimerEl) {
+      return;
+    }
+    speedTimerEl.textContent = String(seconds);
+  }
+
+  function updateSpeedUI() {
+    if (!speedTimerEl) {
+      return;
+    }
+    if (state.speedTimerActive) {
+      speedTimerEl.style.display = "block";
+    } else {
+      speedTimerEl.style.display = "none";
+    }
+  }
+
+  function stopSpeedTimer(expired) {
+    if (state.speedTimerId) {
+      clearInterval(state.speedTimerId);
+      state.speedTimerId = null;
+    }
+    state.speedTimerActive = false;
+    state.speedTimerEndsAt = 0;
+    updateSpeedUI();
+
+    if (expired) {
+      state.lives -= 1;
+      state.combo = 0;
+      updateHud();
+      logMessage("Speed timer expired: lost a life.");
+      evaluatePosition();
+    }
+  }
+
+  function tickSpeedTimer() {
+    if (!state.speedTimerActive) {
+      return;
+    }
+    var remaining = state.speedTimerEndsAt - performance.now();
+    var seconds = Math.max(0, Math.ceil(remaining / 1000));
+    updateSpeedTimerDisplay(seconds);
+    if (remaining <= 0) {
+      stopSpeedTimer(true);
+    }
+  }
+
+  function startSpeedTimer() {
+    if (state.speedTimerActive) {
+      stopSpeedTimer(false);
+    }
+    var duration = getSpeedTimerSeconds(state.speedLevel);
+    state.speedTimerActive = true;
+    state.speedTimerEndsAt = performance.now() + duration * 1000;
+    updateSpeedTimerDisplay(duration);
+    updateSpeedUI();
+    state.speedTimerId = setInterval(tickSpeedTimer, 100);
+  }
+
+  function shouldRunSpeedTimer() {
+    if (!state.challengeSpeed) {
+      return false;
+    }
+    if (state.lives <= 0) {
+      return false;
+    }
+    if (!state.currentNode || !state.currentNode.hasChildren()) {
+      return false;
+    }
+    if (state.speedMoveCount <= 0) {
+      return false;
+    }
+    if (
+      (state.challengeMystery && !state.mysteryRevealed) ||
+      (state.challengeEnigma && !state.enigmaRevealed)
+    ) {
+      return false;
+    }
+    var turn = getTurn(state.currentNode, state.playerColor);
+    return turn === state.playerColor;
+  }
+
+  function syncSpeedTimer() {
+    if (shouldRunSpeedTimer()) {
+      if (!state.speedTimerActive) {
+        startSpeedTimer();
+      }
+    } else if (state.speedTimerActive) {
+      stopSpeedTimer(false);
     }
   }
 
@@ -1057,6 +1180,15 @@
     renderEnigmaOverlay();
   }
 
+  function setSpeedPlay(active) {
+    state.challengeSpeed = active;
+    state.speedMoveCount = 0;
+    stopSpeedTimer(false);
+    updateChallengeControls();
+    updateSpeedLevelUI();
+    updateSpeedUI();
+  }
+
   function renderGrayStones(mat) {
     if (!grayCanvas || !board) {
       return;
@@ -1260,6 +1392,15 @@
         challengeInfectionBtn.disabled = false;
       }
     }
+    if (challengeSpeedBtn) {
+      if (state.challengeSpeed) {
+        challengeSpeedBtn.classList.add("active");
+        challengeSpeedBtn.disabled = true;
+      } else {
+        challengeSpeedBtn.classList.remove("active");
+        challengeSpeedBtn.disabled = false;
+      }
+    }
   }
 
   function resetChallenges() {
@@ -1279,6 +1420,9 @@
     stopEnigmaTimer(false);
     state.challengeInfection = false;
     state.infectionPoints = new Set();
+    state.challengeSpeed = false;
+    state.speedMoveCount = 0;
+    stopSpeedTimer(false);
     if (ghostAnimId) {
       cancelAnimationFrame(ghostAnimId);
       ghostAnimId = null;
@@ -1620,6 +1764,12 @@
     enigmaTimerEl.style.display = "none";
     mount.appendChild(enigmaTimerEl);
     updateEnigmaButtonLabel();
+    speedTimerEl = document.createElement("div");
+    speedTimerEl.id = "speedTimerCountdown";
+    speedTimerEl.className = "board-control";
+    speedTimerEl.setAttribute("aria-live", "polite");
+    speedTimerEl.style.display = "none";
+    mount.appendChild(speedTimerEl);
     rowHintEl = document.createElement("div");
     rowHintEl.className = "row-hint";
     rowHintEl.setAttribute("aria-hidden", "true");
@@ -1772,6 +1922,7 @@
   function evaluatePosition() {
     if (state.lives <= 0) {
       setStatus("Out of lives. Reset to continue.", "error");
+      stopSpeedTimer(false);
       return;
     }
 
@@ -1781,6 +1932,7 @@
       } else {
         setStatus("Line over. Reset to try again.", "error");
       }
+      stopSpeedTimer(false);
       return;
     }
 
@@ -1789,6 +1941,7 @@
       (state.challengeEnigma && !state.enigmaRevealed)
     ) {
       setStatus("Reveal & start timer to begin.");
+      stopSpeedTimer(false);
       return;
     }
 
@@ -1798,6 +1951,7 @@
     } else {
       setStatus("Opponent move...");
     }
+    syncSpeedTimer();
   }
 
   function pickOpponentMove() {
@@ -2302,6 +2456,9 @@
     if (state.enigmaTimerActive) {
       stopEnigmaTimer(false);
     }
+    if (state.speedTimerActive) {
+      stopSpeedTimer(false);
+    }
 
     var turn = getTurn(state.currentNode, state.playerColor);
     var coord = GB.SGF_LETTERS[i] + GB.SGF_LETTERS[j];
@@ -2330,6 +2487,7 @@
     recordGhostStone(i, j, turn);
     if (turn === state.playerColor) {
       recordInfection(i, j, true);
+      state.speedMoveCount += 1;
     }
     var correct = GB.inRightPath(chosen.node);
     if (correct) {
@@ -2422,6 +2580,13 @@
     updateBoard();
     logMessage("Challenge enabled: Infection.");
   });
+  challengeSpeedBtn.addEventListener("click", function () {
+    if (state.challengeSpeed) {
+      return;
+    }
+    setSpeedPlay(true);
+    logMessage("Challenge enabled: Speed play.");
+  });
   if (mysteryLevelInput) {
     mysteryLevelInput.addEventListener("input", function (event) {
       if (!event || !event.target) {
@@ -2444,6 +2609,14 @@
         return;
       }
       setInfectionLevel(event.target.value);
+    });
+  }
+  if (speedLevelInput) {
+    speedLevelInput.addEventListener("input", function (event) {
+      if (!event || !event.target) {
+        return;
+      }
+      setSpeedLevel(event.target.value);
     });
   }
   elimRandomBtn.addEventListener("click", eliminateRandomMove);
@@ -2513,6 +2686,11 @@
     setInfectionLevel(infectionLevelInput.value);
   } else {
     updateInfectionLevelUI();
+  }
+  if (speedLevelInput) {
+    setSpeedLevel(speedLevelInput.value);
+  } else {
+    updateSpeedLevelUI();
   }
   loadSgf(state.sgfKey);
 })();

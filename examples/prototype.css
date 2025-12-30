@@ -146,6 +146,22 @@ body {
   pointer-events: none;
 }
 
+#speedTimerCountdown {
+  left: 10px;
+  top: 78px;
+  min-width: 36px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  font-weight: 700;
+  font-size: 14px;
+  text-align: center;
+  color: #fff8ea;
+  background: rgba(31, 26, 20, 0.78);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  box-shadow: 0 6px 14px rgba(30, 20, 10, 0.35);
+  pointer-events: none;
+}
+
 #ghostban-board {
   z-index: 1;
 }
@@ -390,7 +406,8 @@ select {
 .mystery-row,
 .ghost-row,
 .enigma-row,
-.infection-row {
+.infection-row,
+.speed-row {
   display: grid;
   grid-template-columns: auto minmax(120px, 1fr);
   align-items: center;
@@ -400,7 +417,8 @@ select {
 .mystery-level,
 .ghost-level,
 .enigma-level,
-.infection-level {
+.infection-level,
+.speed-level {
   display: flex;
   align-items: center;
   gap: 6px;
@@ -415,7 +433,8 @@ select {
 .mystery-level label,
 .ghost-level label,
 .enigma-level label,
-.infection-level label {
+.infection-level label,
+.speed-level label {
   display: inline-flex;
   align-items: center;
   margin: 0;
@@ -426,7 +445,8 @@ select {
 .mystery-level input[type="range"],
 .ghost-level input[type="range"],
 .enigma-level input[type="range"],
-.infection-level input[type="range"] {
+.infection-level input[type="range"],
+.speed-level input[type="range"] {
   width: 100%;
   min-width: 60px;
 }
@@ -434,7 +454,8 @@ select {
 .mystery-level__value,
 .ghost-level__value,
 .enigma-level__value,
-.infection-level__value {
+.infection-level__value,
+.speed-level__value {
   min-width: 16px;
   text-align: right;
   font-weight: 700;
