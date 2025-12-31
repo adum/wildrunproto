@@ -62,6 +62,30 @@ if (elements.hintColBtn) {
 if (elements.hintDiagBtn) {
   elements.hintDiagBtn.addEventListener("click", app.hints.hintDiagonalReveal);
 }
+if (elements.hintDiagLevelInput) {
+  elements.hintDiagLevelInput.addEventListener("input", function (event) {
+    if (!event || !event.target) {
+      return;
+    }
+    app.hints.setDiagonalRevealLevel(event.target.value);
+  });
+}
+if (elements.hintRowLevelInput) {
+  elements.hintRowLevelInput.addEventListener("input", function (event) {
+    if (!event || !event.target) {
+      return;
+    }
+    app.hints.setRowRevealLevel(event.target.value);
+  });
+}
+if (elements.hintColLevelInput) {
+  elements.hintColLevelInput.addEventListener("input", function (event) {
+    if (!event || !event.target) {
+      return;
+    }
+    app.hints.setColumnRevealLevel(event.target.value);
+  });
+}
 
 if (elements.challengeGrayBtn) {
   elements.challengeGrayBtn.addEventListener("click", function () {
@@ -173,6 +197,15 @@ if (elements.speedLevelInput) {
   });
 }
 
+if (elements.elimRandomLevelInput) {
+  elements.elimRandomLevelInput.addEventListener("input", function (event) {
+    if (!event || !event.target) {
+      return;
+    }
+    app.hints.setElimRandomLevel(event.target.value);
+  });
+}
+
 if (elements.elimRandomBtn) {
   elements.elimRandomBtn.addEventListener("click", app.board.eliminateRandomMove);
 }
@@ -252,6 +285,26 @@ if (elements.speedLevelInput) {
   app.timers.setSpeedLevel(elements.speedLevelInput.value);
 } else {
   app.timers.updateSpeedLevelUI();
+}
+if (elements.hintRowLevelInput) {
+  app.hints.setRowRevealLevel(elements.hintRowLevelInput.value);
+} else {
+  app.hints.updateRowRevealLevelUI();
+}
+if (elements.hintColLevelInput) {
+  app.hints.setColumnRevealLevel(elements.hintColLevelInput.value);
+} else {
+  app.hints.updateColumnRevealLevelUI();
+}
+if (elements.hintDiagLevelInput) {
+  app.hints.setDiagonalRevealLevel(elements.hintDiagLevelInput.value);
+} else {
+  app.hints.updateDiagonalRevealLevelUI();
+}
+if (elements.elimRandomLevelInput) {
+  app.hints.setElimRandomLevel(elements.elimRandomLevelInput.value);
+} else {
+  app.hints.updateElimRandomLevelUI();
 }
 
 app.board.loadSgf(state.sgfKey);

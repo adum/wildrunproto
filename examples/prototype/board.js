@@ -291,6 +291,73 @@ function loadSgf(key) {
   ui.logMessage("Loaded SGF " + key + ".");
 }
 
+function collectEliminateDecoys(count, wrongMoves) {
+  if (count <= 0 || !state.currentMat) {
+    return [];
+  }
+
+  var size = state.currentMat.length || GB.extractBoardSize(state.currentNode, 19);
+  var turn = utils.getTurn(state.currentNode, state.playerColor);
+  var previousBoardState =
+    refs.board && refs.board.getPreviousBoardState
+      ? refs.board.getPreviousBoardState()
+      : null;
+  var offsets = [
+    [1, 0],
+    [-1, 0],
+    [0, 1],
+    [0, -1],
+  ];
+
+  var taken = new Set();
+  state.childMoves.forEach(function (move) {
+    taken.add(move.sgf);
+  });
+  state.blockedMoves.forEach(function (coord) {
+    taken.add(coord);
+  });
+  if (wrongMoves && wrongMoves.length) {
+    wrongMoves.forEach(function (move) {
+      taken.add(move.sgf);
+    });
+  }
+
+  var candidates = [];
+  state.childMoves.forEach(function (move) {
+    offsets.forEach(function (offset) {
+      var i = move.i + offset[0];
+      var j = move.j + offset[1];
+      if (i < 0 || j < 0 || i >= size || j >= size) {
+        return;
+      }
+      if (!state.currentMat[i] || state.currentMat[i][j] !== GB.Ki.Empty) {
+        return;
+      }
+      var coord = GB.SGF_LETTERS[i] + GB.SGF_LETTERS[j];
+      if (taken.has(coord)) {
+        return;
+      }
+      if (!GB.canMove(state.currentMat, i, j, turn, previousBoardState)) {
+        return;
+      }
+      candidates.push(coord);
+      taken.add(coord);
+    });
+  });
+
+  if (candidates.length === 0) {
+    return [];
+  }
+
+  var picks = [];
+  var pool = candidates.slice();
+  while (picks.length < count && pool.length > 0) {
+    var index = Math.floor(Math.random() * pool.length);
+    picks.push(pool.splice(index, 1)[0]);
+  }
+  return picks;
+}
+
 function eliminateRandomMove() {
   updateChildMoves();
   var wrongMoves = state.childMoves.filter(function (move) {
@@ -300,13 +367,29 @@ function eliminateRandomMove() {
       !GB.inVariantPath(move.node)
     );
   });
-  if (wrongMoves.length === 0) {
-    ui.logMessage("No wrong-path moves left to eliminate.");
+
+  var level = Math.max(1, Math.min(3, Number(state.elimRandomLevel) || 1));
+  var decoyCount = Math.max(0, 3 - level);
+  if (wrongMoves.length === 0 && decoyCount === 0) {
+    decoyCount = 1;
+  }
+
+  var decoys = collectEliminateDecoys(decoyCount, wrongMoves);
+  var candidates = wrongMoves.map(function (move) {
+    return move.sgf;
+  });
+  decoys.forEach(function (coord) {
+    candidates.push(coord);
+  });
+
+  if (candidates.length === 0) {
+    ui.logMessage("No moves available to eliminate.");
     return;
   }
-  var pick = wrongMoves[Math.floor(Math.random() * wrongMoves.length)];
-  state.blockedMoves.add(pick.sgf);
-  ui.logMessage("Eliminated move: " + utils.sgfToA1(pick.sgf));
+
+  var pick = candidates[Math.floor(Math.random() * candidates.length)];
+  state.blockedMoves.add(pick);
+  ui.logMessage("Eliminated move: " + utils.sgfToA1(pick));
   updateBoard();
 }
 

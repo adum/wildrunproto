@@ -5,6 +5,7 @@ var state = app.state;
 var refs = app.refs;
 var ui = app.ui;
 var utils = app.utils;
+var elements = app.elements;
 
 function resetRowHint() {
   state.hintRow = null;
@@ -34,7 +35,7 @@ function resetDiagonalHint() {
 }
 
 function positionRowHint() {
-  if (!refs.rowHintEl || state.hintRow === null || !refs.board) {
+  if (!refs.rowHintEl || !state.hintRow || !refs.board) {
     if (refs.rowHintEl) {
       refs.rowHintEl.classList.remove("is-active");
       refs.rowHintEl.style.display = "none";
@@ -60,12 +61,15 @@ function positionRowHint() {
     : { space: 0, scaledPadding: 0 };
   var space = spacing.space;
   var scaledPadding = spacing.scaledPadding;
-  var row = state.hintRow;
+  var rowStart = state.hintRow.start;
+  var rowCount = state.hintRow.count || 1;
   var rowHeight = space * 0.9;
   var x0 = scaledPadding - space / 2;
   var x1 = scaledPadding + space * (size - 1) + space / 2;
-  var y0 = scaledPadding + row * space - rowHeight / 2;
-  var y1 = scaledPadding + row * space + rowHeight / 2;
+  var firstCenter = scaledPadding + rowStart * space;
+  var lastCenter = scaledPadding + (rowStart + rowCount - 1) * space;
+  var y0 = firstCenter - rowHeight / 2;
+  var y1 = lastCenter + rowHeight / 2;
 
   var topLeft = refs.board.transMat.transformPoint(new DOMPoint(x0, y0));
   var bottomRight = refs.board.transMat.transformPoint(new DOMPoint(x1, y1));
@@ -83,7 +87,7 @@ function positionRowHint() {
 }
 
 function positionColumnHint() {
-  if (!refs.colHintEl || state.hintCol === null || !refs.board) {
+  if (!refs.colHintEl || !state.hintCol || !refs.board) {
     if (refs.colHintEl) {
       refs.colHintEl.classList.remove("is-active");
       refs.colHintEl.style.display = "none";
@@ -109,10 +113,13 @@ function positionColumnHint() {
     : { space: 0, scaledPadding: 0 };
   var space = spacing.space;
   var scaledPadding = spacing.scaledPadding;
-  var col = state.hintCol;
+  var colStart = state.hintCol.start;
+  var colCount = state.hintCol.count || 1;
   var colWidth = space * 0.9;
-  var x0 = scaledPadding + col * space - colWidth / 2;
-  var x1 = scaledPadding + col * space + colWidth / 2;
+  var firstCenter = scaledPadding + colStart * space;
+  var lastCenter = scaledPadding + (colStart + colCount - 1) * space;
+  var x0 = firstCenter - colWidth / 2;
+  var x1 = lastCenter + colWidth / 2;
   var y0 = scaledPadding - space / 2;
   var y1 = scaledPadding + space * (size - 1) + space / 2;
 
@@ -159,19 +166,26 @@ function positionDiagonalHint() {
   var space = spacing.space;
   var scaledPadding = spacing.scaledPadding;
   var diag = state.hintDiag;
+  var diagCount = Math.max(1, Number(diag.count) || 1);
+  var diagStart =
+    typeof diag.start === "number" ? diag.start : diag.value;
+  if (typeof diagStart !== "number") {
+    return;
+  }
+  var centerValue = diagStart + (diagCount - 1) / 2;
 
   var i0;
   var j0;
   var i1;
   var j1;
   if (diag.type === "backslash") {
-    var d = diag.value;
+    var d = centerValue;
     i0 = Math.max(0, -d);
     i1 = Math.min(size - 1, size - 1 - d);
     j0 = i0 + d;
     j1 = i1 + d;
   } else {
-    var s = diag.value;
+    var s = centerValue;
     i0 = Math.max(0, s - (size - 1));
     i1 = Math.min(size - 1, s);
     j0 = -i0 + s;
@@ -210,7 +224,9 @@ function positionDiagonalHint() {
   var base = refs.board.transMat.transformPoint(new DOMPoint(0, 0));
   var spacePoint = refs.board.transMat.transformPoint(new DOMPoint(space, 0));
   var spacePx = Math.abs(spacePoint.x - base.x) / scaleX;
-  var thickness = spacePx * 0.9;
+  var baseThickness = spacePx * 0.9;
+  var diagSpacing = spacePx / Math.SQRT2;
+  var thickness = baseThickness + (diagCount - 1) * diagSpacing;
 
   refs.diagHintEl.style.display = "block";
   refs.diagHintEl.style.left = centerX + "px";
@@ -222,7 +238,68 @@ function positionDiagonalHint() {
   refs.diagHintEl.classList.add("is-active");
 }
 
+function updateElimRandomLevelUI() {
+  if (elements.elimRandomLevelInput) {
+    elements.elimRandomLevelInput.value = String(state.elimRandomLevel);
+  }
+  if (elements.elimRandomLevelValue) {
+    elements.elimRandomLevelValue.textContent = String(state.elimRandomLevel);
+  }
+}
+
+function setElimRandomLevel(level) {
+  var nextLevel = Math.max(1, Math.min(3, Number(level) || 1));
+  state.elimRandomLevel = nextLevel;
+  updateElimRandomLevelUI();
+}
+
+function updateRowRevealLevelUI() {
+  if (elements.hintRowLevelInput) {
+    elements.hintRowLevelInput.value = String(state.hintRowLevel);
+  }
+  if (elements.hintRowLevelValue) {
+    elements.hintRowLevelValue.textContent = String(state.hintRowLevel);
+  }
+}
+
+function setRowRevealLevel(level) {
+  var nextLevel = Math.max(1, Math.min(3, Number(level) || 1));
+  state.hintRowLevel = nextLevel;
+  updateRowRevealLevelUI();
+}
+
+function updateColumnRevealLevelUI() {
+  if (elements.hintColLevelInput) {
+    elements.hintColLevelInput.value = String(state.hintColLevel);
+  }
+  if (elements.hintColLevelValue) {
+    elements.hintColLevelValue.textContent = String(state.hintColLevel);
+  }
+}
+
+function setColumnRevealLevel(level) {
+  var nextLevel = Math.max(1, Math.min(3, Number(level) || 1));
+  state.hintColLevel = nextLevel;
+  updateColumnRevealLevelUI();
+}
+
+function updateDiagonalRevealLevelUI() {
+  if (elements.hintDiagLevelInput) {
+    elements.hintDiagLevelInput.value = String(state.hintDiagLevel);
+  }
+  if (elements.hintDiagLevelValue) {
+    elements.hintDiagLevelValue.textContent = String(state.hintDiagLevel);
+  }
+}
+
+function setDiagonalRevealLevel(level) {
+  var nextLevel = Math.max(1, Math.min(3, Number(level) || 1));
+  state.hintDiagLevel = nextLevel;
+  updateDiagonalRevealLevelUI();
+}
+
 function clearHints() {
+  state.blockedMoves = new Set();
   state.hintMoves = { correct: [], wrong: [] };
   state.hintNeighborStones = [];
   state.hintMode = "none";
@@ -493,6 +570,7 @@ function hintRowReveal() {
     return;
   }
 
+  var size = refs.board && refs.board.options ? refs.board.options.boardSize : 19;
   var rowSet = new Set();
   rightMoves.forEach(function (move) {
     rowSet.add(move.j);
@@ -503,15 +581,34 @@ function hintRowReveal() {
     return;
   }
 
-  var row = rows[Math.floor(Math.random() * rows.length)];
+  var level = Math.max(1, Math.min(3, Number(state.hintRowLevel) || 1));
+  var rowCount = Math.max(1, 4 - level);
+  rowCount = Math.min(rowCount, size);
+  var anchorRow = rows[Math.floor(Math.random() * rows.length)];
+  var maxStart = Math.min(anchorRow, size - rowCount);
+  var minStart = Math.max(0, anchorRow - rowCount + 1);
+  var possibleStarts = [];
+  for (var start = minStart; start <= maxStart; start += 1) {
+    possibleStarts.push(start);
+  }
+  var rowStart =
+    possibleStarts[Math.floor(Math.random() * possibleStarts.length)] ||
+    Math.max(0, Math.min(anchorRow, size - rowCount));
   state.hintMoves = { correct: [], wrong: [] };
   state.hintNeighborStones = [];
   state.hintMode = "none";
-  state.hintRow = row;
+  state.hintRow = { start: rowStart, count: rowCount };
 
-  var size = refs.board && refs.board.options ? refs.board.options.boardSize : 19;
-  var label = size - row;
-  ui.logMessage("Row reveal: row " + label);
+  var startLabel = size - rowStart;
+  var endLabel = size - (rowStart + rowCount - 1);
+  var label =
+    rowCount > 1
+      ? "rows " +
+        Math.max(startLabel, endLabel) +
+        "-" +
+        Math.min(startLabel, endLabel)
+      : "row " + startLabel;
+  ui.logMessage("Row reveal: " + label);
   app.board.updateBoard();
 }
 
@@ -538,6 +635,7 @@ function hintColumnReveal() {
     return;
   }
 
+  var size = refs.board && refs.board.options ? refs.board.options.boardSize : 19;
   var colSet = new Set();
   rightMoves.forEach(function (move) {
     colSet.add(move.i);
@@ -548,14 +646,32 @@ function hintColumnReveal() {
     return;
   }
 
-  var col = cols[Math.floor(Math.random() * cols.length)];
+  var level = Math.max(1, Math.min(3, Number(state.hintColLevel) || 1));
+  var colCount = Math.max(1, 4 - level);
+  colCount = Math.min(colCount, size);
+  var anchorCol = cols[Math.floor(Math.random() * cols.length)];
+  var maxStart = Math.min(anchorCol, size - colCount);
+  var minStart = Math.max(0, anchorCol - colCount + 1);
+  var possibleStarts = [];
+  for (var start = minStart; start <= maxStart; start += 1) {
+    possibleStarts.push(start);
+  }
+  var colStart =
+    possibleStarts[Math.floor(Math.random() * possibleStarts.length)] ||
+    Math.max(0, Math.min(anchorCol, size - colCount));
   state.hintMoves = { correct: [], wrong: [] };
   state.hintNeighborStones = [];
   state.hintMode = "none";
-  state.hintCol = col;
+  state.hintCol = { start: colStart, count: colCount };
 
-  var label = GB.A1_LETTERS[col] || col + 1;
-  ui.logMessage("Column reveal: column " + label);
+  var startLabel = GB.A1_LETTERS[colStart] || colStart + 1;
+  var endLabel =
+    GB.A1_LETTERS[colStart + colCount - 1] || colStart + colCount;
+  var label =
+    colCount > 1
+      ? "columns " + startLabel + "-" + endLabel
+      : "column " + startLabel;
+  ui.logMessage("Column reveal: " + label);
   app.board.updateBoard();
 }
 
@@ -582,6 +698,7 @@ function hintDiagonalReveal() {
     return;
   }
 
+  var size = refs.board && refs.board.options ? refs.board.options.boardSize : 19;
   var backslashSet = new Set();
   var slashSet = new Set();
   rightMoves.forEach(function (move) {
@@ -612,13 +729,31 @@ function hintDiagonalReveal() {
   var values = choice.values;
   var value = values[Math.floor(Math.random() * values.length)];
 
+  var level = Math.max(1, Math.min(3, Number(state.hintDiagLevel) || 1));
+  var diagCount = Math.max(1, 4 - level);
+  var rangeMin =
+    choice.type === "backslash" ? -(size - 1) : 0;
+  var rangeMax =
+    choice.type === "backslash" ? size - 1 : 2 * (size - 1);
+  var minStart = Math.max(rangeMin, value - (diagCount - 1));
+  var maxStart = Math.min(value, rangeMax - (diagCount - 1));
+  var possibleStarts = [];
+  for (var start = minStart; start <= maxStart; start += 1) {
+    possibleStarts.push(start);
+  }
+  var diagStart =
+    possibleStarts[Math.floor(Math.random() * possibleStarts.length)] ||
+    Math.max(rangeMin, Math.min(value, rangeMax - (diagCount - 1)));
+
   state.hintMoves = { correct: [], wrong: [] };
   state.hintNeighborStones = [];
   state.hintMode = "none";
-  state.hintDiag = { type: choice.type, value: value };
+  state.hintDiag = { type: choice.type, start: diagStart, count: diagCount };
 
   var label = choice.type === "backslash" ? "\\" : "/";
-  ui.logMessage("Diagonal reveal: " + label);
+  var widthLabel =
+    diagCount > 1 ? " (" + diagCount + " wide)" : "";
+  ui.logMessage("Diagonal reveal: " + label + widthLabel);
   app.board.updateBoard();
 }
 
@@ -693,6 +828,14 @@ app.hints.resetDiagonalHint = resetDiagonalHint;
 app.hints.positionRowHint = positionRowHint;
 app.hints.positionColumnHint = positionColumnHint;
 app.hints.positionDiagonalHint = positionDiagonalHint;
+app.hints.updateElimRandomLevelUI = updateElimRandomLevelUI;
+app.hints.setElimRandomLevel = setElimRandomLevel;
+app.hints.updateRowRevealLevelUI = updateRowRevealLevelUI;
+app.hints.setRowRevealLevel = setRowRevealLevel;
+app.hints.updateColumnRevealLevelUI = updateColumnRevealLevelUI;
+app.hints.setColumnRevealLevel = setColumnRevealLevel;
+app.hints.updateDiagonalRevealLevelUI = updateDiagonalRevealLevelUI;
+app.hints.setDiagonalRevealLevel = setDiagonalRevealLevel;
 app.hints.clearHints = clearHints;
 app.hints.clearTemporaryState = clearTemporaryState;
 app.hints.setCurrentNode = setCurrentNode;
