@@ -1,6 +1,7 @@
 import { app } from "./context.js";
 import "./ghost.js";
 import "./fire.js";
+import "./passives.js";
 import "./overlays.js";
 import "./timers.js";
 import "./challenges.js";
@@ -178,6 +179,15 @@ if (elements.challengeFireBtn) {
     app.ui.logMessage("Challenge enabled: Fire snake.");
   });
 }
+if (elements.passiveTimeExtendBtn) {
+  elements.passiveTimeExtendBtn.addEventListener("click", function () {
+    if (state.passiveTimeExtend) {
+      return;
+    }
+    app.passives.setTimeExtendActive(true);
+    app.ui.logMessage("Passive enabled: Time extend.");
+  });
+}
 
 if (elements.mysteryLevelInput) {
   elements.mysteryLevelInput.addEventListener("input", function (event) {
@@ -220,6 +230,14 @@ if (elements.fireLevelInput) {
       return;
     }
     app.fire.setFireLevel(event.target.value);
+  });
+}
+if (elements.timeExtendLevelInput) {
+  elements.timeExtendLevelInput.addEventListener("input", function (event) {
+    if (!event || !event.target) {
+      return;
+    }
+    app.passives.setTimeExtendLevel(event.target.value);
   });
 }
 
@@ -318,6 +336,12 @@ if (elements.fireLevelInput) {
 } else {
   app.fire.updateFireLevelUI();
 }
+if (elements.timeExtendLevelInput) {
+  app.passives.setTimeExtendLevel(elements.timeExtendLevelInput.value);
+} else {
+  app.passives.updateTimeExtendLevelUI();
+}
+app.passives.updatePassiveControls();
 if (elements.hintRowLevelInput) {
   app.hints.setRowRevealLevel(elements.hintRowLevelInput.value);
 } else {

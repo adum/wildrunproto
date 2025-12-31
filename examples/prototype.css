@@ -360,7 +360,8 @@ select {
 }
 
 .controls--challenges,
-.controls--hints {
+.controls--hints,
+.controls--passives {
   padding: 8px;
   border-radius: 12px;
   border: 1px dashed rgba(90, 70, 50, 0.4);
@@ -414,6 +415,7 @@ select {
 .infection-row,
 .speed-row,
 .fire-row,
+.passive-row,
 .hint-row {
   display: grid;
   grid-template-columns: auto minmax(120px, 1fr);
@@ -438,6 +440,7 @@ select {
 .infection-level,
 .speed-level,
 .fire-level,
+.passive-level,
 .hint-level {
   display: flex;
   align-items: center;
@@ -456,6 +459,7 @@ select {
 .infection-level label,
 .speed-level label,
 .fire-level label,
+.passive-level label,
 .hint-level label {
   display: inline-flex;
   align-items: center;
@@ -470,6 +474,7 @@ select {
 .infection-level input[type="range"],
 .speed-level input[type="range"],
 .fire-level input[type="range"],
+.passive-level input[type="range"],
 .hint-level input[type="range"] {
   width: 100%;
   min-width: 60px;
@@ -487,6 +492,7 @@ select {
 .infection-level__value,
 .speed-level__value,
 .fire-level__value,
+.passive-level__value,
 .hint-level__value {
   min-width: 16px;
   text-align: right;

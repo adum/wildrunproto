@@ -263,6 +263,7 @@ function resetPuzzle() {
   state.enigmaRevealed = false;
   app.timers.updateEnigmaUI();
   app.challenges.resetChallenges();
+  app.passives.resetPassives();
   app.hints.setCurrentNode(state.rootNode);
   state.combo = 0;
   app.hints.clearTemporaryState();

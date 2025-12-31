@@ -5,6 +5,22 @@ var state = app.state;
 var refs = app.refs;
 var ui = app.ui;
 var utils = app.utils;
+var passives = app.passives;
+
+function getTimeExtendMultiplier() {
+  if (passives && passives.getTimeExtendMultiplier) {
+    return passives.getTimeExtendMultiplier();
+  }
+  return 1;
+}
+
+function applyTimeExtend(seconds) {
+  var multiplier = getTimeExtendMultiplier();
+  if (multiplier <= 1) {
+    return seconds;
+  }
+  return Math.ceil(seconds * multiplier);
+}
 
 function getMysteryStoneCount(level) {
   var safeLevel = Math.max(1, Number(level) || 1);
@@ -58,7 +74,7 @@ function updateMysteryButtonLabel() {
   if (!refs.mysteryBtn) {
     return;
   }
-  var seconds = getMysteryTimerSeconds(state.mysteryLevel);
+  var seconds = applyTimeExtend(getMysteryTimerSeconds(state.mysteryLevel));
   refs.mysteryBtn.textContent = "Reveal & Start Timer " + seconds + "s";
 }
 
@@ -149,7 +165,7 @@ function startMysteryTimer() {
   if (state.mysteryTimerActive) {
     stopMysteryTimer(false);
   }
-  var duration = getMysteryTimerSeconds(state.mysteryLevel);
+  var duration = applyTimeExtend(getMysteryTimerSeconds(state.mysteryLevel));
   state.mysteryTimerActive = true;
   state.mysteryTimerEndsAt = performance.now() + duration * 1000;
   updateMysteryTimerDisplay(duration);
@@ -188,7 +204,7 @@ function updateEnigmaButtonLabel() {
   if (!refs.enigmaBtn) {
     return;
   }
-  var seconds = getEnigmaTimerSeconds(state.enigmaLevel);
+  var seconds = applyTimeExtend(getEnigmaTimerSeconds(state.enigmaLevel));
   refs.enigmaBtn.textContent = "Reveal & Start Timer " + seconds + "s";
 }
 
@@ -256,7 +272,7 @@ function startEnigmaTimer() {
   if (state.enigmaTimerActive) {
     stopEnigmaTimer(false);
   }
-  var duration = getEnigmaTimerSeconds(state.enigmaLevel);
+  var duration = applyTimeExtend(getEnigmaTimerSeconds(state.enigmaLevel));
   state.enigmaTimerActive = true;
   state.enigmaTimerEndsAt = performance.now() + duration * 1000;
   updateEnigmaTimerDisplay(duration);
@@ -374,7 +390,7 @@ function startSpeedTimer() {
   if (state.speedTimerActive) {
     stopSpeedTimer(false);
   }
-  var duration = getSpeedTimerSeconds(state.speedLevel);
+  var duration = applyTimeExtend(getSpeedTimerSeconds(state.speedLevel));
   state.speedTimerActive = true;
   state.speedTimerEndsAt = performance.now() + duration * 1000;
   updateSpeedTimerDisplay(duration);

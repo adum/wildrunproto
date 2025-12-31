@@ -358,6 +358,37 @@
               </div>
             </div>
 
+            <div>
+              <label>Passives</label>
+              <div class="controls controls--passives">
+                <div class="passive-row">
+                  <button
+                    id="passiveTimeExtend"
+                    class="button"
+                    type="button"
+                    title="Slows countdown timers by 10% per level when enabled before they start."
+                  >
+                    Time Extend
+                  </button>
+                  <div class="passive-level">
+                    <label for="timeExtendLevel">Level</label>
+                    <input
+                      id="timeExtendLevel"
+                      type="range"
+                      min="1"
+                      max="10"
+                      step="1"
+                      value="1"
+                      title="L1=10% slower timers, +10% per level."
+                    />
+                    <span id="timeExtendLevelValue" class="passive-level__value"
+                      >1</span
+                    >
+                  </div>
+                </div>
+              </div>
+            </div>
+
             <div class="controls">
               <button id="resetPuzzle" class="button" type="button">
                 Reset Puzzle
