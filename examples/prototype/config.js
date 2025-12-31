@@ -54,6 +54,34 @@ var DEFAULT_CONFIG = {
       minIfNoWrong: 1,
     },
   },
+  play: {
+    startDifficulty: "30kyu",
+    difficultyStep: 1,
+    hintsPerLevel: 2,
+    passivesPerRun: 1,
+    bossFrequency: 5,
+    challengeLevelStart: 1,
+    challengeLevelRamp: 1,
+    hintPool: [
+      "firstMove",
+      "multipleChoice",
+      "neighbor",
+      "rowReveal",
+      "colReveal",
+      "diagReveal",
+      "eliminateRandom",
+    ],
+    passivePool: ["timeExtend"],
+    challengePool: [
+      "gray",
+      "ghost",
+      "mystery",
+      "enigma",
+      "infection",
+      "speed",
+      "fire",
+    ],
+  },
 };
 
 if (!app.config) {

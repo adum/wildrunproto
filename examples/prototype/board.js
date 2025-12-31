@@ -232,8 +232,14 @@ function evaluatePosition() {
   if (!state.currentNode.hasChildren()) {
     if (GB.isRightNode(state.currentNode)) {
       ui.setStatus("Correct. Puzzle solved.", "success");
+      if (app.handlers.onPuzzleSolved) {
+        app.handlers.onPuzzleSolved();
+      }
     } else {
       ui.setStatus("Line over. Reset to try again.", "error");
+      if (app.handlers.onPuzzleFailed) {
+        app.handlers.onPuzzleFailed();
+      }
     }
     app.timers.stopSpeedTimer(false);
     return;

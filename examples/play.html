@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Wildrun Playtest</title>
+    <link rel="stylesheet" href="./prototype.css" />
+  </head>
+  <body>
+    <div class="page">
+      <div class="shell">
+        <div class="layout">
+          <div class="board-panel">
+            <div class="status-row">
+              <div id="status" class="status status--fixed">
+                Ready to start.
+              </div>
+              <div id="livesBox" class="lives-box">
+                <span class="lives-label">Lives</span>
+                <div id="lives" class="lives-hearts" aria-live="polite"></div>
+              </div>
+            </div>
+            <div id="board" class="board">
+              <div
+                id="startOverlay"
+                class="play-overlay play-overlay--start"
+              >
+                <div class="play-overlay__panel">
+                  <div class="play-overlay__title">Start a run</div>
+                  <button
+                    id="startGameBtn"
+                    class="button play-overlay__cta"
+                    type="button"
+                  >
+                    Start Game
+                  </button>
+                </div>
+              </div>
+              <div
+                id="advanceOverlay"
+                class="play-overlay play-overlay--advance is-hidden"
+              >
+                <div class="play-overlay__panel">
+                  <div id="advanceLabel" class="play-overlay__title">
+                    On to 29kyu
+                  </div>
+                  <button
+                    id="advanceBtn"
+                    class="button play-overlay__cta"
+                    type="button"
+                  >
+                    Continue to 29kyu
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="panel play-panel">
+            <div class="difficulty-card">
+              <label>Difficulty</label>
+              <div id="difficultyLabel" class="difficulty-value">30kyu</div>
+            </div>
+
+            <div class="play-section">
+              <label>Passives</label>
+              <div
+                id="passiveList"
+                class="controls controls--passives play-list"
+              ></div>
+            </div>
+
+            <div class="play-section">
+              <label>Hints</label>
+              <div
+                id="hintList"
+                class="controls controls--hints play-list"
+              ></div>
+            </div>
+
+            <div id="challengeSection" class="play-section is-hidden">
+              <label>Challenges</label>
+              <div
+                id="challengeList"
+                class="controls controls--challenges play-list"
+              ></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script src="../gp/problems.js"></script>
+    <script src="../build/index.min.js"></script>
+    <script type="module" src="./play/main.js"></script>
+  </body>
+</html>

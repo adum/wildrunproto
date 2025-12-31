@@ -152,6 +152,8 @@ export const state = {
 
 export const handlers = {
   onTimerExpired: null,
+  onPuzzleSolved: null,
+  onPuzzleFailed: null,
 };
 
 export const config = {};

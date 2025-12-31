@@ -624,6 +624,105 @@ select {
   opacity: 1;
 }
 
+.play-panel {
+  align-self: start;
+}
+
+.difficulty-card {
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: #fff;
+  border: 1px solid var(--panel-edge);
+  display: grid;
+  gap: 4px;
+}
+
+.difficulty-value {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--accent-ink);
+}
+
+.play-section.is-hidden {
+  display: none;
+}
+
+.play-list {
+  display: grid;
+  gap: 8px;
+}
+
+.play-chip {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 8px 12px;
+  border: 1px solid var(--panel-edge);
+  border-radius: 999px;
+  background: #fff;
+  font-size: 13px;
+}
+
+.play-chip__level {
+  font-weight: 700;
+  color: var(--accent-ink);
+  font-size: 12px;
+}
+
+.play-hint {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.play-hint.is-used {
+  opacity: 0.6;
+  cursor: not-allowed;
+  box-shadow: none;
+  transform: none;
+}
+
+.play-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 248, 234, 0.86);
+  backdrop-filter: blur(2px);
+  z-index: 20;
+  transition: opacity 0.2s ease;
+}
+
+.play-overlay.is-hidden {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.play-overlay__panel {
+  padding: 18px 20px;
+  border-radius: 16px;
+  background: #fff;
+  border: 1px solid var(--panel-edge);
+  box-shadow: 0 16px 30px rgba(65, 46, 21, 0.25);
+  display: grid;
+  gap: 12px;
+  justify-items: center;
+  min-width: 180px;
+}
+
+.play-overlay__title {
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.play-overlay__cta {
+  min-width: 160px;
+}
+
 @media (max-width: 960px) {
   .layout {
     grid-template-columns: 1fr;
