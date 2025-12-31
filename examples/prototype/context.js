@@ -132,6 +132,7 @@ export const state = {
   fireStartAt: 0,
   firePath: [],
   firePathSize: 0,
+  firePathKey: "",
   currentMat: null,
   hintMode: "none",
   extraAllowedMoves: new Set(),

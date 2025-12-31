@@ -159,6 +159,7 @@ function setFirePlay(active) {
   state.fireStartAt = active ? performance.now() : 0;
   state.firePath = [];
   state.firePathSize = 0;
+  state.firePathKey = "";
   updateChallengeControls();
   app.fire.updateFireLevelUI();
   if (active) {
@@ -258,6 +259,7 @@ function resetChallenges() {
   state.fireStartAt = 0;
   state.firePath = [];
   state.firePathSize = 0;
+  state.firePathKey = "";
   app.fire.stopFireAnimation();
   if (refs.ghostAnimId) {
     cancelAnimationFrame(refs.ghostAnimId);

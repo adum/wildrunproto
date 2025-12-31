@@ -1,5 +1,6 @@
 import { app } from "./context.js";
 
+var GB = app.GB;
 var state = app.state;
 var refs = app.refs;
 var elements = app.elements;
@@ -42,6 +43,69 @@ function buildFirePath(size) {
   return path;
 }
 
+function getBoundsFromMat(mat) {
+  if (!mat) {
+    return null;
+  }
+  var size = mat.length;
+  var minI = size;
+  var maxI = -1;
+  var minJ = size;
+  var maxJ = -1;
+  for (var i = 0; i < size; i += 1) {
+    if (!mat[i]) {
+      continue;
+    }
+    for (var j = 0; j < size; j += 1) {
+      if (mat[i][j] === GB.Ki.Empty) {
+        continue;
+      }
+      if (i < minI) {
+        minI = i;
+      }
+      if (i > maxI) {
+        maxI = i;
+      }
+      if (j < minJ) {
+        minJ = j;
+      }
+      if (j > maxJ) {
+        maxJ = j;
+      }
+    }
+  }
+  if (maxI < 0 || maxJ < 0) {
+    return null;
+  }
+  return { minI: minI, maxI: maxI, minJ: minJ, maxJ: maxJ };
+}
+
+function buildFirePathForBounds(bounds, size) {
+  if (!bounds) {
+    return buildFirePath(size);
+  }
+  var minI = Math.max(0, bounds.minI);
+  var maxI = Math.min(size - 1, bounds.maxI);
+  var minJ = Math.max(0, bounds.minJ);
+  var maxJ = Math.min(size - 1, bounds.maxJ);
+  if (minI > maxI || minJ > maxJ) {
+    return buildFirePath(size);
+  }
+  var path = [];
+  for (var row = minJ; row <= maxJ; row += 1) {
+    if ((row - minJ) % 2 === 0) {
+      for (var col = minI; col <= maxI; col += 1) {
+        path.push({ i: col, j: row });
+      }
+    } else {
+      for (var col = maxI; col >= minI; col -= 1) {
+        path.push({ i: col, j: row });
+      }
+    }
+  }
+  return path;
+}
+
 function ensureFirePath() {
   var size =
     (refs.board && refs.board.options && refs.board.options.boardSize) ||
@@ -51,9 +115,24 @@ function ensureFirePath() {
     state.firePathSize = 0;
     return;
   }
-  if (!state.firePath || state.firePathSize !== size) {
-    state.firePath = buildFirePath(size);
+  var bounds = getBoundsFromMat(state.currentMat);
+  var key = bounds
+    ? bounds.minI +
+      ":" +
+      bounds.maxI +
+      ":" +
+      bounds.minJ +
+      ":" +
+      bounds.maxJ
+    : "full";
+  if (
+    !state.firePath ||
+    state.firePathSize !== size ||
+    state.firePathKey !== key
+  ) {
+    state.firePath = buildFirePathForBounds(bounds, size);
     state.firePathSize = size;
+    state.firePathKey = key;
   }
 }
 
@@ -99,26 +178,37 @@ function drawSnakeSegment(ctx, points, baseWidth, pulse) {
   var end = points[points.length - 1];
   if (points.length === 1) {
     ctx.save();
-    ctx.fillStyle = "rgba(255, 190, 120, 0.6)";
+    ctx.fillStyle = "rgba(255, 180, 110, 0.85)";
     ctx.beginPath();
-    ctx.arc(start.x, start.y, baseWidth * 0.35, 0, Math.PI * 2, true);
+    ctx.arc(start.x, start.y, baseWidth * 0.45, 0, Math.PI * 2, true);
     ctx.fill();
     ctx.restore();
     return;
   }
 
   var gradient = ctx.createLinearGradient(start.x, start.y, end.x, end.y);
-  gradient.addColorStop(0, "rgba(255, 90, 0, 0.18)");
-  gradient.addColorStop(0.5, "rgba(255, 145, 0, 0.5)");
-  gradient.addColorStop(1, "rgba(255, 230, 170, 0.85)");
+  gradient.addColorStop(0, "rgba(255, 60, 0, 0.32)");
+  gradient.addColorStop(0.5, "rgba(255, 140, 0, 0.75)");
+  gradient.addColorStop(1, "rgba(255, 240, 190, 0.95)");
 
   ctx.save();
   ctx.lineCap = "round";
   ctx.lineJoin = "round";
-  ctx.shadowColor = "rgba(255, 120, 0, 0.65)";
-  ctx.shadowBlur = baseWidth * (0.7 + 0.3 * pulse);
+  ctx.shadowColor = "rgba(255, 90, 0, 0.5)";
+  ctx.shadowBlur = baseWidth * (1.1 + 0.4 * pulse);
+  ctx.strokeStyle = "rgba(255, 80, 0, 0.25)";
+  ctx.lineWidth = baseWidth * 1.35;
+  ctx.beginPath();
+  ctx.moveTo(points[0].x, points[0].y);
+  for (var o = 1; o < points.length; o += 1) {
+    ctx.lineTo(points[o].x, points[o].y);
+  }
+  ctx.stroke();
+
+  ctx.shadowColor = "rgba(255, 120, 0, 0.75)";
+  ctx.shadowBlur = baseWidth * (0.85 + 0.35 * pulse);
   ctx.strokeStyle = gradient;
-  ctx.lineWidth = baseWidth;
+  ctx.lineWidth = baseWidth * 1.05;
   ctx.beginPath();
   ctx.moveTo(points[0].x, points[0].y);
   for (var i = 1; i < points.length; i += 1) {
@@ -126,9 +216,9 @@ function drawSnakeSegment(ctx, points, baseWidth, pulse) {
   }
   ctx.stroke();
 
-  ctx.shadowBlur = baseWidth * 0.45;
-  ctx.strokeStyle = "rgba(255, 235, 190, 0.75)";
-  ctx.lineWidth = baseWidth * 0.55;
+  ctx.shadowBlur = baseWidth * 0.65;
+  ctx.strokeStyle = "rgba(255, 245, 210, 0.9)";
+  ctx.lineWidth = baseWidth * 0.65;
   ctx.beginPath();
   ctx.moveTo(points[0].x, points[0].y);
   for (var j = 1; j < points.length; j += 1) {
@@ -204,7 +294,7 @@ function drawFireSnake(timestamp) {
   }
 
   var pulse = 0.6 + 0.4 * Math.sin(timestamp / 120);
-  var baseWidth = Math.max(space * 0.78, 2);
+  var baseWidth = Math.max(space * 0.98, 2);
 
   segments.forEach(function (segment) {
     var points = segment.map(function (idx) {
@@ -222,9 +312,9 @@ function drawFireSnake(timestamp) {
     var node = path[idx];
     var cx = scaledPadding + node.i * space;
     var cy = scaledPadding + node.j * space;
-    var flicker = 0.35 + 0.35 * Math.sin(timestamp / 90 + pos);
-    var radius = space * 0.18 * (0.6 + flicker);
-    ctx.fillStyle = "rgba(255, 190, 120, " + (0.3 + flicker * 0.5) + ")";
+    var flicker = 0.45 + 0.4 * Math.sin(timestamp / 85 + pos);
+    var radius = space * 0.28 * (0.7 + flicker);
+    ctx.fillStyle = "rgba(255, 180, 120, " + (0.45 + flicker * 0.5) + ")";
     ctx.beginPath();
     ctx.arc(cx, cy, radius, 0, Math.PI * 2, true);
     ctx.fill();
@@ -235,7 +325,7 @@ function drawFireSnake(timestamp) {
   var headX = scaledPadding + headNode.i * space;
   var headY = scaledPadding + headNode.j * space;
   var headPulse = 0.5 + 0.5 * Math.sin(timestamp / 80);
-  var headRadius = baseWidth * (0.55 + headPulse * 0.2);
+  var headRadius = baseWidth * (0.7 + headPulse * 0.3);
   var headGlow = ctx.createRadialGradient(
     headX,
     headY,
@@ -244,8 +334,8 @@ function drawFireSnake(timestamp) {
     headY,
     headRadius
   );
-  headGlow.addColorStop(0, "rgba(255, 255, 220, " + (0.85 * headPulse) + ")");
-  headGlow.addColorStop(0.6, "rgba(255, 175, 0, " + (0.6 * headPulse) + ")");
+  headGlow.addColorStop(0, "rgba(255, 255, 230, " + (0.95 * headPulse) + ")");
+  headGlow.addColorStop(0.6, "rgba(255, 160, 0, " + (0.75 * headPulse) + ")");
   headGlow.addColorStop(1, "rgba(255, 80, 0, 0)");
   ctx.save();
   ctx.fillStyle = headGlow;
