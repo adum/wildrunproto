@@ -70,6 +70,14 @@ if (elements.hintDiagLevelInput) {
     app.hints.setDiagonalRevealLevel(event.target.value);
   });
 }
+if (elements.hintTwoLevelInput) {
+  elements.hintTwoLevelInput.addEventListener("input", function (event) {
+    if (!event || !event.target) {
+      return;
+    }
+    app.hints.setMultipleChoiceLevel(event.target.value);
+  });
+}
 if (elements.hintRowLevelInput) {
   elements.hintRowLevelInput.addEventListener("input", function (event) {
     if (!event || !event.target) {
@@ -300,6 +308,11 @@ if (elements.hintDiagLevelInput) {
   app.hints.setDiagonalRevealLevel(elements.hintDiagLevelInput.value);
 } else {
   app.hints.updateDiagonalRevealLevelUI();
+}
+if (elements.hintTwoLevelInput) {
+  app.hints.setMultipleChoiceLevel(elements.hintTwoLevelInput.value);
+} else {
+  app.hints.updateMultipleChoiceLevelUI();
 }
 if (elements.elimRandomLevelInput) {
   app.hints.setElimRandomLevel(elements.elimRandomLevelInput.value);

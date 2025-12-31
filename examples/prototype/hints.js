@@ -253,6 +253,21 @@ function setElimRandomLevel(level) {
   updateElimRandomLevelUI();
 }
 
+function updateMultipleChoiceLevelUI() {
+  if (elements.hintTwoLevelInput) {
+    elements.hintTwoLevelInput.value = String(state.hintTwoLevel);
+  }
+  if (elements.hintTwoLevelValue) {
+    elements.hintTwoLevelValue.textContent = String(state.hintTwoLevel);
+  }
+}
+
+function setMultipleChoiceLevel(level) {
+  var nextLevel = Math.max(1, Math.min(3, Number(level) || 1));
+  state.hintTwoLevel = nextLevel;
+  updateMultipleChoiceLevelUI();
+}
+
 function updateRowRevealLevelUI() {
   if (elements.hintRowLevelInput) {
     elements.hintRowLevelInput.value = String(state.hintRowLevel);
@@ -435,16 +450,38 @@ function hintTwoMoves() {
     );
   });
 
-  var wrong = wrongMoves[Math.floor(Math.random() * wrongMoves.length)] || null;
-  if (!wrong) {
-    var nearby = pickRandomNearbyWrongMove(correct.sgf);
-    if (nearby) {
-      wrong = { sgf: nearby };
+  var level = Math.max(1, Math.min(3, Number(state.hintTwoLevel) || 1));
+  var optionCount = Math.max(2, 5 - level);
+  var wrongNeeded = optionCount - 1;
+  var wrongChoices = [];
+  var used = new Set([correct.sgf]);
+
+  var wrongPool = wrongMoves.slice();
+  while (wrongChoices.length < wrongNeeded && wrongPool.length > 0) {
+    var idx = Math.floor(Math.random() * wrongPool.length);
+    var pick = wrongPool.splice(idx, 1)[0];
+    if (!pick || !pick.sgf || used.has(pick.sgf)) {
+      continue;
     }
+    used.add(pick.sgf);
+    wrongChoices.push(pick.sgf);
   }
 
-  if (!wrong || !wrong.sgf) {
-    ui.logMessage("Unable to find a wrong move for hint.");
+  var attempts = 0;
+  while (wrongChoices.length < wrongNeeded && attempts < 40) {
+    var nearby = pickRandomNearbyWrongMove(correct.sgf, used);
+    if (!nearby) {
+      break;
+    }
+    if (!used.has(nearby)) {
+      used.add(nearby);
+      wrongChoices.push(nearby);
+    }
+    attempts += 1;
+  }
+
+  if (wrongChoices.length === 0) {
+    ui.logMessage("Unable to find wrong moves for multiple choice.");
     state.hintMoves = { correct: [correct.sgf], wrong: [] };
     state.hintNeighborStones = [];
     state.hintMode = "single";
@@ -454,22 +491,21 @@ function hintTwoMoves() {
   } else {
     state.hintMoves = {
       correct: [correct.sgf],
-      wrong: [wrong.sgf],
+      wrong: wrongChoices,
     };
     state.hintNeighborStones = [];
     state.hintMode = "double";
     resetRowHint();
     resetColumnHint();
     resetDiagonalHint();
-    var hinted = [correct.sgf, wrong.sgf];
-    if (Math.random() > 0.5) {
-      hinted.reverse();
-    }
+    var hinted = [correct.sgf].concat(wrongChoices);
     ui.logMessage(
-      "Hinted two moves: " +
-        utils.sgfToA1(hinted[0]) +
-        " / " +
-        utils.sgfToA1(hinted[1])
+      "Multiple choice (" +
+        hinted.length +
+        "): " +
+        hinted.map(function (move) {
+          return utils.sgfToA1(move);
+        }).join(" / ")
     );
   }
 
@@ -757,7 +793,7 @@ function hintDiagonalReveal() {
   app.board.updateBoard();
 }
 
-function pickRandomNearbyWrongMove(correctSgf) {
+function pickRandomNearbyWrongMove(correctSgf, extraExclude) {
   var size = GB.extractBoardSize(state.currentNode, 19);
   var res = GB.calcMatAndMarkup(state.currentNode, size);
   var mat = res.mat;
@@ -771,6 +807,11 @@ function pickRandomNearbyWrongMove(correctSgf) {
     exclude.add(move.sgf);
   });
   exclude.add(correctSgf);
+  if (extraExclude) {
+    extraExclude.forEach(function (coord) {
+      exclude.add(coord);
+    });
+  }
 
   function collectCandidates(radius) {
     var candidates = [];
@@ -830,6 +871,8 @@ app.hints.positionColumnHint = positionColumnHint;
 app.hints.positionDiagonalHint = positionDiagonalHint;
 app.hints.updateElimRandomLevelUI = updateElimRandomLevelUI;
 app.hints.setElimRandomLevel = setElimRandomLevel;
+app.hints.updateMultipleChoiceLevelUI = updateMultipleChoiceLevelUI;
+app.hints.setMultipleChoiceLevel = setMultipleChoiceLevel;
 app.hints.updateRowRevealLevelUI = updateRowRevealLevelUI;
 app.hints.setRowRevealLevel = setRowRevealLevel;
 app.hints.updateColumnRevealLevelUI = updateColumnRevealLevelUI;

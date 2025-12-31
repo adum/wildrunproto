@@ -50,14 +50,31 @@
                 >
                   First Move
                 </button>
-                <button
-                  id="hintTwo"
-                  class="button"
-                  type="button"
-                  title="Marks one correct move and one wrong move."
-                >
-                  Two Moves
-                </button>
+                <div class="hint-row">
+                  <button
+                    id="hintTwo"
+                    class="button"
+                    type="button"
+                    title="Marks multiple options with one correct move."
+                  >
+                    Multiple Choice
+                  </button>
+                  <div class="hint-level">
+                    <label for="hintTwoLevel">Level</label>
+                    <input
+                      id="hintTwoLevel"
+                      type="range"
+                      min="1"
+                      max="3"
+                      step="1"
+                      value="1"
+                      title="Controls option count (L1=4, L2=3, L3=2)."
+                    />
+                    <span id="hintTwoLevelValue" class="hint-level__value"
+                      >1</span
+                    >
+                  </div>
+                </div>
                 <button
                   id="hintNeighbor"
                   class="button"
