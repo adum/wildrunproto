@@ -5,6 +5,41 @@ var state = app.state;
 var refs = app.refs;
 var ui = app.ui;
 var utils = app.utils;
+var configUtils = app.configUtils;
+
+function getNumber(value, fallback) {
+  var num = Number(value);
+  if (Number.isFinite(num)) {
+    return num;
+  }
+  return fallback;
+}
+
+function clampLevel(levelKey, level, fallbackMin, fallbackMax) {
+  if (configUtils && configUtils.clampLevel) {
+    return configUtils.clampLevel(levelKey, level, fallbackMin, fallbackMax);
+  }
+  var min = typeof fallbackMin === "number" ? fallbackMin : 1;
+  var max = typeof fallbackMax === "number" ? fallbackMax : min;
+  var value = Number(level);
+  if (!Number.isFinite(value)) {
+    value = min;
+  }
+  if (value < min) {
+    return min;
+  }
+  if (value > max) {
+    return max;
+  }
+  return value;
+}
+
+function getEliminateRandomConfig() {
+  if (app.config && app.config.hints && app.config.hints.eliminateRandom) {
+    return app.config.hints.eliminateRandom;
+  }
+  return {};
+}
 
 function initBoard(boardSize) {
   refs.board = new GB.GhostBan({
@@ -378,10 +413,19 @@ function eliminateRandomMove() {
     );
   });
 
-  var level = Math.max(1, Math.min(3, Number(state.elimRandomLevel) || 1));
-  var decoyCount = Math.max(0, 3 - level);
-  if (wrongMoves.length === 0 && decoyCount === 0) {
-    decoyCount = 1;
+  var level = clampLevel("eliminateRandom", state.elimRandomLevel, 1, 3);
+  var config = getEliminateRandomConfig();
+  var baseDecoys = getNumber(config.baseDecoys, 2);
+  var decrement = getNumber(config.decrementPerLevel, 1);
+  var minDecoys = getNumber(config.minDecoys, 0);
+  var minIfNoWrong = getNumber(config.minIfNoWrong, 1);
+  var decoyCount = baseDecoys - (level - 1) * decrement;
+  if (!Number.isFinite(decoyCount)) {
+    decoyCount = baseDecoys;
+  }
+  decoyCount = Math.max(minDecoys, Math.round(decoyCount));
+  if (wrongMoves.length === 0 && decoyCount <= 0) {
+    decoyCount = minIfNoWrong;
   }
 
   var decoys = collectEliminateDecoys(decoyCount, wrongMoves);

@@ -4,12 +4,50 @@ var GB = app.GB;
 var state = app.state;
 var refs = app.refs;
 var elements = app.elements;
+var configUtils = app.configUtils;
 
-var FIRE_SPEED = 5;
+function getNumber(value, fallback) {
+  var num = Number(value);
+  if (Number.isFinite(num)) {
+    return num;
+  }
+  return fallback;
+}
+
+function clampLevel(levelKey, level, fallbackMin, fallbackMax) {
+  if (configUtils && configUtils.clampLevel) {
+    return configUtils.clampLevel(levelKey, level, fallbackMin, fallbackMax);
+  }
+  var min = typeof fallbackMin === "number" ? fallbackMin : 1;
+  var max = typeof fallbackMax === "number" ? fallbackMax : min;
+  var value = Number(level);
+  if (!Number.isFinite(value)) {
+    value = min;
+  }
+  if (value < min) {
+    return min;
+  }
+  if (value > max) {
+    return max;
+  }
+  return value;
+}
+
+function getFireSpeed() {
+  var config = app.config && app.config.fireSnake ? app.config.fireSnake : {};
+  return getNumber(config.speed, 5);
+}
 
 function getFireLength(level) {
-  var safeLevel = Math.max(1, Number(level) || 1);
-  return 4 + (safeLevel - 1) * 2;
+  var config = app.config && app.config.fireSnake ? app.config.fireSnake : {};
+  var base = getNumber(config.baseLength, 4);
+  var increment = getNumber(config.lengthPerLevel, 2);
+  var safeLevel = clampLevel("fire", level, 1, 10);
+  var length = base + (safeLevel - 1) * increment;
+  if (!Number.isFinite(length)) {
+    length = base;
+  }
+  return Math.max(1, Math.round(length));
 }
 
 function updateFireLevelUI() {
@@ -22,7 +60,7 @@ function updateFireLevelUI() {
 }
 
 function setFireLevel(level) {
-  var nextLevel = Math.max(1, Math.min(10, Number(level) || 1));
+  var nextLevel = clampLevel("fire", level, 1, 10);
   state.fireLevel = nextLevel;
   updateFireLevelUI();
 }
@@ -260,7 +298,7 @@ function drawFireSnake(timestamp) {
   var pathLength = path.length;
   var snakeLength = Math.min(getFireLength(state.fireLevel), pathLength);
   var elapsed = (timestamp - state.fireStartAt) / 1000;
-  var headIndex = Math.floor(elapsed * FIRE_SPEED);
+  var headIndex = Math.floor(elapsed * getFireSpeed());
   headIndex = ((headIndex % pathLength) + pathLength) % pathLength;
 
   var indices = [];

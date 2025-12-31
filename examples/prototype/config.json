@@ -1,0 +1,55 @@
+{
+  "levels": {
+    "ghost": { "min": 1, "max": 10 },
+    "mystery": { "min": 1, "max": 10 },
+    "enigma": { "min": 1, "max": 10 },
+    "infection": { "min": 1, "max": 4 },
+    "speed": { "min": 1, "max": 10 },
+    "fire": { "min": 1, "max": 10 },
+    "timeExtend": { "min": 1, "max": 10 },
+    "hintMultipleChoice": { "min": 1, "max": 3 },
+    "hintRow": { "min": 1, "max": 3 },
+    "hintCol": { "min": 1, "max": 3 },
+    "hintDiag": { "min": 1, "max": 3 },
+    "eliminateRandom": { "min": 1, "max": 3 }
+  },
+  "timers": {
+    "mystery": { "baseSeconds": 30, "decrementPerLevel": 5, "minSeconds": 5 },
+    "enigma": { "baseSeconds": 30, "decrementPerLevel": 5, "minSeconds": 5 },
+    "speed": { "baseSeconds": 30, "decrementPerLevel": 5, "minSeconds": 2 }
+  },
+  "mystery": { "baseStones": 1, "incrementPerLevel": 1, "minStones": 1 },
+  "enigma": { "baseRings": 1, "incrementPerLevel": 1, "minRings": 1 },
+  "passives": {
+    "timeExtendPercentPerLevel": 10
+  },
+  "ghost": {
+    "flashSeconds": 5,
+    "flashDecrementPerLevel": 1,
+    "flashMinSeconds": 0.5,
+    "revealSeconds": 2,
+    "revealDecrementPerLevel": 1,
+    "revealMinSeconds": 0
+  },
+  "fireSnake": {
+    "speed": 5,
+    "baseLength": 4,
+    "lengthPerLevel": 2
+  },
+  "hints": {
+    "multipleChoice": {
+      "baseOptions": 4,
+      "decrementPerLevel": 1,
+      "minOptions": 2
+    },
+    "rowBand": { "baseWidth": 3, "decrementPerLevel": 1, "minWidth": 1 },
+    "colBand": { "baseWidth": 3, "decrementPerLevel": 1, "minWidth": 1 },
+    "diagBand": { "baseWidth": 3, "decrementPerLevel": 1, "minWidth": 1 },
+    "eliminateRandom": {
+      "baseDecoys": 2,
+      "decrementPerLevel": 1,
+      "minDecoys": 0,
+      "minIfNoWrong": 1
+    }
+  }
+}

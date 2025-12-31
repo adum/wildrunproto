@@ -1,4 +1,5 @@
 import { app } from "./context.js";
+import "./config.js";
 import "./ghost.js";
 import "./fire.js";
 import "./passives.js";
@@ -306,66 +307,16 @@ window.addEventListener("resize", function () {
 });
 
 app.ui.updateHud();
-if (elements.ghostLevelInput) {
-  app.ghost.setGhostLevel(elements.ghostLevelInput.value);
-} else {
-  app.ghost.updateGhostLevelUI();
+if (app.configUtils && app.configUtils.applyConfigToUI) {
+  app.configUtils.applyConfigToUI();
 }
-if (elements.mysteryLevelInput) {
-  app.timers.setMysteryLevel(elements.mysteryLevelInput.value);
-} else {
-  app.timers.updateMysteryLevelUI();
-}
-if (elements.enigmaLevelInput) {
-  app.timers.setEnigmaLevel(elements.enigmaLevelInput.value);
-} else {
-  app.timers.updateEnigmaLevelUI();
-}
-if (elements.infectionLevelInput) {
-  app.challenges.setInfectionLevel(elements.infectionLevelInput.value);
-} else {
-  app.challenges.updateInfectionLevelUI();
-}
-if (elements.speedLevelInput) {
-  app.timers.setSpeedLevel(elements.speedLevelInput.value);
-} else {
-  app.timers.updateSpeedLevelUI();
-}
-if (elements.fireLevelInput) {
-  app.fire.setFireLevel(elements.fireLevelInput.value);
-} else {
-  app.fire.updateFireLevelUI();
-}
-if (elements.timeExtendLevelInput) {
-  app.passives.setTimeExtendLevel(elements.timeExtendLevelInput.value);
-} else {
-  app.passives.updateTimeExtendLevelUI();
+if (app.configReady && app.configReady.then) {
+  app.configReady.then(function () {
+    if (app.configUtils && app.configUtils.applyConfigToUI) {
+      app.configUtils.applyConfigToUI();
+    }
+  });
 }
 app.passives.updatePassiveControls();
-if (elements.hintRowLevelInput) {
-  app.hints.setRowRevealLevel(elements.hintRowLevelInput.value);
-} else {
-  app.hints.updateRowRevealLevelUI();
-}
-if (elements.hintColLevelInput) {
-  app.hints.setColumnRevealLevel(elements.hintColLevelInput.value);
-} else {
-  app.hints.updateColumnRevealLevelUI();
-}
-if (elements.hintDiagLevelInput) {
-  app.hints.setDiagonalRevealLevel(elements.hintDiagLevelInput.value);
-} else {
-  app.hints.updateDiagonalRevealLevelUI();
-}
-if (elements.hintTwoLevelInput) {
-  app.hints.setMultipleChoiceLevel(elements.hintTwoLevelInput.value);
-} else {
-  app.hints.updateMultipleChoiceLevelUI();
-}
-if (elements.elimRandomLevelInput) {
-  app.hints.setElimRandomLevel(elements.elimRandomLevelInput.value);
-} else {
-  app.hints.updateElimRandomLevelUI();
-}
 
 app.board.loadSgf(state.sgfKey);

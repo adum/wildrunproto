@@ -154,6 +154,9 @@ export const handlers = {
   onTimerExpired: null,
 };
 
+export const config = {};
+export const configUtils = {};
+
 export function logMessage(message) {
   var logEl = elements.logEl;
   if (!logEl) {
@@ -270,6 +273,8 @@ export const app = {
   refs: refs,
   state: state,
   handlers: handlers,
+  config: config,
+  configUtils: configUtils,
   ui: {
     logMessage: logMessage,
     setStatus: setStatus,

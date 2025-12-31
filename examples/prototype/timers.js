@@ -6,6 +6,48 @@ var refs = app.refs;
 var ui = app.ui;
 var utils = app.utils;
 var passives = app.passives;
+var configUtils = app.configUtils;
+
+function getNumber(value, fallback) {
+  var num = Number(value);
+  if (Number.isFinite(num)) {
+    return num;
+  }
+  return fallback;
+}
+
+function clampLevel(levelKey, level, fallbackMin, fallbackMax) {
+  if (configUtils && configUtils.clampLevel) {
+    return configUtils.clampLevel(levelKey, level, fallbackMin, fallbackMax);
+  }
+  var min = typeof fallbackMin === "number" ? fallbackMin : 1;
+  var max = typeof fallbackMax === "number" ? fallbackMax : min;
+  var value = Number(level);
+  if (!Number.isFinite(value)) {
+    value = min;
+  }
+  if (value < min) {
+    return min;
+  }
+  if (value > max) {
+    return max;
+  }
+  return value;
+}
+
+function getTimerSeconds(timerKey, level, baseFallback, decFallback, minFallback) {
+  var timers = app.config && app.config.timers ? app.config.timers : {};
+  var config = timers[timerKey] || {};
+  var base = getNumber(config.baseSeconds, baseFallback);
+  var decrement = getNumber(config.decrementPerLevel, decFallback);
+  var minSeconds = getNumber(config.minSeconds, minFallback);
+  var safeLevel = clampLevel(timerKey, level, 1, 10);
+  var seconds = base - (safeLevel - 1) * decrement;
+  if (!Number.isFinite(seconds)) {
+    seconds = base;
+  }
+  return Math.max(minSeconds, seconds);
+}
 
 function getTimeExtendMultiplier() {
   if (passives && passives.getTimeExtendMultiplier) {
@@ -23,13 +65,21 @@ function applyTimeExtend(seconds) {
 }
 
 function getMysteryStoneCount(level) {
-  var safeLevel = Math.max(1, Number(level) || 1);
-  return safeLevel;
+  var config = app.config && app.config.mystery ? app.config.mystery : {};
+  var base = getNumber(config.baseStones, 1);
+  var increment = getNumber(config.incrementPerLevel, 1);
+  var minStones = getNumber(config.minStones, 1);
+  var safeLevel = clampLevel("mystery", level, 1, 10);
+  var count = base + (safeLevel - 1) * increment;
+  if (!Number.isFinite(count)) {
+    count = base;
+  }
+  count = Math.max(minStones, count);
+  return Math.max(1, Math.round(count));
 }
 
 function getMysteryTimerSeconds(level) {
-  var safeLevel = Math.max(1, Number(level) || 1);
-  return Math.max(5, 30 - (safeLevel - 1) * 5);
+  return getTimerSeconds("mystery", level, 30, 5, 5);
 }
 
 function ensureMysteryStones(mat) {
@@ -89,7 +139,7 @@ function updateMysteryLevelUI() {
 }
 
 function setMysteryLevel(level) {
-  var nextLevel = Math.max(1, Number(level) || 1);
+  var nextLevel = clampLevel("mystery", level, 1, 10);
   state.mysteryLevel = nextLevel;
   updateMysteryLevelUI();
   if (state.challengeMystery && !state.mysteryRevealed) {
@@ -191,13 +241,21 @@ function revealMysteryAndStart() {
 }
 
 function getEnigmaPointCount(level) {
-  var safeLevel = Math.max(1, Number(level) || 1);
-  return safeLevel;
+  var config = app.config && app.config.enigma ? app.config.enigma : {};
+  var base = getNumber(config.baseRings, 1);
+  var increment = getNumber(config.incrementPerLevel, 1);
+  var minRings = getNumber(config.minRings, 1);
+  var safeLevel = clampLevel("enigma", level, 1, 10);
+  var count = base + (safeLevel - 1) * increment;
+  if (!Number.isFinite(count)) {
+    count = base;
+  }
+  count = Math.max(minRings, count);
+  return Math.max(1, Math.round(count));
 }
 
 function getEnigmaTimerSeconds(level) {
-  var safeLevel = Math.max(1, Number(level) || 1);
-  return Math.max(5, 30 - (safeLevel - 1) * 5);
+  return getTimerSeconds("enigma", level, 30, 5, 5);
 }
 
 function updateEnigmaButtonLabel() {
@@ -219,7 +277,7 @@ function updateEnigmaLevelUI() {
 }
 
 function setEnigmaLevel(level) {
-  var nextLevel = Math.max(1, Number(level) || 1);
+  var nextLevel = clampLevel("enigma", level, 1, 10);
   state.enigmaLevel = nextLevel;
   updateEnigmaLevelUI();
   if (state.challengeEnigma && !state.enigmaRevealed) {
@@ -317,8 +375,7 @@ function revealEnigmaAndStart() {
 }
 
 function getSpeedTimerSeconds(level) {
-  var safeLevel = Math.max(1, Number(level) || 1);
-  return Math.max(2, 30 - (safeLevel - 1) * 5);
+  return getTimerSeconds("speed", level, 30, 5, 2);
 }
 
 function updateSpeedLevelUI() {
@@ -331,7 +388,7 @@ function updateSpeedLevelUI() {
 }
 
 function setSpeedLevel(level) {
-  var nextLevel = Math.max(1, Number(level) || 1);
+  var nextLevel = clampLevel("speed", level, 1, 10);
   state.speedLevel = nextLevel;
   updateSpeedLevelUI();
 }

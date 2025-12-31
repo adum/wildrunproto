@@ -3,6 +3,34 @@ import { app } from "./context.js";
 var GB = app.GB;
 var state = app.state;
 var refs = app.refs;
+var configUtils = app.configUtils;
+
+function getNumber(value, fallback) {
+  var num = Number(value);
+  if (Number.isFinite(num)) {
+    return num;
+  }
+  return fallback;
+}
+
+function clampLevel(levelKey, level, fallbackMin, fallbackMax) {
+  if (configUtils && configUtils.clampLevel) {
+    return configUtils.clampLevel(levelKey, level, fallbackMin, fallbackMax);
+  }
+  var min = typeof fallbackMin === "number" ? fallbackMin : 1;
+  var max = typeof fallbackMax === "number" ? fallbackMax : min;
+  var value = Number(level);
+  if (!Number.isFinite(value)) {
+    value = min;
+  }
+  if (value < min) {
+    return min;
+  }
+  if (value > max) {
+    return max;
+  }
+  return value;
+}
 
 function recordGhostStone(i, j, ki) {
   if (!state.challengeGhost) {
@@ -171,13 +199,30 @@ function startGhostAnimation() {
 }
 
 function getGhostVisibleDuration(level) {
-  var safeLevel = Math.max(1, Number(level) || 1);
-  return Math.max(500, 5000 - (safeLevel - 1) * 1000);
+  var config = app.config && app.config.ghost ? app.config.ghost : {};
+  var base = getNumber(config.flashSeconds, 5);
+  var decrement = getNumber(config.flashDecrementPerLevel, 1);
+  var minSeconds = getNumber(config.flashMinSeconds, 0.5);
+  var safeLevel = clampLevel("ghost", level, 1, 10);
+  var seconds = base - (safeLevel - 1) * decrement;
+  if (!Number.isFinite(seconds)) {
+    seconds = base;
+  }
+  seconds = Math.max(minSeconds, seconds);
+  return Math.max(0, seconds) * 1000;
 }
 
 function getGhostRevealDuration(level) {
-  var safeLevel = Math.max(1, Number(level) || 1);
-  var seconds = 2 - (safeLevel - 1);
+  var config = app.config && app.config.ghost ? app.config.ghost : {};
+  var base = getNumber(config.revealSeconds, 2);
+  var decrement = getNumber(config.revealDecrementPerLevel, 1);
+  var minSeconds = getNumber(config.revealMinSeconds, 0);
+  var safeLevel = clampLevel("ghost", level, 1, 10);
+  var seconds = base - (safeLevel - 1) * decrement;
+  if (!Number.isFinite(seconds)) {
+    seconds = base;
+  }
+  seconds = Math.max(minSeconds, seconds);
   return Math.max(0, seconds) * 1000;
 }
 
@@ -191,7 +236,7 @@ function updateGhostLevelUI() {
 }
 
 function setGhostLevel(level) {
-  var nextLevel = Math.max(1, Number(level) || 1);
+  var nextLevel = clampLevel("ghost", level, 1, 10);
   state.ghostLevel = nextLevel;
   updateGhostLevelUI();
 }

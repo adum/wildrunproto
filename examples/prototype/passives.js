@@ -3,6 +3,34 @@ import { app } from "./context.js";
 var GB = app.GB;
 var state = app.state;
 var elements = app.elements;
+var configUtils = app.configUtils;
+
+function getNumber(value, fallback) {
+  var num = Number(value);
+  if (Number.isFinite(num)) {
+    return num;
+  }
+  return fallback;
+}
+
+function clampLevel(levelKey, level, fallbackMin, fallbackMax) {
+  if (configUtils && configUtils.clampLevel) {
+    return configUtils.clampLevel(levelKey, level, fallbackMin, fallbackMax);
+  }
+  var min = typeof fallbackMin === "number" ? fallbackMin : 1;
+  var max = typeof fallbackMax === "number" ? fallbackMax : min;
+  var value = Number(level);
+  if (!Number.isFinite(value)) {
+    value = min;
+  }
+  if (value < min) {
+    return min;
+  }
+  if (value > max) {
+    return max;
+  }
+  return value;
+}
 
 function updateTimeExtendLevelUI() {
   if (elements.timeExtendLevelInput) {
@@ -23,7 +51,7 @@ function updateTimeExtendLevelUI() {
 }
 
 function setTimeExtendLevel(level) {
-  var nextLevel = Math.max(1, Math.min(10, Number(level) || 1));
+  var nextLevel = clampLevel("timeExtend", level, 1, 10);
   state.timeExtendLevel = nextLevel;
   updateTimeExtendLevelUI();
 }
@@ -32,8 +60,10 @@ function getTimeExtendMultiplier() {
   if (!state.passiveTimeExtend) {
     return 1;
   }
-  var safeLevel = Math.max(1, Number(state.timeExtendLevel) || 1);
-  return 1 + safeLevel * 0.1;
+  var config = app.config && app.config.passives ? app.config.passives : {};
+  var percentPerLevel = getNumber(config.timeExtendPercentPerLevel, 10);
+  var safeLevel = clampLevel("timeExtend", state.timeExtendLevel, 1, 10);
+  return 1 + safeLevel * (percentPerLevel / 100);
 }
 
 function updatePassiveControls() {

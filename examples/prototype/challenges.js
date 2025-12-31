@@ -3,6 +3,26 @@ import { app } from "./context.js";
 var state = app.state;
 var refs = app.refs;
 var elements = app.elements;
+var configUtils = app.configUtils;
+
+function clampLevel(levelKey, level, fallbackMin, fallbackMax) {
+  if (configUtils && configUtils.clampLevel) {
+    return configUtils.clampLevel(levelKey, level, fallbackMin, fallbackMax);
+  }
+  var min = typeof fallbackMin === "number" ? fallbackMin : 1;
+  var max = typeof fallbackMax === "number" ? fallbackMax : min;
+  var value = Number(level);
+  if (!Number.isFinite(value)) {
+    value = min;
+  }
+  if (value < min) {
+    return min;
+  }
+  if (value > max) {
+    return max;
+  }
+  return value;
+}
 
 function recordGrayStone(i, j) {
   if (!state.challengeGray) {
@@ -15,7 +35,7 @@ function recordGrayStone(i, j) {
 }
 
 function getInfectionCounts(level) {
-  var safeLevel = Math.max(1, Math.min(4, Number(level) || 1));
+  var safeLevel = clampLevel("infection", level, 1, 4);
   var playerCount = safeLevel >= 3 ? 2 : 1;
   var opponentCount = 0;
   if (safeLevel >= 2) {
@@ -132,7 +152,7 @@ function updateInfectionLevelUI() {
 }
 
 function setInfectionLevel(level) {
-  var nextLevel = Math.max(1, Math.min(4, Number(level) || 1));
+  var nextLevel = clampLevel("infection", level, 1, 4);
   state.infectionLevel = nextLevel;
   updateInfectionLevelUI();
 }

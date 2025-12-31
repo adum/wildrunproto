@@ -6,6 +6,62 @@ var refs = app.refs;
 var ui = app.ui;
 var utils = app.utils;
 var elements = app.elements;
+var configUtils = app.configUtils;
+
+function getNumber(value, fallback) {
+  var num = Number(value);
+  if (Number.isFinite(num)) {
+    return num;
+  }
+  return fallback;
+}
+
+function clampLevel(levelKey, level, fallbackMin, fallbackMax) {
+  if (configUtils && configUtils.clampLevel) {
+    return configUtils.clampLevel(levelKey, level, fallbackMin, fallbackMax);
+  }
+  var min = typeof fallbackMin === "number" ? fallbackMin : 1;
+  var max = typeof fallbackMax === "number" ? fallbackMax : min;
+  var value = Number(level);
+  if (!Number.isFinite(value)) {
+    value = min;
+  }
+  if (value < min) {
+    return min;
+  }
+  if (value > max) {
+    return max;
+  }
+  return value;
+}
+
+function getHintsConfig() {
+  return app.config && app.config.hints ? app.config.hints : {};
+}
+
+function getMultipleChoiceOptionCount(level) {
+  var hintsConfig = getHintsConfig();
+  var config = hintsConfig.multipleChoice || {};
+  var base = getNumber(config.baseOptions, 4);
+  var decrement = getNumber(config.decrementPerLevel, 1);
+  var minOptions = getNumber(config.minOptions, 2);
+  var safeLevel = clampLevel("hintMultipleChoice", level, 1, 3);
+  var count = base - (safeLevel - 1) * decrement;
+  count = Math.max(minOptions, count);
+  return Math.max(2, Math.round(count));
+}
+
+function getBandWidth(levelKey, configKey, level, fallbackWidth) {
+  var hintsConfig = getHintsConfig();
+  var config = hintsConfig[configKey] || {};
+  var base = getNumber(config.baseWidth, fallbackWidth);
+  var decrement = getNumber(config.decrementPerLevel, 1);
+  var minWidth = getNumber(config.minWidth, 1);
+  var safeLevel = clampLevel(levelKey, level, 1, 3);
+  var width = base - (safeLevel - 1) * decrement;
+  width = Math.max(minWidth, width);
+  return Math.max(1, Math.round(width));
+}
 
 function resetRowHint() {
   state.hintRow = null;
@@ -248,7 +304,7 @@ function updateElimRandomLevelUI() {
 }
 
 function setElimRandomLevel(level) {
-  var nextLevel = Math.max(1, Math.min(3, Number(level) || 1));
+  var nextLevel = clampLevel("eliminateRandom", level, 1, 3);
   state.elimRandomLevel = nextLevel;
   updateElimRandomLevelUI();
 }
@@ -263,7 +319,7 @@ function updateMultipleChoiceLevelUI() {
 }
 
 function setMultipleChoiceLevel(level) {
-  var nextLevel = Math.max(1, Math.min(3, Number(level) || 1));
+  var nextLevel = clampLevel("hintMultipleChoice", level, 1, 3);
   state.hintTwoLevel = nextLevel;
   updateMultipleChoiceLevelUI();
 }
@@ -278,7 +334,7 @@ function updateRowRevealLevelUI() {
 }
 
 function setRowRevealLevel(level) {
-  var nextLevel = Math.max(1, Math.min(3, Number(level) || 1));
+  var nextLevel = clampLevel("hintRow", level, 1, 3);
   state.hintRowLevel = nextLevel;
   updateRowRevealLevelUI();
 }
@@ -293,7 +349,7 @@ function updateColumnRevealLevelUI() {
 }
 
 function setColumnRevealLevel(level) {
-  var nextLevel = Math.max(1, Math.min(3, Number(level) || 1));
+  var nextLevel = clampLevel("hintCol", level, 1, 3);
   state.hintColLevel = nextLevel;
   updateColumnRevealLevelUI();
 }
@@ -308,7 +364,7 @@ function updateDiagonalRevealLevelUI() {
 }
 
 function setDiagonalRevealLevel(level) {
-  var nextLevel = Math.max(1, Math.min(3, Number(level) || 1));
+  var nextLevel = clampLevel("hintDiag", level, 1, 3);
   state.hintDiagLevel = nextLevel;
   updateDiagonalRevealLevelUI();
 }
@@ -450,8 +506,7 @@ function hintTwoMoves() {
     );
   });
 
-  var level = Math.max(1, Math.min(3, Number(state.hintTwoLevel) || 1));
-  var optionCount = Math.max(2, 5 - level);
+  var optionCount = getMultipleChoiceOptionCount(state.hintTwoLevel);
   var wrongNeeded = optionCount - 1;
   var wrongChoices = [];
   var used = new Set([correct.sgf]);
@@ -617,8 +672,7 @@ function hintRowReveal() {
     return;
   }
 
-  var level = Math.max(1, Math.min(3, Number(state.hintRowLevel) || 1));
-  var rowCount = Math.max(1, 4 - level);
+  var rowCount = getBandWidth("hintRow", "rowBand", state.hintRowLevel, 3);
   rowCount = Math.min(rowCount, size);
   var anchorRow = rows[Math.floor(Math.random() * rows.length)];
   var maxStart = Math.min(anchorRow, size - rowCount);
@@ -682,8 +736,7 @@ function hintColumnReveal() {
     return;
   }
 
-  var level = Math.max(1, Math.min(3, Number(state.hintColLevel) || 1));
-  var colCount = Math.max(1, 4 - level);
+  var colCount = getBandWidth("hintCol", "colBand", state.hintColLevel, 3);
   colCount = Math.min(colCount, size);
   var anchorCol = cols[Math.floor(Math.random() * cols.length)];
   var maxStart = Math.min(anchorCol, size - colCount);
@@ -765,8 +818,7 @@ function hintDiagonalReveal() {
   var values = choice.values;
   var value = values[Math.floor(Math.random() * values.length)];
 
-  var level = Math.max(1, Math.min(3, Number(state.hintDiagLevel) || 1));
-  var diagCount = Math.max(1, 4 - level);
+  var diagCount = getBandWidth("hintDiag", "diagBand", state.hintDiagLevel, 3);
   var rangeMin =
     choice.type === "backslash" ? -(size - 1) : 0;
   var rangeMax =
