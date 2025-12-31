@@ -355,7 +355,8 @@ select {
   gap: 8px;
 }
 
-.controls--challenges {
+.controls--challenges,
+.controls--hints {
   padding: 8px;
   border-radius: 12px;
   border: 1px dashed rgba(90, 70, 50, 0.4);
@@ -407,18 +408,31 @@ select {
 .ghost-row,
 .enigma-row,
 .infection-row,
-.speed-row {
+.speed-row,
+.hint-row {
   display: grid;
   grid-template-columns: auto minmax(120px, 1fr);
   align-items: center;
   gap: 8px;
 }
 
+.hint-row {
+  grid-template-columns: minmax(0, 1fr) minmax(140px, 1fr);
+}
+
+.hint-row .button {
+  width: 100%;
+  min-width: 0;
+  white-space: normal;
+  text-align: center;
+}
+
 .mystery-level,
 .ghost-level,
 .enigma-level,
 .infection-level,
-.speed-level {
+.speed-level,
+.hint-level {
   display: flex;
   align-items: center;
   gap: 6px;
@@ -434,7 +448,8 @@ select {
 .ghost-level label,
 .enigma-level label,
 .infection-level label,
-.speed-level label {
+.speed-level label,
+.hint-level label {
   display: inline-flex;
   align-items: center;
   margin: 0;
@@ -446,16 +461,24 @@ select {
 .ghost-level input[type="range"],
 .enigma-level input[type="range"],
 .infection-level input[type="range"],
-.speed-level input[type="range"] {
+.speed-level input[type="range"],
+.hint-level input[type="range"] {
   width: 100%;
   min-width: 60px;
+}
+
+.hint-level input[type="range"] {
+  width: auto;
+  min-width: 0;
+  flex: 1 1 0;
 }
 
 .mystery-level__value,
 .ghost-level__value,
 .enigma-level__value,
 .infection-level__value,
-.speed-level__value {
+.speed-level__value,
+.hint-level__value {
   min-width: 16px;
   text-align: right;
   font-weight: 700;
@@ -541,12 +564,12 @@ select {
   transform-origin: center;
   background: linear-gradient(
     90deg,
-    rgba(233, 196, 106, 0.14),
-    rgba(233, 196, 106, 0.34),
-    rgba(233, 196, 106, 0.14)
+    rgba(110, 200, 140, 0.14),
+    rgba(110, 200, 140, 0.34),
+    rgba(110, 200, 140, 0.14)
   );
-  border: 1px solid rgba(194, 152, 70, 0.45);
-  box-shadow: 0 8px 16px rgba(120, 90, 40, 0.18);
+  border: 1px solid rgba(78, 156, 102, 0.45);
+  box-shadow: 0 8px 16px rgba(45, 90, 60, 0.18);
   transition: opacity 0.2s ease;
   z-index: 5;
 }

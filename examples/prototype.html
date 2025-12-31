@@ -39,71 +39,144 @@
               </select>
             </div>
 
-            <div class="controls">
-              <button
-                id="hintOne"
-                class="button"
-                type="button"
-                title="Marks the next correct move."
-              >
-                Hint: First Move
-              </button>
-              <button
-                id="hintTwo"
-                class="button"
-                type="button"
-                title="Marks one correct move and one wrong move."
-              >
-                Hint: Two Moves
-              </button>
-              <button
-                id="hintNeighbor"
-                class="button"
-                type="button"
-                title="Highlights a stone adjacent to a correct move."
-              >
-                Hint: Wave to Your Neighbor
-              </button>
-              <button
-                id="hintRow"
-                class="button"
-                type="button"
-                title="Reveals a row containing a correct move."
-              >
-                Hint: Row Reveal
-              </button>
-              <button
-                id="hintCol"
-                class="button"
-                type="button"
-                title="Reveals a column containing a correct move."
-              >
-                Hint: Column Reveal
-              </button>
-              <button
-                id="hintDiag"
-                class="button"
-                type="button"
-                title="Reveals a diagonal containing a correct move."
-              >
-                Hint: Diagonal Reveal
-              </button>
-              <button
-                id="elimRandom"
-                class="button"
-                type="button"
-                title="Blocks a random wrong-path move."
-              >
-                Eliminate Random Move
-              </button>
-              <button
-                id="clearHints"
-                class="button"
-                type="button"
-                title="Clears all active hints."
-              >
-                Clear Hints
-              </button>
+            <div>
+              <label>Hints</label>
+              <div class="controls controls--hints">
+                <button
+                  id="hintOne"
+                  class="button"
+                  type="button"
+                  title="Marks the next correct move."
+                >
+                  First Move
+                </button>
+                <button
+                  id="hintTwo"
+                  class="button"
+                  type="button"
+                  title="Marks one correct move and one wrong move."
+                >
+                  Two Moves
+                </button>
+                <button
+                  id="hintNeighbor"
+                  class="button"
+                  type="button"
+                  title="Highlights a stone adjacent to a correct move."
+                >
+                  Wave to Your Neighbor
+                </button>
+                <div class="hint-row">
+                  <button
+                    id="hintRow"
+                    class="button"
+                    type="button"
+                    title="Reveals a row containing a correct move."
+                  >
+                    Row Reveal
+                  </button>
+                  <div class="hint-level">
+                    <label for="hintRowLevel">Level</label>
+                    <input
+                      id="hintRowLevel"
+                      type="range"
+                      min="1"
+                      max="3"
+                      step="1"
+                      value="1"
+                      title="Controls row band width (L1=3 rows, L2=2 rows, L3=1 row)."
+                    />
+                    <span id="hintRowLevelValue" class="hint-level__value"
+                      >1</span
+                    >
+                  </div>
+                </div>
+                <div class="hint-row">
+                  <button
+                    id="hintCol"
+                    class="button"
+                    type="button"
+                    title="Reveals a column containing a correct move."
+                  >
+                    Column Reveal
+                  </button>
+                  <div class="hint-level">
+                    <label for="hintColLevel">Level</label>
+                    <input
+                      id="hintColLevel"
+                      type="range"
+                      min="1"
+                      max="3"
+                      step="1"
+                      value="1"
+                      title="Controls column band width (L1=3 columns, L2=2 columns, L3=1 column)."
+                    />
+                    <span id="hintColLevelValue" class="hint-level__value"
+                      >1</span
+                    >
+                  </div>
+                </div>
+                <div class="hint-row">
+                  <button
+                    id="hintDiag"
+                    class="button"
+                    type="button"
+                    title="Reveals a diagonal containing a correct move."
+                  >
+                    Diagonal Reveal
+                  </button>
+                  <div class="hint-level">
+                    <label for="hintDiagLevel">Level</label>
+                    <input
+                      id="hintDiagLevel"
+                      type="range"
+                      min="1"
+                      max="3"
+                      step="1"
+                      value="1"
+                      title="Controls diagonal band width (L1=3 diagonals, L2=2 diagonals, L3=1 diagonal)."
+                    />
+                    <span id="hintDiagLevelValue" class="hint-level__value"
+                      >1</span
+                    >
+                  </div>
+                </div>
+                <div class="hint-row">
+                  <button
+                    id="elimRandom"
+                    class="button"
+                    type="button"
+                    title="Blocks a random wrong-path move."
+                  >
+                    Eliminate Random Move
+                  </button>
+                  <div class="hint-level">
+                    <label for="elimRandomLevel">Level</label>
+                    <input
+                      id="elimRandomLevel"
+                      type="range"
+                      min="1"
+                      max="3"
+                      step="1"
+                      value="1"
+                      title="Controls extra decoy moves (L1=+2, L2=+1, L3=+0; if no wrong moves exist, at least 1 decoy is added)."
+                    />
+                    <span
+                      id="elimRandomLevelValue"
+                      class="hint-level__value"
+                      >1</span
+                    >
+                  </div>
+                </div>
+                <button
+                  id="clearHints"
+                  class="button"
+                  type="button"
+                  title="Clears all active hints."
+                >
+                  Clear Hints
+                </button>
+              </div>
             </div>
 
             <div>
