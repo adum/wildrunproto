@@ -49,6 +49,9 @@ export const elements = {
   infectionLevelValue: document.getElementById("infectionLevelValue"),
   speedLevelInput: document.getElementById("speedLevel"),
   speedLevelValue: document.getElementById("speedLevelValue"),
+  challengeFireBtn: document.getElementById("challengeFire"),
+  fireLevelInput: document.getElementById("fireLevel"),
+  fireLevelValue: document.getElementById("fireLevelValue"),
   elimRandomBtn: document.getElementById("elimRandom"),
   elimRandomLevelInput: document.getElementById("elimRandomLevel"),
   elimRandomLevelValue: document.getElementById("elimRandomLevelValue"),
@@ -71,6 +74,8 @@ export const refs = {
   enigmaTimerEl: null,
   speedTimerEl: null,
   ghostAnimId: null,
+  fireCanvas: null,
+  fireAnimId: null,
 };
 
 export const state = {
@@ -122,6 +127,11 @@ export const state = {
   speedTimerActive: false,
   speedTimerEndsAt: 0,
   speedTimerId: null,
+  challengeFire: false,
+  fireLevel: 1,
+  fireStartAt: 0,
+  firePath: [],
+  firePathSize: 0,
   currentMat: null,
   hintMode: "none",
   extraAllowedMoves: new Set(),
@@ -264,6 +274,7 @@ export const app = {
     colorName: colorName,
   },
   ghost: {},
+  fire: {},
   overlays: {},
   timers: {},
   challenges: {},

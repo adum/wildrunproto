@@ -154,6 +154,20 @@ function setSpeedPlay(active) {
   app.timers.updateSpeedUI();
 }
 
+function setFirePlay(active) {
+  state.challengeFire = active;
+  state.fireStartAt = active ? performance.now() : 0;
+  state.firePath = [];
+  state.firePathSize = 0;
+  updateChallengeControls();
+  app.fire.updateFireLevelUI();
+  if (active) {
+    app.fire.startFireAnimation();
+  } else {
+    app.fire.stopFireAnimation();
+  }
+}
+
 function updateChallengeControls() {
   if (elements.challengeGrayBtn) {
     if (state.challengeGray) {
@@ -209,6 +223,15 @@ function updateChallengeControls() {
       elements.challengeSpeedBtn.disabled = false;
     }
   }
+  if (elements.challengeFireBtn) {
+    if (state.challengeFire) {
+      elements.challengeFireBtn.classList.add("active");
+      elements.challengeFireBtn.disabled = true;
+    } else {
+      elements.challengeFireBtn.classList.remove("active");
+      elements.challengeFireBtn.disabled = false;
+    }
+  }
 }
 
 function resetChallenges() {
@@ -231,6 +254,11 @@ function resetChallenges() {
   state.challengeSpeed = false;
   state.speedMoveCount = 0;
   app.timers.stopSpeedTimer(false);
+  state.challengeFire = false;
+  state.fireStartAt = 0;
+  state.firePath = [];
+  state.firePathSize = 0;
+  app.fire.stopFireAnimation();
   if (refs.ghostAnimId) {
     cancelAnimationFrame(refs.ghostAnimId);
     refs.ghostAnimId = null;
@@ -252,6 +280,7 @@ app.challenges.setMysteryPlay = setMysteryPlay;
 app.challenges.setEnigmaPlay = setEnigmaPlay;
 app.challenges.setInfectionPlay = setInfectionPlay;
 app.challenges.setSpeedPlay = setSpeedPlay;
+app.challenges.setFirePlay = setFirePlay;
 app.challenges.updateChallengeControls = updateChallengeControls;
 app.challenges.resetChallenges = resetChallenges;
 app.challenges.updateInfectionLevelUI = updateInfectionLevelUI;

@@ -1,5 +1,6 @@
 import { app } from "./context.js";
 import "./ghost.js";
+import "./fire.js";
 import "./overlays.js";
 import "./timers.js";
 import "./challenges.js";
@@ -168,6 +169,15 @@ if (elements.challengeSpeedBtn) {
     app.ui.logMessage("Challenge enabled: Speed play.");
   });
 }
+if (elements.challengeFireBtn) {
+  elements.challengeFireBtn.addEventListener("click", function () {
+    if (state.challengeFire) {
+      return;
+    }
+    app.challenges.setFirePlay(true);
+    app.ui.logMessage("Challenge enabled: Fire snake.");
+  });
+}
 
 if (elements.mysteryLevelInput) {
   elements.mysteryLevelInput.addEventListener("input", function (event) {
@@ -202,6 +212,14 @@ if (elements.speedLevelInput) {
       return;
     }
     app.timers.setSpeedLevel(event.target.value);
+  });
+}
+if (elements.fireLevelInput) {
+  elements.fireLevelInput.addEventListener("input", function (event) {
+    if (!event || !event.target) {
+      return;
+    }
+    app.fire.setFireLevel(event.target.value);
   });
 }
 
@@ -259,6 +277,7 @@ window.addEventListener("resize", function () {
   }
   app.overlays.renderGrayStones(state.currentMat);
   app.overlays.renderEnigmaOverlay();
+  app.fire.startFireAnimation();
   var revealActive =
     state.ghostRevealUntil > 0 && state.ghostRevealUntil > performance.now();
   if (state.challengeGhost && (state.ghostFlashes.length > 0 || revealActive)) {
@@ -293,6 +312,11 @@ if (elements.speedLevelInput) {
   app.timers.setSpeedLevel(elements.speedLevelInput.value);
 } else {
   app.timers.updateSpeedLevelUI();
+}
+if (elements.fireLevelInput) {
+  app.fire.setFireLevel(elements.fireLevelInput.value);
+} else {
+  app.fire.updateFireLevelUI();
 }
 if (elements.hintRowLevelInput) {
   app.hints.setRowRevealLevel(elements.hintRowLevelInput.value);

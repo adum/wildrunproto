@@ -33,6 +33,11 @@ function initBoard(boardSize) {
   refs.enigmaCanvas.style.position = "absolute";
   refs.enigmaCanvas.style.pointerEvents = "none";
   app.elements.mount.appendChild(refs.enigmaCanvas);
+  refs.fireCanvas = document.createElement("canvas");
+  refs.fireCanvas.id = "ghostban-fire";
+  refs.fireCanvas.style.position = "absolute";
+  refs.fireCanvas.style.pointerEvents = "none";
+  app.elements.mount.appendChild(refs.fireCanvas);
   state.enigmaPoints = [];
 
   refs.mysteryBtn = document.createElement("button");
@@ -172,6 +177,7 @@ function updateBoard() {
   app.timers.updateMysteryUI();
   app.overlays.renderEnigmaOverlay();
   app.timers.updateEnigmaUI();
+  app.fire.startFireAnimation();
   var revealActive =
     state.ghostRevealUntil > 0 && state.ghostRevealUntil > performance.now();
   if (state.challengeGhost && (state.ghostFlashes.length > 0 || revealActive)) {
