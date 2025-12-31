@@ -292,6 +292,9 @@ function loadSgf(key) {
   state.playerColor = GB.getFirstToMoveColorFromRoot(sgf.root, GB.Ki.Black);
   state.combo = 0;
   state.lastNodeId = null;
+  if (app.passives && app.passives.updateCaptureIndicators) {
+    app.passives.updateCaptureIndicators();
+  }
 
   initBoard(GB.extractBoardSize(sgf.root, 19));
   resetPuzzle();

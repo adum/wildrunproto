@@ -43,15 +43,12 @@ function buildFirePath(size) {
   return path;
 }
 
-function getBoundsFromMat(mat) {
+function getRowSpansFromMat(mat) {
   if (!mat) {
     return null;
   }
   var size = mat.length;
-  var minI = size;
-  var maxI = -1;
-  var minJ = size;
-  var maxJ = -1;
+  var rows = [];
   for (var i = 0; i < size; i += 1) {
     if (!mat[i]) {
       continue;
@@ -60,50 +57,48 @@ function getBoundsFromMat(mat) {
       if (mat[i][j] === GB.Ki.Empty) {
         continue;
       }
-      if (i < minI) {
-        minI = i;
+      rows[j] = rows[j] || { j: j, minI: i, maxI: i };
+      if (i < rows[j].minI) {
+        rows[j].minI = i;
       }
-      if (i > maxI) {
-        maxI = i;
-      }
-      if (j < minJ) {
-        minJ = j;
-      }
-      if (j > maxJ) {
-        maxJ = j;
+      if (i > rows[j].maxI) {
+        rows[j].maxI = i;
       }
     }
   }
-  if (maxI < 0 || maxJ < 0) {
+  var spans = rows.filter(Boolean);
+  if (spans.length === 0) {
     return null;
   }
-  return { minI: minI, maxI: maxI, minJ: minJ, maxJ: maxJ };
+  spans.sort(function (a, b) {
+    return a.j - b.j;
+  });
+  return spans;
 }
 
-function buildFirePathForBounds(bounds, size) {
-  if (!bounds) {
-    return buildFirePath(size);
-  }
-  var minI = Math.max(0, bounds.minI);
-  var maxI = Math.min(size - 1, bounds.maxI);
-  var minJ = Math.max(0, bounds.minJ);
-  var maxJ = Math.min(size - 1, bounds.maxJ);
-  if (minI > maxI || minJ > maxJ) {
+function buildFirePathForRows(spans, size) {
+  if (!spans || spans.length === 0) {
     return buildFirePath(size);
   }
   var path = [];
-  for (var row = minJ; row <= maxJ; row += 1) {
-    if ((row - minJ) % 2 === 0) {
+  for (var r = 0; r < spans.length; r += 1) {
+    var row = spans[r];
+    var minI = Math.max(0, row.minI);
+    var maxI = Math.min(size - 1, row.maxI);
+    if (minI > maxI) {
+      continue;
+    }
+    if (r % 2 === 0) {
       for (var col = minI; col <= maxI; col += 1) {
-        path.push({ i: col, j: row });
+        path.push({ i: col, j: row.j });
       }
     } else {
       for (var col = maxI; col >= minI; col -= 1) {
-        path.push({ i: col, j: row });
+        path.push({ i: col, j: row.j });
       }
     }
   }
-  return path;
+  return path.length > 0 ? path : buildFirePath(size);
 }
 
 function ensureFirePath() {
@@ -115,22 +110,20 @@ function ensureFirePath() {
     state.firePathSize = 0;
     return;
   }
-  var bounds = getBoundsFromMat(state.currentMat);
-  var key = bounds
-    ? bounds.minI +
-      ":" +
-      bounds.maxI +
-      ":" +
-      bounds.minJ +
-      ":" +
-      bounds.maxJ
+  var spans = getRowSpansFromMat(state.currentMat);
+  var key = spans
+    ? spans
+        .map(function (row) {
+          return row.j + ":" + row.minI + "-" + row.maxI;
+        })
+        .join("|")
     : "full";
   if (
     !state.firePath ||
     state.firePathSize !== size ||
     state.firePathKey !== key
   ) {
-    state.firePath = buildFirePathForBounds(bounds, size);
+    state.firePath = buildFirePathForRows(spans, size);
     state.firePathSize = size;
     state.firePathKey = key;
   }
