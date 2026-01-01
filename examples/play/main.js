@@ -195,7 +195,11 @@ app.handlers.onPuzzleFailed = function () {
   }
   game.levelActive = false;
   hideAdvanceOverlay();
-  showRetryOverlay();
+  if (state.lives <= 0) {
+    endGame();
+  } else {
+    showRetryOverlay();
+  }
 };
 
 function getPlayConfig() {
@@ -662,6 +666,12 @@ function hideAdvanceOverlay() {
   }
 }
 
+function showStartOverlay() {
+  if (startOverlay) {
+    startOverlay.classList.remove("is-hidden");
+  }
+}
+
 function showRetryOverlay() {
   if (!retryOverlay) {
     return;
@@ -684,6 +694,29 @@ function hideStartOverlay() {
   if (startOverlay) {
     startOverlay.classList.add("is-hidden");
   }
+}
+
+function endGame() {
+  game.started = false;
+  game.levelActive = false;
+  game.levelNumber = 0;
+  game.bossCount = 0;
+  game.difficulty = null;
+  game.currentProblem = null;
+  game.pendingNext = null;
+  game.hints = [];
+  game.passives = [];
+  game.challenge = null;
+  renderHints();
+  renderPassives();
+  renderChallenges();
+  app.passives.resetPassives();
+  app.challenges.resetChallenges();
+  app.hints.clearHints();
+  app.ui.setStatus("Game over. Start a new run.", "error");
+  hideRetryOverlay();
+  hideAdvanceOverlay();
+  showStartOverlay();
 }
 
 function startGame() {
@@ -739,8 +772,8 @@ if (retryBtn) {
       return;
     }
     if (state.lives <= 0) {
-      state.lives = game.maxLives || 3;
-      app.ui.updateHud();
+      endGame();
+      return;
     }
     hideRetryOverlay();
     game.levelActive = true;
@@ -784,5 +817,21 @@ if (app.elements.mount) {
     app.board.handleMoveSelection(pos[0], pos[1]);
   });
 }
+
+document.addEventListener("keydown", function (event) {
+  if (event.target && event.target.tagName === "SELECT") {
+    return;
+  }
+  if (!advanceOverlay || advanceOverlay.classList.contains("is-hidden")) {
+    return;
+  }
+  var key = event.key;
+  if (key === " " || key === "Enter" || key === "n" || key === "N") {
+    event.preventDefault();
+    if (advanceBtn) {
+      advanceBtn.click();
+    }
+  }
+});
 
 app.ui.updateHud();

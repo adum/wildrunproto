@@ -34,8 +34,11 @@ def is_eligible(problem):
         return False, "sandbox"
     if not problem.get("isCanon"):
         return False, "not_canon"
-    if not problem.get("sgf"):
+    sgf = problem.get("sgf")
+    if not sgf:
         return False, "missing_sgf"
+    if ";;" in sgf:
+        return False, "double_semicolon"
     return True, ""
 
 
