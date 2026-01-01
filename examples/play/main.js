@@ -24,6 +24,7 @@ var advanceBtn = document.getElementById("advanceBtn");
 var retryOverlay = document.getElementById("retryOverlay");
 var retryLabel = document.getElementById("retryLabel");
 var retryBtn = document.getElementById("retryBtn");
+var coinBurst = document.getElementById("coinBurst");
 var difficultyLabel = document.getElementById("difficultyLabel");
 var passiveList = document.getElementById("passiveList");
 var hintList = document.getElementById("hintList");
@@ -189,6 +190,7 @@ var game = {
   challenge: null,
   pendingNext: null,
   maxLives: 3,
+  isBoss: false,
 };
 
 app.handlers.onPuzzleSolved = function () {
@@ -196,6 +198,7 @@ app.handlers.onPuzzleSolved = function () {
     return;
   }
   game.levelActive = false;
+  awardCoins();
   showAdvanceOverlay();
 };
 
@@ -214,6 +217,7 @@ app.handlers.onPuzzleFailed = function () {
 
 function getPlayConfig() {
   var config = app.config && app.config.play ? app.config.play : {};
+  var coins = config.coins || {};
   var hintPool = Array.isArray(config.hintPool)
     ? config.hintPool.slice()
     : Object.keys(HINT_DEFS);
@@ -231,6 +235,11 @@ function getPlayConfig() {
     bossFrequency: Math.max(0, toNumber(config.bossFrequency, 0)),
     challengeLevelStart: toNumber(config.challengeLevelStart, 1),
     challengeLevelRamp: toNumber(config.challengeLevelRamp, 1),
+    coins: {
+      base: toNumber(coins.base, 5),
+      perDifficulty: toNumber(coins.perDifficulty, 1),
+      bossBonus: toNumber(coins.bossBonus, 0),
+    },
     hintPool: hintPool,
     passivePool: passivePool,
     challengePool: challengePool,
@@ -373,6 +382,9 @@ function ensureBoard(size) {
   }
   if (retryOverlay && retryOverlay.parentElement !== app.elements.mount) {
     app.elements.mount.appendChild(retryOverlay);
+  }
+  if (coinBurst && coinBurst.parentElement !== app.elements.mount) {
+    app.elements.mount.appendChild(coinBurst);
   }
 }
 
@@ -643,6 +655,7 @@ function loadLevel() {
   if (isBoss) {
     game.bossCount += 1;
   }
+  game.isBoss = isBoss;
 
   var pick = pickProblemForDifficulty(game.difficulty);
   if (!pick) {
@@ -731,6 +744,8 @@ function endGame() {
   game.hints = [];
   game.passives = [];
   game.challenge = null;
+  game.isBoss = false;
+  state.coins = 0;
   renderHints();
   renderPassives();
   renderChallenges();
@@ -738,6 +753,7 @@ function endGame() {
   app.challenges.resetChallenges();
   app.hints.clearHints();
   app.ui.setStatus("Game over. Start a new run.", "error");
+  app.ui.updateHud();
   hideRetryOverlay();
   hideAdvanceOverlay();
   showStartOverlay();
@@ -748,11 +764,13 @@ function startGame() {
   game.started = true;
   game.levelNumber = 1;
   game.bossCount = 0;
+  game.isBoss = false;
   game.difficulty = parseDifficulty(config.startDifficulty) || {
     type: "kyu",
     value: 30,
   };
   state.lives = 3;
+  state.coins = 0;
   game.maxLives = state.lives;
   app.ui.updateHud();
   setupPassives(config);
@@ -771,21 +789,21 @@ if (startGameBtn) {
   });
 }
 
-if (advanceBtn) {
-  advanceBtn.addEventListener("click", function (event) {
+  if (advanceBtn) {
+    advanceBtn.addEventListener("click", function (event) {
     if (event) {
       event.stopPropagation();
     }
     if (!game.pendingNext) {
       return;
     }
-    hideAdvanceOverlay();
-    game.difficulty = game.pendingNext.difficulty;
-    game.levelNumber = game.pendingNext.levelNumber;
-    game.pendingNext = null;
-    loadLevel();
-  });
-}
+      hideAdvanceOverlay();
+      game.difficulty = game.pendingNext.difficulty;
+      game.levelNumber = game.pendingNext.levelNumber;
+      game.pendingNext = null;
+      loadLevel();
+    });
+  }
 
 if (retryBtn) {
   retryBtn.addEventListener("click", function (event) {
@@ -859,3 +877,47 @@ document.addEventListener("keydown", function (event) {
 });
 
 app.ui.updateHud();
+
+function calculateCoinAward() {
+  var config = getPlayConfig();
+  var steps = Math.max(0, game.levelNumber - 1) * config.difficultyStep;
+  var amount = config.coins.base + steps * config.coins.perDifficulty;
+  if (game.isBoss) {
+    amount += config.coins.bossBonus;
+  }
+  if (!Number.isFinite(amount)) {
+    amount = 0;
+  }
+  return Math.max(0, amount);
+}
+
+function flashCoinAward(amount) {
+  if (!coinBurst || amount <= 0) {
+    return;
+  }
+  coinBurst.classList.remove("is-active");
+  while (coinBurst.firstChild) {
+    coinBurst.removeChild(coinBurst.firstChild);
+  }
+  var icon = document.createElement("span");
+  icon.className = "coin-icon coin-burst__icon";
+  icon.setAttribute("aria-hidden", "true");
+  var text = document.createElement("span");
+  text.className = "coin-burst__value";
+  text.textContent = "+" + amount;
+  coinBurst.appendChild(icon);
+  coinBurst.appendChild(text);
+  void coinBurst.offsetWidth;
+  coinBurst.classList.add("is-active");
+}
+
+function awardCoins() {
+  var raw = calculateCoinAward();
+  var award = Math.round(raw);
+  if (award <= 0) {
+    return;
+  }
+  state.coins = (state.coins || 0) + award;
+  app.ui.updateHud();
+  flashCoinAward(award);
+}

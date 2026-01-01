@@ -62,6 +62,7 @@ var DEFAULT_CONFIG = {
     bossFrequency: 5,
     challengeLevelStart: 1,
     challengeLevelRamp: 1,
+    coins: { base: 5, perDifficulty: 1, bossBonus: 5 },
     hintPool: [
       "firstMove",
       "multipleChoice",
