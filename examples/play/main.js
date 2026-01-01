@@ -3,6 +3,7 @@ import "../prototype/config.js";
 import "../prototype/ghost.js";
 import "../prototype/fire.js";
 import "../prototype/frost.js";
+import "../prototype/effects.js";
 import "../prototype/passives.js";
 import "../prototype/overlays.js";
 import "../prototype/timers.js";

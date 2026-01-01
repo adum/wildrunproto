@@ -3,6 +3,7 @@ import "./config.js";
 import "./ghost.js";
 import "./fire.js";
 import "./frost.js";
+import "./effects.js";
 import "./passives.js";
 import "./overlays.js";
 import "./timers.js";
@@ -350,6 +351,9 @@ window.addEventListener("resize", function () {
   app.overlays.renderEnigmaOverlay();
   app.fire.startFireAnimation();
   app.frost.startFrostAnimation();
+  if (app.effects && app.effects.syncFxCanvas) {
+    app.effects.syncFxCanvas();
+  }
   var revealActive =
     state.ghostRevealUntil > 0 && state.ghostRevealUntil > performance.now();
   if (state.challengeGhost && (state.ghostFlashes.length > 0 || revealActive)) {

@@ -201,6 +201,9 @@ function stopMysteryTimer(expired) {
   }
   state.mysteryTimerActive = false;
   state.mysteryTimerEndsAt = 0;
+  if (expired && app.effects && app.effects.triggerTimerShatter) {
+    app.effects.triggerTimerShatter(refs.mysteryTimerEl);
+  }
   updateMysteryUI();
 
   if (expired) {
@@ -316,6 +319,9 @@ function stopEnigmaTimer(expired) {
   }
   state.enigmaTimerActive = false;
   state.enigmaTimerEndsAt = 0;
+  if (expired && app.effects && app.effects.triggerTimerShatter) {
+    app.effects.triggerTimerShatter(refs.enigmaTimerEl);
+  }
   updateEnigmaUI();
 
   if (expired) {
@@ -433,6 +439,9 @@ function stopSpeedTimer(expired) {
   }
   state.speedTimerActive = false;
   state.speedTimerEndsAt = 0;
+  if (expired && app.effects && app.effects.triggerTimerShatter) {
+    app.effects.triggerTimerShatter(refs.speedTimerEl);
+  }
   updateSpeedUI();
 
   if (expired) {

@@ -206,6 +206,10 @@ body {
   z-index: 6;
 }
 
+#ghostban-fx {
+  z-index: 12;
+}
+
 #ghostban-ownership {
   z-index: 6;
 }

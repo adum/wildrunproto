@@ -78,6 +78,11 @@ function initBoard(boardSize) {
   refs.frostCanvas.style.position = "absolute";
   refs.frostCanvas.style.pointerEvents = "none";
   app.elements.mount.appendChild(refs.frostCanvas);
+  refs.fxCanvas = document.createElement("canvas");
+  refs.fxCanvas.id = "ghostban-fx";
+  refs.fxCanvas.style.position = "absolute";
+  refs.fxCanvas.style.pointerEvents = "none";
+  app.elements.mount.appendChild(refs.fxCanvas);
   state.enigmaPoints = [];
 
   refs.mysteryBtn = document.createElement("button");

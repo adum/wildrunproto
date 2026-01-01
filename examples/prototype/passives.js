@@ -239,6 +239,9 @@ function startSecondChance(onExpire) {
     var seconds = Math.max(0, remaining / 1000);
     updateSecondChanceTimerDisplay(seconds);
     if (remaining <= 0) {
+      if (app.effects && app.effects.triggerTimerShatter) {
+        app.effects.triggerTimerShatter(refs.secondChanceTimerEl);
+      }
       clearSecondChanceTimer();
       if (typeof onExpire === "function") {
         onExpire();

@@ -95,6 +95,8 @@ export const refs = {
   fireAnimId: null,
   frostCanvas: null,
   frostAnimId: null,
+  fxCanvas: null,
+  fxAnimId: null,
 };
 
 export const state = {
@@ -355,6 +357,7 @@ export const app = {
   ghost: {},
   fire: {},
   frost: {},
+  effects: {},
   overlays: {},
   timers: {},
   challenges: {},
