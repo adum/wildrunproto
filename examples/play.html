@@ -74,6 +74,40 @@
                   </button>
                 </div>
               </div>
+              <div
+                id="shopOverlay"
+                class="play-overlay play-overlay--shop is-hidden"
+              >
+                <div class="play-overlay__panel play-overlay__panel--shop">
+                  <div class="shop-header">
+                    <div class="shop-title-group">
+                      <div id="shopTitle" class="play-overlay__title">Shop</div>
+                      <div id="shopSubtitle" class="shop-subtitle">
+                        Next: 29kyu
+                      </div>
+                    </div>
+                    <div class="shop-coins" aria-live="polite">
+                      <span class="coin-icon" aria-hidden="true"></span>
+                      <span id="shopCoinsValue">0</span>
+                    </div>
+                  </div>
+                  <div class="shop-section">
+                    <div class="shop-section__label">Hints</div>
+                    <div id="shopHintList" class="shop-list"></div>
+                  </div>
+                  <div class="shop-section">
+                    <div class="shop-section__label">Passives</div>
+                    <div id="shopPassiveList" class="shop-list"></div>
+                  </div>
+                  <button
+                    id="shopContinueBtn"
+                    class="button play-overlay__cta"
+                    type="button"
+                  >
+                    Continue to 29kyu
+                  </button>
+                </div>
+              </div>
               <div id="coinBurst" class="coin-burst" aria-live="polite"></div>
             </div>
           </div>

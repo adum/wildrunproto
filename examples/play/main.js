@@ -25,6 +25,13 @@ var advanceBtn = document.getElementById("advanceBtn");
 var retryOverlay = document.getElementById("retryOverlay");
 var retryLabel = document.getElementById("retryLabel");
 var retryBtn = document.getElementById("retryBtn");
+var shopOverlay = document.getElementById("shopOverlay");
+var shopTitle = document.getElementById("shopTitle");
+var shopSubtitle = document.getElementById("shopSubtitle");
+var shopContinueBtn = document.getElementById("shopContinueBtn");
+var shopCoinsValue = document.getElementById("shopCoinsValue");
+var shopHintList = document.getElementById("shopHintList");
+var shopPassiveList = document.getElementById("shopPassiveList");
 var coinBurst = document.getElementById("coinBurst");
 var difficultyLabel = document.getElementById("difficultyLabel");
 var passiveList = document.getElementById("passiveList");
@@ -203,6 +210,7 @@ var game = {
   passives: [],
   hints: [],
   challenge: null,
+  shop: { hints: [], passives: [] },
   pendingNext: null,
   maxLives: 3,
   isBoss: false,
@@ -214,7 +222,12 @@ app.handlers.onPuzzleSolved = function () {
   }
   game.levelActive = false;
   awardCoins();
-  showAdvanceOverlay();
+  var config = getPlayConfig();
+  if (isShopLevel(config, game.levelNumber)) {
+    showShopOverlay();
+  } else {
+    showAdvanceOverlay();
+  }
 };
 
 app.handlers.onPuzzleFailed = function () {
@@ -242,6 +255,14 @@ function getPlayConfig() {
   var challengePool = Array.isArray(config.challengePool)
     ? config.challengePool.slice()
     : Object.keys(CHALLENGE_DEFS);
+  var shop = config.shop || {};
+  var shopPrices = shop.prices || {};
+  var shopHintPool = Array.isArray(shop.hintPool)
+    ? shop.hintPool.slice()
+    : hintPool.slice();
+  var shopPassivePool = Array.isArray(shop.passivePool)
+    ? shop.passivePool.slice()
+    : ["timeExtend", "secondChance"];
   return {
     startDifficulty: config.startDifficulty || "30kyu",
     difficultyStep: toNumber(config.difficultyStep, 1),
@@ -255,6 +276,18 @@ function getPlayConfig() {
       perDifficulty: toNumber(coins.perDifficulty, 1),
       bossBonus: toNumber(coins.bossBonus, 0),
     },
+    shop: {
+      frequency: Math.max(0, toNumber(shop.frequency, 3)),
+      startAfterLevel: Math.max(0, toNumber(shop.startAfterLevel, 1)),
+      hintCount: Math.max(0, toNumber(shop.hintCount, 2)),
+      passiveCount: Math.max(0, toNumber(shop.passiveCount, 1)),
+      hintPool: shopHintPool,
+      passivePool: shopPassivePool,
+      prices: {
+        hints: shopPrices.hints || {},
+        passives: shopPrices.passives || {},
+      },
+    },
     hintPool: hintPool,
     passivePool: passivePool,
     challengePool: challengePool,
@@ -267,6 +300,17 @@ function toNumber(value, fallback) {
     return num;
   }
   return fallback;
+}
+
+function getShopPrice(priceMap, id) {
+  if (!priceMap || !id) {
+    return null;
+  }
+  var value = toNumber(priceMap[id], NaN);
+  if (!Number.isFinite(value)) {
+    return null;
+  }
+  return Math.max(0, Math.round(value));
 }
 
 function shuffle(list) {
@@ -398,6 +442,9 @@ function ensureBoard(size) {
   if (retryOverlay && retryOverlay.parentElement !== app.elements.mount) {
     app.elements.mount.appendChild(retryOverlay);
   }
+  if (shopOverlay && shopOverlay.parentElement !== app.elements.mount) {
+    app.elements.mount.appendChild(shopOverlay);
+  }
   if (coinBurst && coinBurst.parentElement !== app.elements.mount) {
     app.elements.mount.appendChild(coinBurst);
   }
@@ -512,6 +559,155 @@ function renderChallenges() {
   item.appendChild(label);
   item.appendChild(level);
   challengeList.appendChild(item);
+}
+
+function updateShopCoins() {
+  if (!shopCoinsValue) {
+    return;
+  }
+  var rounded = Math.round(state.coins || 0);
+  shopCoinsValue.textContent = String(rounded);
+}
+
+function buildShopInventory(config) {
+  var shopConfig = config.shop;
+  if (!shopConfig) {
+    game.shop = { hints: [], passives: [] };
+    return;
+  }
+  var hintPrices = shopConfig.prices ? shopConfig.prices.hints : {};
+  var passivePrices = shopConfig.prices ? shopConfig.prices.passives : {};
+  var ownedHints = new Set(
+    game.hints.map(function (hint) {
+      return hint.id;
+    })
+  );
+  var ownedPassives = new Set(
+    game.passives.map(function (passive) {
+      return passive.id;
+    })
+  );
+  var hintCandidates = shopConfig.hintPool.filter(function (id) {
+    if (!HINT_DEFS[id]) {
+      return false;
+    }
+    if (ownedHints.has(id)) {
+      return false;
+    }
+    return getShopPrice(hintPrices, id) !== null;
+  });
+  var passiveCandidates = shopConfig.passivePool.filter(function (id) {
+    if (!PASSIVE_DEFS[id]) {
+      return false;
+    }
+    if (ownedPassives.has(id)) {
+      return false;
+    }
+    return getShopPrice(passivePrices, id) !== null;
+  });
+  var hints = pickRandom(hintCandidates, shopConfig.hintCount).map(function (id) {
+    return {
+      id: id,
+      price: getShopPrice(hintPrices, id),
+      purchased: false,
+    };
+  });
+  var passives = pickRandom(passiveCandidates, shopConfig.passiveCount).map(function (id) {
+    return {
+      id: id,
+      price: getShopPrice(passivePrices, id),
+      purchased: false,
+    };
+  });
+  game.shop = { hints: hints, passives: passives };
+}
+
+function renderShopList(listEl, items, defs, type) {
+  if (!listEl) {
+    return;
+  }
+  listEl.textContent = "";
+  if (!items || items.length === 0) {
+    var empty = document.createElement("div");
+    empty.className = "shop-empty";
+    empty.textContent = "No items right now.";
+    listEl.appendChild(empty);
+    return;
+  }
+  items.forEach(function (item) {
+    var def = defs[item.id];
+    if (!def) {
+      return;
+    }
+    var row = document.createElement("div");
+    row.className = "shop-item";
+    row.title = def.tooltip || "";
+    var info = document.createElement("div");
+    info.className = "shop-item__info";
+    var name = document.createElement("div");
+    name.className = "shop-item__name";
+    name.textContent = def.label;
+    var priceRow = document.createElement("div");
+    priceRow.className = "shop-item__price";
+    var priceIcon = document.createElement("span");
+    priceIcon.className = "coin-icon";
+    priceIcon.setAttribute("aria-hidden", "true");
+    var priceValue = document.createElement("span");
+    if (item.price <= 0) {
+      priceValue.textContent = "Free";
+    } else {
+      priceValue.textContent = String(item.price);
+    }
+    priceRow.appendChild(priceIcon);
+    priceRow.appendChild(priceValue);
+    info.appendChild(name);
+    info.appendChild(priceRow);
+    row.appendChild(info);
+    var button = document.createElement("button");
+    button.type = "button";
+    button.className = "button shop-buy";
+    if (item.purchased) {
+      row.classList.add("is-owned");
+      button.textContent = "Owned";
+      button.disabled = true;
+    } else {
+      button.textContent = "Buy";
+      if (item.price > (state.coins || 0)) {
+        button.disabled = true;
+      }
+    }
+    button.addEventListener("click", function (event) {
+      if (event) {
+        event.stopPropagation();
+      }
+      if (item.purchased) {
+        return;
+      }
+      if (item.price > (state.coins || 0)) {
+        return;
+      }
+      state.coins = (state.coins || 0) - item.price;
+      item.purchased = true;
+      if (type === "hint") {
+        game.hints.push({ id: item.id, used: false });
+        renderHints();
+      } else if (type === "passive") {
+        game.passives.push({ id: item.id, level: 1 });
+        applyPassives();
+        renderPassives();
+      }
+      app.ui.updateHud();
+      renderShop();
+    });
+    row.appendChild(button);
+    listEl.appendChild(row);
+  });
+}
+
+function renderShop() {
+  updateShopCoins();
+  renderShopList(shopHintList, game.shop.hints, HINT_DEFS, "hint");
+  renderShopList(shopPassiveList, game.shop.passives, PASSIVE_DEFS, "passive");
 }
 
 function applyPassives() {
@@ -696,30 +892,85 @@ function isBossLevel(config, levelNumber) {
   return levelNumber % config.bossFrequency === 0;
 }
 
-function showAdvanceOverlay() {
-  if (!advanceOverlay || !advanceLabel || !advanceBtn) {
-    return;
+function isShopLevel(config, levelNumber) {
+  if (!config.shop || !config.shop.frequency) {
+    return false;
   }
-  var config = getPlayConfig();
+  var startAfter = Math.max(0, toNumber(config.shop.startAfterLevel, 1));
+  if (levelNumber < startAfter) {
+    return false;
+  }
+  return (levelNumber - startAfter) % config.shop.frequency === 0;
+}
+
+function getNextLevelInfo(config) {
   var nextDifficulty = advanceDifficulty(game.difficulty, config.difficultyStep);
   var nextLevelNumber = game.levelNumber + 1;
   var nextIsBoss = isBossLevel(config, nextLevelNumber);
   var label = formatDifficulty(nextDifficulty);
   var buttonLabel = nextIsBoss ? label + " (Boss)" : label;
-  advanceLabel.textContent = "On to " + label;
-  advanceBtn.textContent = "Continue to " + buttonLabel;
-  advanceOverlay.classList.remove("is-hidden");
-  hideRetryOverlay();
-  game.pendingNext = {
+  return {
     difficulty: nextDifficulty,
     levelNumber: nextLevelNumber,
     isBoss: nextIsBoss,
+    label: label,
+    buttonLabel: buttonLabel,
+  };
+}
+
+function showAdvanceOverlay() {
+  if (!advanceOverlay || !advanceLabel || !advanceBtn) {
+    return;
+  }
+  var config = getPlayConfig();
+  var nextInfo = getNextLevelInfo(config);
+  advanceLabel.textContent = "On to " + nextInfo.label;
+  advanceBtn.textContent = "Continue to " + nextInfo.buttonLabel;
+  advanceOverlay.classList.remove("is-hidden");
+  hideRetryOverlay();
+  hideShopOverlay();
+  game.pendingNext = {
+    difficulty: nextInfo.difficulty,
+    levelNumber: nextInfo.levelNumber,
+    isBoss: nextInfo.isBoss,
   };
 }
 
 function hideAdvanceOverlay() {
   if (advanceOverlay) {
     advanceOverlay.classList.add("is-hidden");
+  }
+}
+
+function showShopOverlay() {
+  if (!shopOverlay || !shopContinueBtn) {
+    showAdvanceOverlay();
+    return;
+  }
+  var config = getPlayConfig();
+  var nextInfo = getNextLevelInfo(config);
+  if (shopTitle) {
+    shopTitle.textContent = "Shop";
+  }
+  if (shopSubtitle) {
+    shopSubtitle.textContent = "Next: " + nextInfo.buttonLabel;
+  }
+  shopContinueBtn.textContent = "Continue to " + nextInfo.buttonLabel;
+  buildShopInventory(config);
+  renderShop();
+  shopOverlay.classList.remove("is-hidden");
+  hideRetryOverlay();
+  hideAdvanceOverlay();
+  game.pendingNext = {
+    difficulty: nextInfo.difficulty,
+    levelNumber: nextInfo.levelNumber,
+    isBoss: nextInfo.isBoss,
+  };
+}
+
+function hideShopOverlay() {
+  if (shopOverlay) {
+    shopOverlay.classList.add("is-hidden");
   }
 }
 
@@ -739,6 +990,7 @@ function showRetryOverlay() {
     retryLabel.textContent = "Retry this level";
   }
   retryOverlay.classList.remove("is-hidden");
+  hideShopOverlay();
 }
 
 function hideRetryOverlay() {
@@ -753,6 +1005,18 @@ function hideStartOverlay() {
   }
 }
 
+function advanceToPendingLevel() {
+  if (!game.pendingNext) {
+    return;
+  }
+  hideAdvanceOverlay();
+  hideShopOverlay();
+  game.difficulty = game.pendingNext.difficulty;
+  game.levelNumber = game.pendingNext.levelNumber;
+  game.pendingNext = null;
+  loadLevel();
+}
+
 function endGame() {
   game.started = false;
   game.levelActive = false;
@@ -764,6 +1028,7 @@ function endGame() {
   game.hints = [];
   game.passives = [];
   game.challenge = null;
+  game.shop = { hints: [], passives: [] };
   game.isBoss = false;
   state.coins = 0;
   renderHints();
@@ -776,6 +1041,7 @@ function endGame() {
   app.ui.updateHud();
   hideRetryOverlay();
   hideAdvanceOverlay();
+  hideShopOverlay();
   showStartOverlay();
 }
 
@@ -785,6 +1051,7 @@ function startGame() {
   game.levelNumber = 1;
   game.bossCount = 0;
   game.isBoss = false;
+  game.shop = { hints: [], passives: [] };
   game.difficulty = parseDifficulty(config.startDifficulty) || {
     type: "kyu",
     value: 30,
@@ -797,6 +1064,7 @@ function startGame() {
   setupHints(config);
   hideStartOverlay();
   hideRetryOverlay();
+  hideShopOverlay();
   loadLevel();
 }
 
@@ -809,21 +1077,23 @@ if (startGameBtn) {
   });
 }
 
-  if (advanceBtn) {
-    advanceBtn.addEventListener("click", function (event) {
+if (advanceBtn) {
+  advanceBtn.addEventListener("click", function (event) {
     if (event) {
       event.stopPropagation();
     }
-    if (!game.pendingNext) {
-      return;
+    advanceToPendingLevel();
+  });
+}
+
+if (shopContinueBtn) {
+  shopContinueBtn.addEventListener("click", function (event) {
+    if (event) {
+      event.stopPropagation();
     }
-      hideAdvanceOverlay();
-      game.difficulty = game.pendingNext.difficulty;
-      game.levelNumber = game.pendingNext.levelNumber;
-      game.pendingNext = null;
-      loadLevel();
-    });
-  }
+    advanceToPendingLevel();
+  });
+}
 
 if (retryBtn) {
   retryBtn.addEventListener("click", function (event) {
@@ -884,13 +1154,18 @@ document.addEventListener("keydown", function (event) {
   if (event.target && event.target.tagName === "SELECT") {
     return;
   }
-  if (!advanceOverlay || advanceOverlay.classList.contains("is-hidden")) {
+  var advanceVisible =
+    advanceOverlay && !advanceOverlay.classList.contains("is-hidden");
+  var shopVisible = shopOverlay && !shopOverlay.classList.contains("is-hidden");
+  if (!advanceVisible && !shopVisible) {
     return;
   }
   var key = event.key;
   if (key === " " || key === "Enter" || key === "n" || key === "N") {
     event.preventDefault();
-    if (advanceBtn) {
+    if (shopVisible && shopContinueBtn) {
+      shopContinueBtn.click();
+    } else if (advanceVisible && advanceBtn) {
       advanceBtn.click();
     }
   }
@@ -939,5 +1214,9 @@ function awardCoins() {
   }
   state.coins = (state.coins || 0) + award;
   app.ui.updateHud();
+  updateShopCoins();
+  if (shopOverlay && !shopOverlay.classList.contains("is-hidden")) {
+    renderShop();
+  }
   flashCoinAward(award);
 }

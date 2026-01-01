@@ -66,6 +66,37 @@ var DEFAULT_CONFIG = {
     challengeLevelStart: 1,
     challengeLevelRamp: 1,
     coins: { base: 5, perDifficulty: 1, bossBonus: 5 },
+    shop: {
+      frequency: 3,
+      startAfterLevel: 1,
+      hintCount: 2,
+      passiveCount: 1,
+      hintPool: [
+        "firstMove",
+        "multipleChoice",
+        "neighbor",
+        "rowReveal",
+        "colReveal",
+        "diagReveal",
+        "eliminateRandom",
+      ],
+      passivePool: ["timeExtend", "secondChance"],
+      prices: {
+        hints: {
+          firstMove: 6,
+          multipleChoice: 8,
+          neighbor: 5,
+          rowReveal: 7,
+          colReveal: 7,
+          diagReveal: 9,
+          eliminateRandom: 6,
+        },
+        passives: {
+          timeExtend: 12,
+          secondChance: 14,
+        },
+      },
+    },
     hintPool: [
       "firstMove",
       "multipleChoice",

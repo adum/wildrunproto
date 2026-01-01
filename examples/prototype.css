@@ -818,6 +818,105 @@ select {
   min-width: 160px;
 }
 
+.play-overlay--shop .play-overlay__panel {
+  min-width: 320px;
+  max-width: 360px;
+  align-items: stretch;
+  justify-items: stretch;
+  text-align: left;
+}
+
+.shop-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.shop-title-group {
+  display: grid;
+  gap: 2px;
+}
+
+.shop-subtitle {
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.shop-coins {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 600;
+  font-size: 13px;
+  color: var(--accent-ink);
+}
+
+.shop-section {
+  display: grid;
+  gap: 6px;
+}
+
+.shop-section__label {
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.shop-list {
+  display: grid;
+  gap: 8px;
+}
+
+.shop-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 8px 10px;
+  border: 1px solid var(--panel-edge);
+  border-radius: 12px;
+  background: #fff;
+  font-size: 13px;
+}
+
+.shop-item__info {
+  display: grid;
+  gap: 4px;
+}
+
+.shop-item__name {
+  font-weight: 600;
+}
+
+.shop-item__price {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.shop-item__badge {
+  font-size: 11px;
+  color: var(--muted);
+}
+
+.shop-item.is-owned {
+  opacity: 0.6;
+}
+
+.shop-buy {
+  min-width: 74px;
+}
+
+.shop-empty {
+  padding: 6px 8px;
+  font-size: 12px;
+  color: var(--muted);
+}
+
 .coin-burst {
   position: absolute;
   inset: 0;
