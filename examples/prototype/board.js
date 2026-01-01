@@ -259,7 +259,7 @@ function evaluatePosition() {
 
   var turn = utils.getTurn(state.currentNode, state.playerColor);
   if (turn === state.playerColor) {
-    ui.setStatus("Your move: " + utils.colorName(turn));
+    ui.setStatus("Your move", null, turn);
   } else {
     ui.setStatus("Opponent move...");
   }

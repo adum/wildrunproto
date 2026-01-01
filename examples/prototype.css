@@ -237,11 +237,14 @@ body {
 }
 
 .status {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
   padding: 10px 12px;
   border-radius: 12px;
-  border: 1px solid rgba(217, 123, 59, 0.3);
-  background: var(--chip);
-  color: var(--accent-ink);
+  border: 1px solid var(--panel-edge);
+  background: #fff;
+  color: var(--ink);
   font-size: 13px;
 }
 
@@ -260,6 +263,22 @@ body {
   border-color: rgba(188, 60, 60, 0.45);
   background: rgba(225, 79, 79, 0.18);
   color: #6a1f1f;
+}
+
+.status-indicator {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  border: 1px solid rgba(40, 30, 20, 0.6);
+  box-shadow: 0 0 4px rgba(40, 30, 20, 0.2);
+}
+
+.status-indicator--black {
+  background: #1f1a14;
+}
+
+.status-indicator--white {
+  background: #fffdf6;
 }
 
 .lives-box {

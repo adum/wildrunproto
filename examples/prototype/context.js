@@ -173,17 +173,41 @@ export function logMessage(message) {
   }
 }
 
-export function setStatus(text, tone) {
+export function setStatus(text, tone, indicator) {
   var statusEl = elements.statusEl;
   if (!statusEl) {
     return;
   }
-  statusEl.textContent = text;
   statusEl.classList.remove("success", "error");
   if (tone === "success") {
     statusEl.classList.add("success");
   } else if (tone === "error") {
     statusEl.classList.add("error");
+  }
+  statusEl.textContent = "";
+  statusEl.removeAttribute("aria-label");
+
+  var indicatorTone = null;
+  if (indicator === GB.Ki.Black || indicator === "black") {
+    indicatorTone = "black";
+  } else if (indicator === GB.Ki.White || indicator === "white") {
+    indicatorTone = "white";
+  }
+
+  if (indicatorTone) {
+    var dot = document.createElement("span");
+    dot.className = "status-indicator status-indicator--" + indicatorTone;
+    dot.setAttribute("aria-hidden", "true");
+    var label = document.createElement("span");
+    label.textContent = text;
+    statusEl.appendChild(dot);
+    statusEl.appendChild(label);
+    statusEl.setAttribute(
+      "aria-label",
+      text + ": " + (indicatorTone === "black" ? "Black" : "White")
+    );
+  } else {
+    statusEl.textContent = text;
   }
 }
 
