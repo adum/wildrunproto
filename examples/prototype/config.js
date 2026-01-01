@@ -71,7 +71,7 @@ var DEFAULT_CONFIG = {
       "diagReveal",
       "eliminateRandom",
     ],
-    passivePool: ["timeExtend"],
+    passivePool: ["timeExtend", "friendlyCapture", "enemyCapture"],
     challengePool: [
       "gray",
       "ghost",

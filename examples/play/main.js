@@ -41,6 +41,16 @@ var PASSIVE_DEFS = {
     label: "Time Extend",
     tooltip: "Slows countdown timers by 10% per level.",
   },
+  friendlyCapture: {
+    label: "Friendly Capture",
+    tooltip: "Lights up if any correct line sacrifices a player stone.",
+    indicatorKey: "friendlyCaptureDetected",
+  },
+  enemyCapture: {
+    label: "Enemy Capture",
+    tooltip: "Lights up if any correct line captures an enemy stone.",
+    indicatorKey: "enemyCaptureDetected",
+  },
 };
 
 var HINT_DEFS = {
@@ -389,11 +399,21 @@ function renderPassives() {
     item.title = def.tooltip;
     var label = document.createElement("span");
     label.textContent = def.label;
-    var level = document.createElement("span");
-    level.className = "play-chip__level";
-    level.textContent = "L" + passive.level;
+    if (def.indicatorKey) {
+      var indicator = document.createElement("span");
+      indicator.className = "play-chip__indicator";
+      if (state[def.indicatorKey]) {
+        indicator.classList.add("is-active");
+      }
+      item.appendChild(indicator);
+    }
     item.appendChild(label);
-    item.appendChild(level);
+    if (!def.indicatorKey) {
+      var level = document.createElement("span");
+      level.className = "play-chip__level";
+      level.textContent = "L" + passive.level;
+      item.appendChild(level);
+    }
     passiveList.appendChild(item);
   });
 }
@@ -581,6 +601,9 @@ function loadProblem(problem, difficultyLabelText, isBoss) {
   );
   state.combo = 0;
   state.lastNodeId = null;
+  if (app.passives && app.passives.updateCaptureIndicators) {
+    app.passives.updateCaptureIndicators();
+  }
 
   var size = app.GB.extractBoardSize(sgf.root, 19);
   ensureBoard(size);
@@ -601,6 +624,7 @@ function loadProblem(problem, difficultyLabelText, isBoss) {
   state.speedMoveCount = 0;
 
   applyPassives();
+  renderPassives();
   setupChallenge(getPlayConfig(), isBoss);
 
   app.board.autoPlayOpponent();

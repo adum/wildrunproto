@@ -86,16 +86,15 @@ function setTimeExtendActive(active) {
 }
 
 function updateCaptureIndicators() {
-  if (!elements.friendlyCaptureIndicator && !elements.enemyCaptureIndicator) {
-    return;
-  }
+  var hasFriendlyEl = !!elements.friendlyCaptureIndicator;
+  var hasEnemyEl = !!elements.enemyCaptureIndicator;
   if (!state.rootNode) {
     state.friendlyCaptureDetected = false;
     state.enemyCaptureDetected = false;
-    if (elements.friendlyCaptureIndicator) {
+    if (hasFriendlyEl) {
       elements.friendlyCaptureIndicator.classList.remove("is-active");
     }
-    if (elements.enemyCaptureIndicator) {
+    if (hasEnemyEl) {
       elements.enemyCaptureIndicator.classList.remove("is-active");
     }
     return;
@@ -167,7 +166,7 @@ function updateCaptureIndicators() {
   walk(state.rootNode);
   state.friendlyCaptureDetected = friendlyFound;
   state.enemyCaptureDetected = enemyFound;
-  if (elements.friendlyCaptureIndicator) {
+  if (hasFriendlyEl) {
     if (friendlyFound) {
       elements.friendlyCaptureIndicator.classList.add("is-active");
       elements.friendlyCaptureIndicator.setAttribute(
@@ -182,7 +181,7 @@ function updateCaptureIndicators() {
       );
     }
   }
-  if (elements.enemyCaptureIndicator) {
+  if (hasEnemyEl) {
     if (enemyFound) {
       elements.enemyCaptureIndicator.classList.add("is-active");
       elements.enemyCaptureIndicator.setAttribute(

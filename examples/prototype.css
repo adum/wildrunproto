@@ -670,6 +670,21 @@ select {
   font-size: 12px;
 }
 
+.play-chip__indicator {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  border: 1px solid rgba(90, 70, 50, 0.4);
+  background: rgba(120, 110, 100, 0.2);
+  box-shadow: inset 0 0 4px rgba(60, 45, 30, 0.2);
+}
+
+.play-chip__indicator.is-active {
+  background: rgba(255, 150, 50, 0.9);
+  border-color: rgba(200, 105, 30, 0.85);
+  box-shadow: 0 0 8px rgba(255, 140, 40, 0.6);
+}
+
 .play-hint {
   width: 100%;
   display: flex;
