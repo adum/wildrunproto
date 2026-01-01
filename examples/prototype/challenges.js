@@ -189,6 +189,21 @@ function setFirePlay(active) {
   }
 }
 
+function setFrostPlay(active) {
+  state.challengeFrost = active;
+  state.frostStartAt = active ? performance.now() : 0;
+  state.frostPath = [];
+  state.frostPathSize = 0;
+  state.frostPathKey = "";
+  updateChallengeControls();
+  app.frost.updateFrostLevelUI();
+  if (active) {
+    app.frost.startFrostAnimation();
+  } else {
+    app.frost.stopFrostAnimation();
+  }
+}
+
 function updateChallengeControls() {
   if (elements.challengeGrayBtn) {
     if (state.challengeGray) {
@@ -253,6 +268,15 @@ function updateChallengeControls() {
       elements.challengeFireBtn.disabled = false;
     }
   }
+  if (elements.challengeFrostBtn) {
+    if (state.challengeFrost) {
+      elements.challengeFrostBtn.classList.add("active");
+      elements.challengeFrostBtn.disabled = true;
+    } else {
+      elements.challengeFrostBtn.classList.remove("active");
+      elements.challengeFrostBtn.disabled = false;
+    }
+  }
 }
 
 function resetChallenges() {
@@ -281,6 +305,12 @@ function resetChallenges() {
   state.firePathSize = 0;
   state.firePathKey = "";
   app.fire.stopFireAnimation();
+  state.challengeFrost = false;
+  state.frostStartAt = 0;
+  state.frostPath = [];
+  state.frostPathSize = 0;
+  state.frostPathKey = "";
+  app.frost.stopFrostAnimation();
   if (refs.ghostAnimId) {
     cancelAnimationFrame(refs.ghostAnimId);
     refs.ghostAnimId = null;
@@ -303,6 +333,7 @@ app.challenges.setEnigmaPlay = setEnigmaPlay;
 app.challenges.setInfectionPlay = setInfectionPlay;
 app.challenges.setSpeedPlay = setSpeedPlay;
 app.challenges.setFirePlay = setFirePlay;
+app.challenges.setFrostPlay = setFrostPlay;
 app.challenges.updateChallengeControls = updateChallengeControls;
 app.challenges.resetChallenges = resetChallenges;
 app.challenges.updateInfectionLevelUI = updateInfectionLevelUI;

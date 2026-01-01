@@ -2,6 +2,7 @@ import { app } from "./context.js";
 import "./config.js";
 import "./ghost.js";
 import "./fire.js";
+import "./frost.js";
 import "./passives.js";
 import "./overlays.js";
 import "./timers.js";
@@ -180,6 +181,15 @@ if (elements.challengeFireBtn) {
     app.ui.logMessage("Challenge enabled: Fire snake.");
   });
 }
+if (elements.challengeFrostBtn) {
+  elements.challengeFrostBtn.addEventListener("click", function () {
+    if (state.challengeFrost) {
+      return;
+    }
+    app.challenges.setFrostPlay(true);
+    app.ui.logMessage("Challenge enabled: Frost snake.");
+  });
+}
 if (elements.passiveTimeExtendBtn) {
   elements.passiveTimeExtendBtn.addEventListener("click", function () {
     if (state.passiveTimeExtend) {
@@ -187,6 +197,15 @@ if (elements.passiveTimeExtendBtn) {
     }
     app.passives.setTimeExtendActive(true);
     app.ui.logMessage("Passive enabled: Time extend.");
+  });
+}
+if (elements.passiveSecondChanceBtn) {
+  elements.passiveSecondChanceBtn.addEventListener("click", function () {
+    if (state.passiveSecondChance) {
+      return;
+    }
+    app.passives.setSecondChanceActive(true);
+    app.ui.logMessage("Passive enabled: Second chance.");
   });
 }
 
@@ -233,12 +252,28 @@ if (elements.fireLevelInput) {
     app.fire.setFireLevel(event.target.value);
   });
 }
+if (elements.frostLevelInput) {
+  elements.frostLevelInput.addEventListener("input", function (event) {
+    if (!event || !event.target) {
+      return;
+    }
+    app.frost.setFrostLevel(event.target.value);
+  });
+}
 if (elements.timeExtendLevelInput) {
   elements.timeExtendLevelInput.addEventListener("input", function (event) {
     if (!event || !event.target) {
       return;
     }
     app.passives.setTimeExtendLevel(event.target.value);
+  });
+}
+if (elements.secondChanceLevelInput) {
+  elements.secondChanceLevelInput.addEventListener("input", function (event) {
+    if (!event || !event.target) {
+      return;
+    }
+    app.passives.setSecondChanceLevel(event.target.value);
   });
 }
 
@@ -297,6 +332,7 @@ window.addEventListener("resize", function () {
   app.overlays.renderGrayStones(state.currentMat);
   app.overlays.renderEnigmaOverlay();
   app.fire.startFireAnimation();
+  app.frost.startFrostAnimation();
   var revealActive =
     state.ghostRevealUntil > 0 && state.ghostRevealUntil > performance.now();
   if (state.challengeGhost && (state.ghostFlashes.length > 0 || revealActive)) {

@@ -73,6 +73,11 @@ function initBoard(boardSize) {
   refs.fireCanvas.style.position = "absolute";
   refs.fireCanvas.style.pointerEvents = "none";
   app.elements.mount.appendChild(refs.fireCanvas);
+  refs.frostCanvas = document.createElement("canvas");
+  refs.frostCanvas.id = "ghostban-frost";
+  refs.frostCanvas.style.position = "absolute";
+  refs.frostCanvas.style.pointerEvents = "none";
+  app.elements.mount.appendChild(refs.frostCanvas);
   state.enigmaPoints = [];
 
   refs.mysteryBtn = document.createElement("button");
@@ -123,6 +128,13 @@ function initBoard(boardSize) {
   refs.speedTimerEl.setAttribute("aria-live", "polite");
   refs.speedTimerEl.style.display = "none";
   app.elements.mount.appendChild(refs.speedTimerEl);
+
+  refs.secondChanceTimerEl = document.createElement("div");
+  refs.secondChanceTimerEl.id = "secondChanceCountdown";
+  refs.secondChanceTimerEl.className = "board-control";
+  refs.secondChanceTimerEl.setAttribute("aria-live", "polite");
+  refs.secondChanceTimerEl.style.display = "none";
+  app.elements.mount.appendChild(refs.secondChanceTimerEl);
 
   refs.rowHintEl = document.createElement("div");
   refs.rowHintEl.className = "row-hint";
@@ -213,6 +225,7 @@ function updateBoard() {
   app.overlays.renderEnigmaOverlay();
   app.timers.updateEnigmaUI();
   app.fire.startFireAnimation();
+  app.frost.startFrostAnimation();
   var revealActive =
     state.ghostRevealUntil > 0 && state.ghostRevealUntil > performance.now();
   if (state.challengeGhost && (state.ghostFlashes.length > 0 || revealActive)) {
@@ -500,7 +513,54 @@ function handleMoveSelection(i, j) {
   updateChildMoves();
 
   var chosen = state.childMoveMap.get(coord);
-  if (state.blockedMoves.has(coord)) {
+  var isBlocked = state.blockedMoves.has(coord);
+  var isCorrect = chosen && GB.inRightPath(chosen.node);
+  var isWrong = isBlocked || !chosen || (chosen && !isCorrect);
+
+  if (state.secondChanceActive) {
+    if (isCorrect) {
+      if (app.passives && app.passives.clearSecondChanceTimer) {
+        app.passives.clearSecondChanceTimer();
+      }
+      ui.logMessage("Second chance used: " + utils.sgfToA1(coord));
+    } else {
+      if (app.passives && app.passives.clearSecondChanceTimer) {
+        app.passives.clearSecondChanceTimer();
+      }
+      state.lives -= 1;
+      state.combo = 0;
+      ui.updateHud();
+      if (isBlocked) {
+        ui.logMessage(
+          "Second chance failed: eliminated move " + utils.sgfToA1(coord)
+        );
+      } else if (!chosen) {
+        ui.logMessage(
+          "Second chance failed: wrong move (not in tree) " +
+            utils.sgfToA1(coord)
+        );
+      } else {
+        ui.logMessage("Second chance failed: wrong move " + utils.sgfToA1(coord));
+      }
+      evaluatePosition();
+      return;
+    }
+  } else if (isWrong && app.passives && app.passives.startSecondChance) {
+    var duration = app.passives.startSecondChance(function () {
+      state.lives -= 1;
+      state.combo = 0;
+      ui.updateHud();
+      ui.logMessage("Second chance expired: lost a life.");
+      evaluatePosition();
+    });
+    if (duration) {
+      ui.setStatus("Second chance! Play the correct move.");
+      ui.logMessage("Second chance active (" + duration + "s).");
+      return;
+    }
+  }
+
+  if (isBlocked) {
     state.lives -= 1;
     state.combo = 0;
     ui.updateHud();
@@ -524,8 +584,7 @@ function handleMoveSelection(i, j) {
     app.challenges.recordInfection(i, j, true);
     state.speedMoveCount += 1;
   }
-  var correct = GB.inRightPath(chosen.node);
-  if (correct) {
+  if (isCorrect) {
     state.combo += 1;
     ui.logMessage("Correct move: " + utils.sgfToA1(coord));
   } else {

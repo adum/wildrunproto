@@ -8,7 +8,9 @@ var DEFAULT_CONFIG = {
     infection: { min: 1, max: 4 },
     speed: { min: 1, max: 10 },
     fire: { min: 1, max: 10 },
+    frost: { min: 1, max: 10 },
     timeExtend: { min: 1, max: 10 },
+    secondChance: { min: 1, max: 10 },
     hintMultipleChoice: { min: 1, max: 3 },
     hintRow: { min: 1, max: 3 },
     hintCol: { min: 1, max: 3 },
@@ -24,6 +26,7 @@ var DEFAULT_CONFIG = {
   enigma: { baseRings: 1, incrementPerLevel: 1, minRings: 1 },
   passives: {
     timeExtendPercentPerLevel: 10,
+    secondChance: { baseSeconds: 2, incrementPerLevel: 1, minSeconds: 1 },
   },
   ghost: {
     flashSeconds: 5,
@@ -72,7 +75,7 @@ var DEFAULT_CONFIG = {
       "diagReveal",
       "eliminateRandom",
     ],
-    passivePool: ["timeExtend", "friendlyCapture", "enemyCapture"],
+    passivePool: ["timeExtend", "secondChance", "friendlyCapture", "enemyCapture"],
     challengePool: [
       "gray",
       "ghost",
@@ -81,6 +84,7 @@ var DEFAULT_CONFIG = {
       "infection",
       "speed",
       "fire",
+      "frost",
     ],
   },
 };
@@ -196,7 +200,9 @@ function applyConfigToUI() {
   applyLevelRange(elements.infectionLevelInput, "infection");
   applyLevelRange(elements.speedLevelInput, "speed");
   applyLevelRange(elements.fireLevelInput, "fire");
+  applyLevelRange(elements.frostLevelInput, "frost");
   applyLevelRange(elements.timeExtendLevelInput, "timeExtend");
+  applyLevelRange(elements.secondChanceLevelInput, "secondChance");
   applyLevelRange(elements.hintTwoLevelInput, "hintMultipleChoice");
   applyLevelRange(elements.hintRowLevelInput, "hintRow");
   applyLevelRange(elements.hintColLevelInput, "hintCol");
@@ -257,6 +263,15 @@ function applyConfigToUI() {
     app.fire.updateFireLevelUI();
   }
 
+  if (app.frost && app.frost.setFrostLevel) {
+    var frostValue = elements.frostLevelInput
+      ? elements.frostLevelInput.value
+      : state.frostLevel;
+    app.frost.setFrostLevel(frostValue);
+  } else if (app.frost && app.frost.updateFrostLevelUI) {
+    app.frost.updateFrostLevelUI();
+  }
+
   if (app.passives && app.passives.setTimeExtendLevel) {
     var timeExtendValue = elements.timeExtendLevelInput
       ? elements.timeExtendLevelInput.value
@@ -264,6 +279,15 @@ function applyConfigToUI() {
     app.passives.setTimeExtendLevel(timeExtendValue);
   } else if (app.passives && app.passives.updateTimeExtendLevelUI) {
     app.passives.updateTimeExtendLevelUI();
+  }
+
+  if (app.passives && app.passives.setSecondChanceLevel) {
+    var secondChanceValue = elements.secondChanceLevelInput
+      ? elements.secondChanceLevelInput.value
+      : state.secondChanceLevel;
+    app.passives.setSecondChanceLevel(secondChanceValue);
+  } else if (app.passives && app.passives.updateSecondChanceLevelUI) {
+    app.passives.updateSecondChanceLevelUI();
   }
 
   if (app.hints && app.hints.setRowRevealLevel) {

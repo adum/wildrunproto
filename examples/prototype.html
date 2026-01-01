@@ -359,6 +359,31 @@
                     <span id="fireLevelValue" class="fire-level__value">1</span>
                   </div>
                 </div>
+                <div class="frost-row">
+                  <button
+                    id="challengeFrost"
+                    class="button button--challenge"
+                    type="button"
+                    title="Animated frost snake sweeps the board."
+                  >
+                    Frost Snake
+                  </button>
+                  <div class="frost-level">
+                    <label for="frostLevel">Level</label>
+                    <input
+                      id="frostLevel"
+                      type="range"
+                      min="1"
+                      max="10"
+                      step="1"
+                      value="1"
+                      title="Controls snake length (L1=4, +2 per level)."
+                    />
+                    <span id="frostLevelValue" class="frost-level__value"
+                      >1</span
+                    >
+                  </div>
+                </div>
               </div>
             </div>
 
@@ -386,6 +411,33 @@
                       title="L1=10% slower timers, +10% per level."
                     />
                     <span id="timeExtendLevelValue" class="passive-level__value"
+                      >1</span
+                    >
+                  </div>
+                </div>
+                <div class="passive-row">
+                  <button
+                    id="passiveSecondChance"
+                    class="button"
+                    type="button"
+                    title="Gives one timed chance per puzzle to correct a mistake."
+                  >
+                    Second Chance
+                  </button>
+                  <div class="passive-level">
+                    <label for="secondChanceLevel">Level</label>
+                    <input
+                      id="secondChanceLevel"
+                      type="range"
+                      min="1"
+                      max="10"
+                      step="1"
+                      value="1"
+                      title="Timer length (L1=2s, +1s per level)."
+                    />
+                    <span
+                      id="secondChanceLevelValue"
+                      class="passive-level__value"
                       >1</span
                     >
                   </div>

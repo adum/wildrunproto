@@ -3,6 +3,7 @@ import { app } from "./context.js";
 var GB = app.GB;
 var state = app.state;
 var elements = app.elements;
+var refs = app.refs;
 var configUtils = app.configUtils;
 
 function getNumber(value, fallback) {
@@ -56,6 +57,21 @@ function setTimeExtendLevel(level) {
   updateTimeExtendLevelUI();
 }
 
+function updateSecondChanceLevelUI() {
+  if (elements.secondChanceLevelInput) {
+    elements.secondChanceLevelInput.value = String(state.secondChanceLevel);
+  }
+  if (elements.secondChanceLevelValue) {
+    elements.secondChanceLevelValue.textContent = String(state.secondChanceLevel);
+  }
+}
+
+function setSecondChanceLevel(level) {
+  var nextLevel = clampLevel("secondChance", level, 1, 10);
+  state.secondChanceLevel = nextLevel;
+  updateSecondChanceLevelUI();
+}
+
 function getTimeExtendMultiplier() {
   if (!state.passiveTimeExtend) {
     return 1;
@@ -64,6 +80,52 @@ function getTimeExtendMultiplier() {
   var percentPerLevel = getNumber(config.timeExtendPercentPerLevel, 10);
   var safeLevel = clampLevel("timeExtend", state.timeExtendLevel, 1, 10);
   return 1 + safeLevel * (percentPerLevel / 100);
+}
+
+function getSecondChanceSeconds(level) {
+  var config = app.config && app.config.passives ? app.config.passives : {};
+  var secondsConfig = config.secondChance || {};
+  var base = getNumber(secondsConfig.baseSeconds, 2);
+  var increment = getNumber(secondsConfig.incrementPerLevel, 1);
+  var minSeconds = getNumber(secondsConfig.minSeconds, 1);
+  var safeLevel = clampLevel("secondChance", level, 1, 10);
+  var seconds = base + (safeLevel - 1) * increment;
+  if (!Number.isFinite(seconds)) {
+    seconds = base;
+  }
+  return Math.max(minSeconds, seconds);
+}
+
+function updateSecondChanceTimerDisplay(seconds) {
+  if (!refs.secondChanceTimerEl) {
+    return;
+  }
+  if (app.timers && app.timers.formatTimerValue) {
+    refs.secondChanceTimerEl.textContent = app.timers.formatTimerValue(seconds);
+    return;
+  }
+  var value = Number(seconds);
+  if (!Number.isFinite(value) || value <= 0) {
+    refs.secondChanceTimerEl.textContent = "0";
+    return;
+  }
+  if (value < 1) {
+    var trimmed = Math.floor(value * 100) / 100;
+    refs.secondChanceTimerEl.textContent = trimmed.toFixed(2);
+    return;
+  }
+  refs.secondChanceTimerEl.textContent = String(Math.ceil(value));
+}
+
+function updateSecondChanceUI() {
+  if (!refs.secondChanceTimerEl) {
+    return;
+  }
+  if (state.secondChanceActive) {
+    refs.secondChanceTimerEl.style.display = "block";
+  } else {
+    refs.secondChanceTimerEl.style.display = "none";
+  }
 }
 
 function updatePassiveControls() {
@@ -76,6 +138,15 @@ function updatePassiveControls() {
       elements.passiveTimeExtendBtn.disabled = false;
     }
   }
+  if (elements.passiveSecondChanceBtn) {
+    if (state.passiveSecondChance) {
+      elements.passiveSecondChanceBtn.classList.add("active");
+      elements.passiveSecondChanceBtn.disabled = true;
+    } else {
+      elements.passiveSecondChanceBtn.classList.remove("active");
+      elements.passiveSecondChanceBtn.disabled = false;
+    }
+  }
 }
 
 function setTimeExtendActive(active) {
@@ -83,6 +154,51 @@ function setTimeExtendActive(active) {
   updatePassiveControls();
   updateTimeExtendLevelUI();
   updateCaptureIndicators();
+}
+
+function setSecondChanceActive(active) {
+  state.passiveSecondChance = active;
+  updatePassiveControls();
+  updateSecondChanceLevelUI();
+}
+
+function clearSecondChanceTimer() {
+  if (state.secondChanceTimerId) {
+    clearInterval(state.secondChanceTimerId);
+    state.secondChanceTimerId = null;
+  }
+  state.secondChanceActive = false;
+  state.secondChanceEndsAt = 0;
+  updateSecondChanceUI();
+}
+
+function startSecondChance(onExpire) {
+  if (
+    !state.passiveSecondChance ||
+    state.secondChanceUsed ||
+    state.secondChanceActive
+  ) {
+    return null;
+  }
+  state.secondChanceUsed = true;
+  clearSecondChanceTimer();
+  state.secondChanceActive = true;
+  var duration = getSecondChanceSeconds(state.secondChanceLevel);
+  state.secondChanceEndsAt = performance.now() + duration * 1000;
+  updateSecondChanceTimerDisplay(duration);
+  updateSecondChanceUI();
+  state.secondChanceTimerId = setInterval(function () {
+    var remaining = state.secondChanceEndsAt - performance.now();
+    var seconds = Math.max(0, remaining / 1000);
+    updateSecondChanceTimerDisplay(seconds);
+    if (remaining <= 0) {
+      clearSecondChanceTimer();
+      if (typeof onExpire === "function") {
+        onExpire();
+      }
+    }
+  }, 100);
+  return duration;
 }
 
 function updateCaptureIndicators() {
@@ -200,8 +316,13 @@ function updateCaptureIndicators() {
 
 function resetPassives() {
   state.passiveTimeExtend = false;
+  state.passiveSecondChance = false;
+  state.secondChanceUsed = false;
+  clearSecondChanceTimer();
   updatePassiveControls();
   updateTimeExtendLevelUI();
+  updateSecondChanceLevelUI();
+  updateSecondChanceUI();
   updateCaptureIndicators();
 }
 
@@ -212,3 +333,10 @@ app.passives.updatePassiveControls = updatePassiveControls;
 app.passives.setTimeExtendActive = setTimeExtendActive;
 app.passives.resetPassives = resetPassives;
 app.passives.updateCaptureIndicators = updateCaptureIndicators;
+app.passives.updateSecondChanceLevelUI = updateSecondChanceLevelUI;
+app.passives.setSecondChanceLevel = setSecondChanceLevel;
+app.passives.setSecondChanceActive = setSecondChanceActive;
+app.passives.getSecondChanceSeconds = getSecondChanceSeconds;
+app.passives.startSecondChance = startSecondChance;
+app.passives.clearSecondChanceTimer = clearSecondChanceTimer;
+app.passives.updateSecondChanceUI = updateSecondChanceUI;

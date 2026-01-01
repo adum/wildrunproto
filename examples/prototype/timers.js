@@ -64,6 +64,21 @@ function applyTimeExtend(seconds) {
   return Math.ceil(seconds * multiplier);
 }
 
+function formatTimerValue(seconds) {
+  var value = Number(seconds);
+  if (!Number.isFinite(value)) {
+    return "0";
+  }
+  if (value <= 0) {
+    return "0";
+  }
+  if (value < 1) {
+    var trimmed = Math.floor(value * 100) / 100;
+    return trimmed.toFixed(2);
+  }
+  return String(Math.ceil(value));
+}
+
 function getMysteryStoneCount(level) {
   var config = app.config && app.config.mystery ? app.config.mystery : {};
   var base = getNumber(config.baseStones, 1);
@@ -176,7 +191,7 @@ function updateMysteryTimerDisplay(seconds) {
   if (!refs.mysteryTimerEl) {
     return;
   }
-  refs.mysteryTimerEl.textContent = String(seconds);
+  refs.mysteryTimerEl.textContent = formatTimerValue(seconds);
 }
 
 function stopMysteryTimer(expired) {
@@ -204,7 +219,7 @@ function tickMysteryTimer() {
     return;
   }
   var remaining = state.mysteryTimerEndsAt - performance.now();
-  var seconds = Math.max(0, Math.ceil(remaining / 1000));
+  var seconds = Math.max(0, remaining / 1000);
   updateMysteryTimerDisplay(seconds);
   if (remaining <= 0) {
     stopMysteryTimer(true);
@@ -291,7 +306,7 @@ function updateEnigmaTimerDisplay(seconds) {
   if (!refs.enigmaTimerEl) {
     return;
   }
-  refs.enigmaTimerEl.textContent = String(seconds);
+  refs.enigmaTimerEl.textContent = formatTimerValue(seconds);
 }
 
 function stopEnigmaTimer(expired) {
@@ -319,7 +334,7 @@ function tickEnigmaTimer() {
     return;
   }
   var remaining = state.enigmaTimerEndsAt - performance.now();
-  var seconds = Math.max(0, Math.ceil(remaining / 1000));
+  var seconds = Math.max(0, remaining / 1000);
   updateEnigmaTimerDisplay(seconds);
   if (remaining <= 0) {
     stopEnigmaTimer(true);
@@ -397,7 +412,7 @@ function updateSpeedTimerDisplay(seconds) {
   if (!refs.speedTimerEl) {
     return;
   }
-  refs.speedTimerEl.textContent = String(seconds);
+  refs.speedTimerEl.textContent = formatTimerValue(seconds);
 }
 
 function updateSpeedUI() {
@@ -436,7 +451,7 @@ function tickSpeedTimer() {
     return;
   }
   var remaining = state.speedTimerEndsAt - performance.now();
-  var seconds = Math.max(0, Math.ceil(remaining / 1000));
+  var seconds = Math.max(0, remaining / 1000);
   updateSpeedTimerDisplay(seconds);
   if (remaining <= 0) {
     stopSpeedTimer(true);
@@ -516,3 +531,4 @@ app.timers.updateSpeedUI = updateSpeedUI;
 app.timers.stopSpeedTimer = stopSpeedTimer;
 app.timers.startSpeedTimer = startSpeedTimer;
 app.timers.syncSpeedTimer = syncSpeedTimer;
+app.timers.formatTimerValue = formatTimerValue;

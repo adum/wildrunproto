@@ -2,6 +2,7 @@ import { app } from "../prototype/context.js";
 import "../prototype/config.js";
 import "../prototype/ghost.js";
 import "../prototype/fire.js";
+import "../prototype/frost.js";
 import "../prototype/passives.js";
 import "../prototype/overlays.js";
 import "../prototype/timers.js";
@@ -41,6 +42,10 @@ var PASSIVE_DEFS = {
   timeExtend: {
     label: "Time Extend",
     tooltip: "Slows countdown timers by 10% per level.",
+  },
+  secondChance: {
+    label: "Second Chance",
+    tooltip: "One timed retry per puzzle on a mistake.",
   },
   friendlyCapture: {
     label: "Friendly Capture",
@@ -172,6 +177,16 @@ var CHALLENGE_DEFS = {
     },
     enable: function () {
       app.challenges.setFirePlay(true);
+    },
+  },
+  frost: {
+    label: "Frost Snake",
+    tooltip: "Animated frost snake sweeps the board.",
+    setLevel: function (level) {
+      app.frost.setFrostLevel(level);
+    },
+    enable: function () {
+      app.challenges.setFrostPlay(true);
     },
   },
 };
@@ -505,6 +520,9 @@ function applyPassives() {
     if (passive.id === "timeExtend") {
       app.passives.setTimeExtendLevel(passive.level);
       app.passives.setTimeExtendActive(true);
+    } else if (passive.id === "secondChance") {
+      app.passives.setSecondChanceLevel(passive.level);
+      app.passives.setSecondChanceActive(true);
     }
   });
 }
@@ -594,6 +612,8 @@ function clampChallengeLevel(challengeId, level) {
     key = "speed";
   } else if (challengeId === "fire") {
     key = "fire";
+  } else if (challengeId === "frost") {
+    key = "frost";
   }
   if (!key) {
     return 1;

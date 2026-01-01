@@ -162,6 +162,22 @@ body {
   pointer-events: none;
 }
 
+#secondChanceCountdown {
+  left: 10px;
+  top: 112px;
+  min-width: 36px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  font-weight: 700;
+  font-size: 14px;
+  text-align: center;
+  color: #fff8ea;
+  background: rgba(31, 26, 20, 0.78);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  box-shadow: 0 6px 14px rgba(30, 20, 10, 0.35);
+  pointer-events: none;
+}
+
 #ghostban-board {
   z-index: 1;
 }
@@ -183,6 +199,10 @@ body {
 }
 
 #ghostban-fire {
+  z-index: 6;
+}
+
+#ghostban-frost {
   z-index: 6;
 }
 
@@ -470,6 +490,7 @@ select {
 .infection-row,
 .speed-row,
 .fire-row,
+.frost-row,
 .passive-row,
 .hint-row {
   display: grid;
@@ -526,6 +547,7 @@ select {
 .infection-level,
 .speed-level,
 .fire-level,
+.frost-level,
 .passive-level,
 .hint-level {
   display: flex;
@@ -545,6 +567,7 @@ select {
 .infection-level label,
 .speed-level label,
 .fire-level label,
+.frost-level label,
 .passive-level label,
 .hint-level label {
   display: inline-flex;
@@ -560,6 +583,7 @@ select {
 .infection-level input[type="range"],
 .speed-level input[type="range"],
 .fire-level input[type="range"],
+.frost-level input[type="range"],
 .passive-level input[type="range"],
 .hint-level input[type="range"] {
   width: 100%;
@@ -578,6 +602,7 @@ select {
 .infection-level__value,
 .speed-level__value,
 .fire-level__value,
+.frost-level__value,
 .passive-level__value,
 .hint-level__value {
   min-width: 16px;
