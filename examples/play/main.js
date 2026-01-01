@@ -21,6 +21,9 @@ var startGameBtn = document.getElementById("startGameBtn");
 var advanceOverlay = document.getElementById("advanceOverlay");
 var advanceLabel = document.getElementById("advanceLabel");
 var advanceBtn = document.getElementById("advanceBtn");
+var retryOverlay = document.getElementById("retryOverlay");
+var retryLabel = document.getElementById("retryLabel");
+var retryBtn = document.getElementById("retryBtn");
 var difficultyLabel = document.getElementById("difficultyLabel");
 var passiveList = document.getElementById("passiveList");
 var hintList = document.getElementById("hintList");
@@ -175,6 +178,7 @@ var game = {
   hints: [],
   challenge: null,
   pendingNext: null,
+  maxLives: 3,
 };
 
 app.handlers.onPuzzleSolved = function () {
@@ -183,6 +187,15 @@ app.handlers.onPuzzleSolved = function () {
   }
   game.levelActive = false;
   showAdvanceOverlay();
+};
+
+app.handlers.onPuzzleFailed = function () {
+  if (!game.started) {
+    return;
+  }
+  game.levelActive = false;
+  hideAdvanceOverlay();
+  showRetryOverlay();
 };
 
 function getPlayConfig() {
@@ -344,6 +357,9 @@ function ensureBoard(size) {
   if (advanceOverlay && advanceOverlay.parentElement !== app.elements.mount) {
     app.elements.mount.appendChild(advanceOverlay);
   }
+  if (retryOverlay && retryOverlay.parentElement !== app.elements.mount) {
+    app.elements.mount.appendChild(retryOverlay);
+  }
 }
 
 function resetHintLevels() {
@@ -484,6 +500,16 @@ function setupHints(config) {
   renderHints();
 }
 
+function pruneUsedHints() {
+  if (!Array.isArray(game.hints)) {
+    game.hints = [];
+    return;
+  }
+  game.hints = game.hints.filter(function (hint) {
+    return !hint.used;
+  });
+}
+
 function setupPassives(config) {
   var passiveIds = pickRandom(config.passivePool, config.passivesPerRun);
   game.passives = passiveIds.map(function (id) {
@@ -598,7 +624,8 @@ function loadLevel() {
   game.currentProblem = pick.problem;
   game.levelActive = true;
   loadProblem(pick.problem, pick.label, isBoss);
-  setupHints(config);
+  pruneUsedHints();
+  renderHints();
 }
 
 function isBossLevel(config, levelNumber) {
@@ -621,6 +648,7 @@ function showAdvanceOverlay() {
   advanceLabel.textContent = "On to " + label;
   advanceBtn.textContent = "Continue to " + buttonLabel;
   advanceOverlay.classList.remove("is-hidden");
+  hideRetryOverlay();
   game.pendingNext = {
     difficulty: nextDifficulty,
     levelNumber: nextLevelNumber,
@@ -631,6 +659,24 @@ function showAdvanceOverlay() {
 function hideAdvanceOverlay() {
   if (advanceOverlay) {
     advanceOverlay.classList.add("is-hidden");
+  }
+}
+
+function showRetryOverlay() {
+  if (!retryOverlay) {
+    return;
+  }
+  if (retryLabel && state.lives <= 0) {
+    retryLabel.textContent = "Out of lives. Retry?";
+  } else if (retryLabel) {
+    retryLabel.textContent = "Retry this level";
+  }
+  retryOverlay.classList.remove("is-hidden");
+}
+
+function hideRetryOverlay() {
+  if (retryOverlay) {
+    retryOverlay.classList.add("is-hidden");
   }
 }
 
@@ -650,9 +696,12 @@ function startGame() {
     value: 30,
   };
   state.lives = 3;
+  game.maxLives = state.lives;
   app.ui.updateHud();
   setupPassives(config);
+  setupHints(config);
   hideStartOverlay();
+  hideRetryOverlay();
   loadLevel();
 }
 
@@ -678,6 +727,29 @@ if (advanceBtn) {
     game.levelNumber = game.pendingNext.levelNumber;
     game.pendingNext = null;
     loadLevel();
+  });
+}
+
+if (retryBtn) {
+  retryBtn.addEventListener("click", function (event) {
+    if (event) {
+      event.stopPropagation();
+    }
+    if (!game.started || !game.currentProblem) {
+      return;
+    }
+    if (state.lives <= 0) {
+      state.lives = game.maxLives || 3;
+      app.ui.updateHud();
+    }
+    hideRetryOverlay();
+    game.levelActive = true;
+    app.board.resetPuzzle();
+    applyPassives();
+    applyChallenge();
+    renderHints();
+    app.board.updateBoard();
+    app.board.evaluatePosition();
   });
 }
 

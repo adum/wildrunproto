@@ -226,6 +226,9 @@ function evaluatePosition() {
   if (state.lives <= 0) {
     ui.setStatus("Out of lives. Reset to continue.", "error");
     app.timers.stopSpeedTimer(false);
+    if (app.handlers.onPuzzleFailed) {
+      app.handlers.onPuzzleFailed();
+    }
     return;
   }
 

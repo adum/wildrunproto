@@ -723,6 +723,20 @@ select {
   min-width: 160px;
 }
 
+.play-overlay--retry .play-overlay__panel {
+  min-width: 220px;
+}
+
+.play-overlay--retry .play-overlay__title {
+  font-size: 18px;
+}
+
+.play-overlay--retry .play-overlay__cta {
+  min-width: 200px;
+  font-size: 16px;
+  padding: 12px 18px;
+}
+
 @media (max-width: 960px) {
   .layout {
     grid-template-columns: 1fr;
