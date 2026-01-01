@@ -72,6 +72,21 @@ function setSecondChanceLevel(level) {
   updateSecondChanceLevelUI();
 }
 
+function updateFreeUpgradesLevelUI() {
+  if (elements.freeUpgradesLevelInput) {
+    elements.freeUpgradesLevelInput.value = String(state.freeUpgradesLevel);
+  }
+  if (elements.freeUpgradesLevelValue) {
+    elements.freeUpgradesLevelValue.textContent = String(state.freeUpgradesLevel);
+  }
+}
+
+function setFreeUpgradesLevel(level) {
+  var nextLevel = clampLevel("freeUpgrades", level, 1, 10);
+  state.freeUpgradesLevel = nextLevel;
+  updateFreeUpgradesLevelUI();
+}
+
 function getTimeExtendMultiplier() {
   if (!state.passiveTimeExtend) {
     return 1;
@@ -94,6 +109,23 @@ function getSecondChanceSeconds(level) {
     seconds = base;
   }
   return Math.max(minSeconds, seconds);
+}
+
+function getFreeUpgradesChance() {
+  if (!state.passiveFreeUpgrades) {
+    return 0;
+  }
+  var config = app.config && app.config.passives ? app.config.passives : {};
+  var upgradesConfig = config.freeUpgrades || {};
+  var base = getNumber(upgradesConfig.baseChancePercent, 30);
+  var increment = getNumber(upgradesConfig.incrementPerLevel, 10);
+  var safeLevel = clampLevel("freeUpgrades", state.freeUpgradesLevel, 1, 10);
+  var percent = base + (safeLevel - 1) * increment;
+  if (!Number.isFinite(percent)) {
+    percent = 0;
+  }
+  percent = Math.max(0, Math.min(100, percent));
+  return percent / 100;
 }
 
 function updateSecondChanceTimerDisplay(seconds) {
@@ -147,6 +179,15 @@ function updatePassiveControls() {
       elements.passiveSecondChanceBtn.disabled = false;
     }
   }
+  if (elements.passiveFreeUpgradesBtn) {
+    if (state.passiveFreeUpgrades) {
+      elements.passiveFreeUpgradesBtn.classList.add("active");
+      elements.passiveFreeUpgradesBtn.disabled = true;
+    } else {
+      elements.passiveFreeUpgradesBtn.classList.remove("active");
+      elements.passiveFreeUpgradesBtn.disabled = false;
+    }
+  }
 }
 
 function setTimeExtendActive(active) {
@@ -160,6 +201,12 @@ function setSecondChanceActive(active) {
   state.passiveSecondChance = active;
   updatePassiveControls();
   updateSecondChanceLevelUI();
+}
+
+function setFreeUpgradesActive(active) {
+  state.passiveFreeUpgrades = active;
+  updatePassiveControls();
+  updateFreeUpgradesLevelUI();
 }
 
 function clearSecondChanceTimer() {
@@ -317,11 +364,13 @@ function updateCaptureIndicators() {
 function resetPassives() {
   state.passiveTimeExtend = false;
   state.passiveSecondChance = false;
+  state.passiveFreeUpgrades = false;
   state.secondChanceUsed = false;
   clearSecondChanceTimer();
   updatePassiveControls();
   updateTimeExtendLevelUI();
   updateSecondChanceLevelUI();
+  updateFreeUpgradesLevelUI();
   updateSecondChanceUI();
   updateCaptureIndicators();
 }
@@ -340,3 +389,7 @@ app.passives.getSecondChanceSeconds = getSecondChanceSeconds;
 app.passives.startSecondChance = startSecondChance;
 app.passives.clearSecondChanceTimer = clearSecondChanceTimer;
 app.passives.updateSecondChanceUI = updateSecondChanceUI;
+app.passives.updateFreeUpgradesLevelUI = updateFreeUpgradesLevelUI;
+app.passives.setFreeUpgradesLevel = setFreeUpgradesLevel;
+app.passives.setFreeUpgradesActive = setFreeUpgradesActive;
+app.passives.getFreeUpgradesChance = getFreeUpgradesChance;

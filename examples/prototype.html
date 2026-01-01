@@ -442,6 +442,33 @@
                     >
                   </div>
                 </div>
+                <div class="passive-row">
+                  <button
+                    id="passiveFreeUpgrades"
+                    class="button"
+                    type="button"
+                    title="Chance to upgrade a newly acquired hint by one level."
+                  >
+                    Free Upgrades
+                  </button>
+                  <div class="passive-level">
+                    <label for="freeUpgradesLevel">Level</label>
+                    <input
+                      id="freeUpgradesLevel"
+                      type="range"
+                      min="1"
+                      max="10"
+                      step="1"
+                      value="1"
+                      title="Upgrade chance (L1=30%, +10% per level)."
+                    />
+                    <span
+                      id="freeUpgradesLevelValue"
+                      class="passive-level__value"
+                      >1</span
+                    >
+                  </div>
+                </div>
                 <div class="passive-row passive-row--indicator">
                   <div
                     class="passive-label"

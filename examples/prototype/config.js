@@ -11,6 +11,7 @@ var DEFAULT_CONFIG = {
     frost: { min: 1, max: 10 },
     timeExtend: { min: 1, max: 10 },
     secondChance: { min: 1, max: 10 },
+    freeUpgrades: { min: 1, max: 10 },
     hintMultipleChoice: { min: 1, max: 3 },
     hintRow: { min: 1, max: 3 },
     hintCol: { min: 1, max: 3 },
@@ -27,6 +28,7 @@ var DEFAULT_CONFIG = {
   passives: {
     timeExtendPercentPerLevel: 10,
     secondChance: { baseSeconds: 2, incrementPerLevel: 1, minSeconds: 1 },
+    freeUpgrades: { baseChancePercent: 30, incrementPerLevel: 10 },
   },
   ghost: {
     flashSeconds: 5,
@@ -80,7 +82,7 @@ var DEFAULT_CONFIG = {
         "diagReveal",
         "eliminateRandom",
       ],
-      passivePool: ["timeExtend", "secondChance"],
+      passivePool: ["timeExtend", "secondChance", "freeUpgrades"],
       prices: {
         hints: {
           firstMove: 6,
@@ -94,6 +96,7 @@ var DEFAULT_CONFIG = {
         passives: {
           timeExtend: 12,
           secondChance: 14,
+          freeUpgrades: 10,
         },
       },
     },
@@ -106,7 +109,13 @@ var DEFAULT_CONFIG = {
       "diagReveal",
       "eliminateRandom",
     ],
-    passivePool: ["timeExtend", "secondChance", "friendlyCapture", "enemyCapture"],
+    passivePool: [
+      "timeExtend",
+      "secondChance",
+      "freeUpgrades",
+      "friendlyCapture",
+      "enemyCapture",
+    ],
     challengePool: [
       "gray",
       "ghost",
@@ -234,6 +243,7 @@ function applyConfigToUI() {
   applyLevelRange(elements.frostLevelInput, "frost");
   applyLevelRange(elements.timeExtendLevelInput, "timeExtend");
   applyLevelRange(elements.secondChanceLevelInput, "secondChance");
+  applyLevelRange(elements.freeUpgradesLevelInput, "freeUpgrades");
   applyLevelRange(elements.hintTwoLevelInput, "hintMultipleChoice");
   applyLevelRange(elements.hintRowLevelInput, "hintRow");
   applyLevelRange(elements.hintColLevelInput, "hintCol");
@@ -319,6 +329,15 @@ function applyConfigToUI() {
     app.passives.setSecondChanceLevel(secondChanceValue);
   } else if (app.passives && app.passives.updateSecondChanceLevelUI) {
     app.passives.updateSecondChanceLevelUI();
+  }
+
+  if (app.passives && app.passives.setFreeUpgradesLevel) {
+    var freeUpgradesValue = elements.freeUpgradesLevelInput
+      ? elements.freeUpgradesLevelInput.value
+      : state.freeUpgradesLevel;
+    app.passives.setFreeUpgradesLevel(freeUpgradesValue);
+  } else if (app.passives && app.passives.updateFreeUpgradesLevelUI) {
+    app.passives.updateFreeUpgradesLevelUI();
   }
 
   if (app.hints && app.hints.setRowRevealLevel) {

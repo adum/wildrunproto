@@ -208,6 +208,15 @@ if (elements.passiveSecondChanceBtn) {
     app.ui.logMessage("Passive enabled: Second chance.");
   });
 }
+if (elements.passiveFreeUpgradesBtn) {
+  elements.passiveFreeUpgradesBtn.addEventListener("click", function () {
+    if (state.passiveFreeUpgrades) {
+      return;
+    }
+    app.passives.setFreeUpgradesActive(true);
+    app.ui.logMessage("Passive enabled: Free upgrades.");
+  });
+}
 
 if (elements.mysteryLevelInput) {
   elements.mysteryLevelInput.addEventListener("input", function (event) {
@@ -274,6 +283,14 @@ if (elements.secondChanceLevelInput) {
       return;
     }
     app.passives.setSecondChanceLevel(event.target.value);
+  });
+}
+if (elements.freeUpgradesLevelInput) {
+  elements.freeUpgradesLevelInput.addEventListener("input", function (event) {
+    if (!event || !event.target) {
+      return;
+    }
+    app.passives.setFreeUpgradesLevel(event.target.value);
   });
 }
 

@@ -54,6 +54,10 @@ var PASSIVE_DEFS = {
     label: "Second Chance",
     tooltip: "One timed retry per puzzle on a mistake.",
   },
+  freeUpgrades: {
+    label: "Free Upgrades",
+    tooltip: "Chance to level up new hints for free.",
+  },
   friendlyCapture: {
     label: "Friendly Capture",
     tooltip: "Lights up if any correct line sacrifices a player stone.",
@@ -262,7 +266,7 @@ function getPlayConfig() {
     : hintPool.slice();
   var shopPassivePool = Array.isArray(shop.passivePool)
     ? shop.passivePool.slice()
-    : ["timeExtend", "secondChance"];
+    : ["timeExtend", "secondChance", "freeUpgrades"];
   return {
     startDifficulty: config.startDifficulty || "30kyu",
     difficultyStep: toNumber(config.difficultyStep, 1),
@@ -330,6 +334,78 @@ function pickRandom(list, count) {
   }
   var picks = shuffle(list);
   return picks.slice(0, Math.min(count, picks.length));
+}
+
+function getHintLevelKey(hintId) {
+  if (hintId === "multipleChoice") {
+    return "hintMultipleChoice";
+  }
+  if (hintId === "rowReveal") {
+    return "hintRow";
+  }
+  if (hintId === "colReveal") {
+    return "hintCol";
+  }
+  if (hintId === "diagReveal") {
+    return "hintDiag";
+  }
+  if (hintId === "eliminateRandom") {
+    return "eliminateRandom";
+  }
+  return null;
+}
+
+function getHintMaxLevel(hintId) {
+  var key = getHintLevelKey(hintId);
+  if (!key) {
+    return 1;
+  }
+  var levels = app.config && app.config.levels ? app.config.levels : {};
+  var config = levels[key] || {};
+  var max = toNumber(config.max, 1);
+  if (!Number.isFinite(max) || max <= 0) {
+    return 1;
+  }
+  return Math.max(1, Math.round(max));
+}
+
+function applyHintLevel(hintId, level) {
+  var safe = Math.max(1, Math.round(level || 1));
+  if (hintId === "multipleChoice" && app.hints.setMultipleChoiceLevel) {
+    app.hints.setMultipleChoiceLevel(safe);
+  } else if (hintId === "rowReveal" && app.hints.setRowRevealLevel) {
+    app.hints.setRowRevealLevel(safe);
+  } else if (hintId === "colReveal" && app.hints.setColumnRevealLevel) {
+    app.hints.setColumnRevealLevel(safe);
+  } else if (hintId === "diagReveal" && app.hints.setDiagonalRevealLevel) {
+    app.hints.setDiagonalRevealLevel(safe);
+  } else if (hintId === "eliminateRandom" && app.hints.setElimRandomLevel) {
+    app.hints.setElimRandomLevel(safe);
+  }
+}
+
+function maybeUpgradeHintLevel(hintId, level) {
+  var maxLevel = getHintMaxLevel(hintId);
+  var current = Math.min(maxLevel, Math.max(1, Math.round(level || 1)));
+  if (current >= maxLevel) {
+    return current;
+  }
+  var chance =
+    app.passives && app.passives.getFreeUpgradesChance
+      ? app.passives.getFreeUpgradesChance()
+      : 0;
+  if (chance > 0 && Math.random() < chance) {
+    return Math.min(maxLevel, current + 1);
+  }
+  return current;
+}
+
+function createHintItem(id) {
+  return {
+    id: id,
+    used: false,
+    level: maybeUpgradeHintLevel(id, 1),
+  };
 }
 
 function parseDifficulty(value) {
@@ -510,7 +586,7 @@ function renderHints() {
     label.textContent = def.label;
     var level = document.createElement("span");
     level.className = "play-chip__level";
-    level.textContent = "L1";
+    level.textContent = "L" + (hint.level || 1);
     button.appendChild(label);
     button.appendChild(level);
     if (hint.used) {
@@ -524,6 +600,7 @@ function renderHints() {
       if (hint.used || !game.levelActive) {
         return;
       }
+      applyHintLevel(hint.id, hint.level || 1);
       def.action();
       hint.used = true;
       button.classList.add("is-used");
@@ -577,11 +654,6 @@ function buildShopInventory(config) {
   }
   var hintPrices = shopConfig.prices ? shopConfig.prices.hints : {};
   var passivePrices = shopConfig.prices ? shopConfig.prices.passives : {};
-  var ownedHints = new Set(
-    game.hints.map(function (hint) {
-      return hint.id;
-    })
-  );
   var ownedPassives = new Set(
     game.passives.map(function (passive) {
       return passive.id;
@@ -589,9 +661,6 @@ function buildShopInventory(config) {
   );
   var hintCandidates = shopConfig.hintPool.filter(function (id) {
     if (!HINT_DEFS[id]) {
-      return false;
-    }
-    if (ownedHints.has(id)) {
       return false;
     }
     return getShopPrice(hintPrices, id) !== null;
@@ -666,35 +735,43 @@ function renderShopList(listEl, items, defs, type) {
     var button = document.createElement("button");
     button.type = "button";
     button.className = "button shop-buy";
-    if (item.purchased) {
+    var lockAfterPurchase = type === "passive";
+    var isOwned = lockAfterPurchase && item.purchased;
+    var canAfford = item.price <= (state.coins || 0);
+    if (isOwned) {
       row.classList.add("is-owned");
       button.textContent = "Owned";
       button.disabled = true;
     } else {
       button.textContent = "Buy";
-      if (item.price > (state.coins || 0)) {
-        button.disabled = true;
+      if (!canAfford) {
+        button.classList.add("is-disabled");
+        button.setAttribute("aria-disabled", "true");
       }
     }
     button.addEventListener("click", function (event) {
       if (event) {
         event.stopPropagation();
       }
-      if (item.purchased) {
+      if (isOwned) {
         return;
       }
-      if (item.price > (state.coins || 0)) {
+      var currentCoins = state.coins || 0;
+      if (item.price > currentCoins) {
+        row.classList.remove("is-warn");
+        void row.offsetWidth;
+        row.classList.add("is-warn");
         return;
       }
       state.coins = (state.coins || 0) - item.price;
-      item.purchased = true;
       if (type === "hint") {
-        game.hints.push({ id: item.id, used: false });
+        game.hints.push(createHintItem(item.id));
         renderHints();
       } else if (type === "passive") {
         game.passives.push({ id: item.id, level: 1 });
         applyPassives();
         renderPassives();
+        item.purchased = true;
       }
       app.ui.updateHud();
       renderShop();
@@ -719,6 +796,9 @@ function applyPassives() {
     } else if (passive.id === "secondChance") {
       app.passives.setSecondChanceLevel(passive.level);
       app.passives.setSecondChanceActive(true);
+    } else if (passive.id === "freeUpgrades") {
+      app.passives.setFreeUpgradesLevel(passive.level);
+      app.passives.setFreeUpgradesActive(true);
     }
   });
 }
@@ -744,9 +824,7 @@ function applyChallenge() {
 
 function setupHints(config) {
   var hintIds = pickRandom(config.hintPool, config.hintsPerLevel);
-  game.hints = hintIds.map(function (id) {
-    return { id: id, used: false };
-  });
+  game.hints = hintIds.map(createHintItem);
   renderHints();
 }
 

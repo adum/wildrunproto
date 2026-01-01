@@ -9,6 +9,7 @@
     "frost": { "min": 1, "max": 10 },
     "timeExtend": { "min": 1, "max": 10 },
     "secondChance": { "min": 1, "max": 10 },
+    "freeUpgrades": { "min": 1, "max": 10 },
     "hintMultipleChoice": { "min": 1, "max": 3 },
     "hintRow": { "min": 1, "max": 3 },
     "hintCol": { "min": 1, "max": 3 },
@@ -24,7 +25,8 @@
   "enigma": { "baseRings": 1, "incrementPerLevel": 1, "minRings": 1 },
   "passives": {
     "timeExtendPercentPerLevel": 10,
-    "secondChance": { "baseSeconds": 2, "incrementPerLevel": 1, "minSeconds": 1 }
+    "secondChance": { "baseSeconds": 2, "incrementPerLevel": 1, "minSeconds": 1 },
+    "freeUpgrades": { "baseChancePercent": 30, "incrementPerLevel": 10 }
   },
   "ghost": {
     "flashSeconds": 5,
@@ -78,7 +80,7 @@
         "diagReveal",
         "eliminateRandom"
       ],
-      "passivePool": ["timeExtend", "secondChance"],
+      "passivePool": ["timeExtend", "secondChance", "freeUpgrades"],
       "prices": {
         "hints": {
           "firstMove": 6,
@@ -91,7 +93,8 @@
         },
         "passives": {
           "timeExtend": 12,
-          "secondChance": 14
+          "secondChance": 14,
+          "freeUpgrades": 10
         }
       }
     },
@@ -107,6 +110,7 @@
     "passivePool": [
       "timeExtend",
       "secondChance",
+      "freeUpgrades",
       "friendlyCapture",
       "enemyCapture"
     ],

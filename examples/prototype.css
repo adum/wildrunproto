@@ -454,6 +454,10 @@ select {
   transition: transform 0.15s ease, box-shadow 0.15s ease;
 }
 
+.controls--passives .button {
+  background: rgba(160, 200, 245, 0.18);
+}
+
 .button:hover {
   transform: translateY(-1px);
   box-shadow: 0 6px 14px rgba(90, 60, 30, 0.15);
@@ -505,7 +509,7 @@ select {
 
 .passive-label {
   border: 1px solid var(--panel-edge);
-  background: #fff;
+  background: rgba(160, 200, 245, 0.18);
   color: var(--ink);
   padding: 8px 12px;
   border-radius: 999px;
@@ -744,6 +748,10 @@ select {
   font-size: 13px;
 }
 
+.controls--passives .play-chip {
+  background: rgba(160, 200, 245, 0.18);
+}
+
 .play-chip__level {
   font-weight: 700;
   color: var(--accent-ink);
@@ -907,8 +915,19 @@ select {
   opacity: 0.6;
 }
 
+.shop-item.is-warn {
+  animation: shopWarn 0.35s ease;
+}
+
 .shop-buy {
   min-width: 74px;
+}
+
+.shop-buy.is-disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  box-shadow: none;
+  transform: none;
 }
 
 .shop-empty {
@@ -954,6 +973,19 @@ select {
   100% {
     opacity: 0;
     transform: scale(1.15);
+  }
+}
+
+@keyframes shopWarn {
+  0% {
+    box-shadow: 0 0 0 rgba(200, 80, 60, 0);
+  }
+  50% {
+    box-shadow: 0 0 0 3px rgba(200, 80, 60, 0.25);
+    background: rgba(255, 235, 228, 0.9);
+  }
+  100% {
+    box-shadow: 0 0 0 rgba(200, 80, 60, 0);
   }
 }
 
