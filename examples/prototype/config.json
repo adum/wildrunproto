@@ -21,6 +21,7 @@
     "enigma": { "baseSeconds": 30, "decrementPerLevel": 5, "minSeconds": 5 },
     "speed": { "baseSeconds": 30, "decrementPerLevel": 5, "minSeconds": 2 }
   },
+  "speedSolve": { "firstMoveSeconds": 5, "followupSeconds": 2 },
   "mystery": { "baseStones": 1, "incrementPerLevel": 1, "minStones": 1 },
   "enigma": { "baseRings": 1, "incrementPerLevel": 1, "minRings": 1 },
   "passives": {

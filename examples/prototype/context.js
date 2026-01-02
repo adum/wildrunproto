@@ -149,6 +149,11 @@ export const state = {
   speedTimerActive: false,
   speedTimerEndsAt: 0,
   speedTimerId: null,
+  speedSolveStartAt: 0,
+  speedSolveLastMoveAt: 0,
+  speedSolveMoveCount: 0,
+  speedSolveFirstOk: false,
+  speedSolveFollowupOk: true,
   challengeFire: false,
   fireLevel: 1,
   fireStartAt: 0,
@@ -204,7 +209,41 @@ export function logMessage(message) {
   }
 }
 
-export function setStatus(text, tone, indicator) {
+var STATUS_MARK_SVGS = {
+  success:
+    '<svg viewBox="0 0 20 20" class="status-mark__icon" aria-hidden="true">' +
+    '<path d="M4 10.5l4 4 8-9" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />' +
+    "</svg>",
+  "speed-play":
+    '<svg viewBox="0 0 20 20" class="status-mark__icon" aria-hidden="true">' +
+    '<path d="M11 1L4 11h4.5L7.5 19l8-11H11l1-7z" fill="currentColor" />' +
+    "</svg>",
+  "speed-solve":
+    '<svg viewBox="0 0 20 20" class="status-mark__icon" aria-hidden="true">' +
+    '<path d="M11 1L4 11h4.5L7.5 19l8-11H11l1-7z" fill="currentColor" />' +
+    '<path d="M11.5 13.2l1.8 1.9 4-4.4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />' +
+    "</svg>",
+};
+
+var STATUS_MARK_LABELS = {
+  success: "Solved",
+  "speed-play": "Speed play",
+  "speed-solve": "Speed solve",
+};
+
+function buildStatusMark(markType) {
+  var svg = STATUS_MARK_SVGS[markType];
+  if (!svg) {
+    return null;
+  }
+  var mark = document.createElement("span");
+  mark.className = "status-mark status-mark--" + markType;
+  mark.setAttribute("aria-hidden", "true");
+  mark.innerHTML = svg;
+  return mark;
+}
+
+export function setStatus(text, tone, indicator, mark) {
   var statusEl = elements.statusEl;
   if (!statusEl) {
     return;
@@ -218,12 +257,22 @@ export function setStatus(text, tone, indicator) {
   statusEl.textContent = "";
   statusEl.removeAttribute("aria-label");
 
+  var indicatorValue = indicator;
+  var markType = mark;
+  if (indicator && typeof indicator === "object") {
+    indicatorValue = indicator.indicator;
+    markType = indicator.mark;
+  }
+
   var indicatorTone = null;
-  if (indicator === GB.Ki.Black || indicator === "black") {
+  if (indicatorValue === GB.Ki.Black || indicatorValue === "black") {
     indicatorTone = "black";
-  } else if (indicator === GB.Ki.White || indicator === "white") {
+  } else if (indicatorValue === GB.Ki.White || indicatorValue === "white") {
     indicatorTone = "white";
   }
+
+  var markEl = markType ? buildStatusMark(markType) : null;
+  var markLabel = markType ? STATUS_MARK_LABELS[markType] : null;
 
   if (indicatorTone) {
     var dot = document.createElement("span");
@@ -233,12 +282,27 @@ export function setStatus(text, tone, indicator) {
     label.textContent = text;
     statusEl.appendChild(dot);
     statusEl.appendChild(label);
-    statusEl.setAttribute(
-      "aria-label",
-      text + ": " + (indicatorTone === "black" ? "Black" : "White")
-    );
+    if (markEl) {
+      statusEl.appendChild(markEl);
+    }
+    var ariaLabel =
+      text + ": " + (indicatorTone === "black" ? "Black" : "White");
+    if (markLabel) {
+      ariaLabel += " (" + markLabel + ")";
+    }
+    statusEl.setAttribute("aria-label", ariaLabel);
   } else {
-    statusEl.textContent = text;
+    var copy = document.createElement("span");
+    copy.textContent = text;
+    statusEl.appendChild(copy);
+    if (markEl) {
+      statusEl.appendChild(markEl);
+    } else {
+      statusEl.textContent = text;
+    }
+    if (markLabel) {
+      statusEl.setAttribute("aria-label", text + " (" + markLabel + ")");
+    }
   }
 }
 

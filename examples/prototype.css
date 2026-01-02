@@ -306,6 +306,41 @@ body {
   background: #fffdf6;
 }
 
+.status-mark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  border-radius: 999px;
+  border: 1px solid transparent;
+  flex-shrink: 0;
+}
+
+.status-mark__icon {
+  width: 12px;
+  height: 12px;
+  display: block;
+}
+
+.status-mark--success {
+  color: #1e4d30;
+  background: rgba(62, 179, 104, 0.18);
+  border-color: rgba(45, 135, 75, 0.4);
+}
+
+.status-mark--speed-play {
+  color: #24724b;
+  background: rgba(62, 179, 104, 0.2);
+  border-color: rgba(45, 135, 75, 0.45);
+}
+
+.status-mark--speed-solve {
+  color: #1f4f92;
+  background: rgba(70, 130, 225, 0.22);
+  border-color: rgba(53, 100, 185, 0.5);
+}
+
 .lives-box {
   padding: 10px 12px;
   border-radius: 12px;

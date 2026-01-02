@@ -255,6 +255,9 @@ function revealMysteryAndStart() {
   app.overlays.renderGrayStones(state.currentMat);
   updateMysteryUI();
   startMysteryTimer();
+  if (app.board && app.board.ensureSpeedSolveStart) {
+    app.board.ensureSpeedSolveStart();
+  }
   ui.logMessage("Mystery stone revealed. Timer started.");
 }
 
@@ -392,6 +395,9 @@ function revealEnigmaAndStart() {
   app.overlays.renderEnigmaOverlay();
   updateEnigmaUI();
   startEnigmaTimer();
+  if (app.board && app.board.ensureSpeedSolveStart) {
+    app.board.ensureSpeedSolveStart();
+  }
   ui.logMessage("Enigma rings revealed. Timer started.");
 }
 

@@ -1178,6 +1178,9 @@ function loadProblem(problem, difficultyLabelText, isBoss) {
   );
   state.combo = 0;
   state.lastNodeId = null;
+  if (app.board && app.board.resetSpeedSolveTracking) {
+    app.board.resetSpeedSolveTracking();
+  }
   if (app.passives && app.passives.updateCaptureIndicators) {
     app.passives.updateCaptureIndicators();
   }

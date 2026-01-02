@@ -41,6 +41,65 @@ function getEliminateRandomConfig() {
   return {};
 }
 
+function getSpeedSolveConfig() {
+  var config = app.config && app.config.speedSolve ? app.config.speedSolve : {};
+  var first = getNumber(config.firstMoveSeconds, 5);
+  var follow = getNumber(config.followupSeconds, 2);
+  return {
+    firstMoveSeconds: Math.max(0, first),
+    followupSeconds: Math.max(0, follow),
+  };
+}
+
+function resetSpeedSolveTracking() {
+  state.speedSolveStartAt = 0;
+  state.speedSolveLastMoveAt = 0;
+  state.speedSolveMoveCount = 0;
+  state.speedSolveFirstOk = false;
+  state.speedSolveFollowupOk = true;
+}
+
+function ensureSpeedSolveStart() {
+  if (state.speedSolveStartAt) {
+    return;
+  }
+  state.speedSolveStartAt = performance.now();
+}
+
+function recordSpeedSolveMove() {
+  var config = getSpeedSolveConfig();
+  var now = performance.now();
+  if (state.speedSolveMoveCount === 0) {
+    if (!state.speedSolveStartAt) {
+      state.speedSolveStartAt = now;
+      state.speedSolveFirstOk = false;
+    } else {
+      var firstDelta = now - state.speedSolveStartAt;
+      state.speedSolveFirstOk = firstDelta <= config.firstMoveSeconds * 1000;
+    }
+  } else if (state.speedSolveLastMoveAt) {
+    var delta = now - state.speedSolveLastMoveAt;
+    if (delta > config.followupSeconds * 1000) {
+      state.speedSolveFollowupOk = false;
+    }
+  }
+  state.speedSolveMoveCount += 1;
+  state.speedSolveLastMoveAt = now;
+}
+
+function getSpeedSolveMark() {
+  if (state.speedSolveMoveCount <= 0) {
+    return "success";
+  }
+  if (state.speedSolveFirstOk && state.speedSolveFollowupOk) {
+    return "speed-solve";
+  }
+  if (state.speedSolveMoveCount > 1 && state.speedSolveFollowupOk) {
+    return "speed-play";
+  }
+  return "success";
+}
+
 function initBoard(boardSize) {
   refs.board = new GB.GhostBan({
     boardSize: boardSize,
@@ -252,7 +311,12 @@ function evaluatePosition() {
 
   if (!state.currentNode.hasChildren()) {
     if (GB.isRightNode(state.currentNode)) {
-      ui.setStatus("Correct. Puzzle solved.", "success");
+      ui.setStatus(
+        "Correct. Puzzle solved.",
+        "success",
+        null,
+        getSpeedSolveMark()
+      );
       if (app.handlers.onPuzzleSolved) {
         app.handlers.onPuzzleSolved();
       }
@@ -277,6 +341,7 @@ function evaluatePosition() {
 
   var turn = utils.getTurn(state.currentNode, state.playerColor);
   if (turn === state.playerColor) {
+    ensureSpeedSolveStart();
     ui.setStatus("Your move", null, turn);
   } else {
     ui.setStatus("Opponent move...");
@@ -316,6 +381,7 @@ function resetPuzzle() {
   if (!state.rootNode) {
     return;
   }
+  resetSpeedSolveTracking();
   app.timers.stopMysteryTimer(false);
   state.mysteryStoneKeys = [];
   state.mysteryRevealed = false;
@@ -586,6 +652,7 @@ function handleMoveSelection(i, j) {
   app.challenges.recordGrayStone(i, j);
   app.ghost.recordGhostStone(i, j, turn);
   if (turn === state.playerColor) {
+    recordSpeedSolveMove();
     app.challenges.recordInfection(i, j, true);
     state.speedMoveCount += 1;
   }
@@ -614,3 +681,5 @@ app.board.resetPuzzle = resetPuzzle;
 app.board.loadSgf = loadSgf;
 app.board.handleMoveSelection = handleMoveSelection;
 app.board.eliminateRandomMove = eliminateRandomMove;
+app.board.resetSpeedSolveTracking = resetSpeedSolveTracking;
+app.board.ensureSpeedSolveStart = ensureSpeedSolveStart;
