@@ -1099,9 +1099,9 @@ select {
 }
 
 .coin-burst__grid {
-  width: min(90vw, 560px);
+  width: min(92vw, 640px);
   display: grid;
-  grid-template-columns: repeat(5, minmax(60px, 1fr));
+  grid-template-columns: repeat(6, minmax(60px, 1fr));
   gap: 8px 14px;
   padding: 12px 16px;
   border-radius: 16px;

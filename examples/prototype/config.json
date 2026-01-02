@@ -10,6 +10,7 @@
     "timeExtend": { "min": 1, "max": 10 },
     "secondChance": { "min": 1, "max": 10 },
     "freeUpgrades": { "min": 1, "max": 10 },
+    "bigMoney": { "min": 1, "max": 5 },
     "hintMultipleChoice": { "min": 1, "max": 3 },
     "hintRow": { "min": 1, "max": 3 },
     "hintCol": { "min": 1, "max": 3 },
@@ -27,7 +28,8 @@
   "passives": {
     "timeExtendPercentPerLevel": 10,
     "secondChance": { "baseSeconds": 2, "incrementPerLevel": 1, "minSeconds": 1 },
-    "freeUpgrades": { "baseChancePercent": 30, "incrementPerLevel": 10 }
+    "freeUpgrades": { "baseChancePercent": 30, "incrementPerLevel": 10 },
+    "bigMoney": { "baseMultiplier": 1.2, "incrementPerLevel": 0.05 }
   },
   "ghost": {
     "flashSeconds": 5,
@@ -81,7 +83,7 @@
         "diagReveal",
         "eliminateRandom"
       ],
-      "passivePool": ["timeExtend", "secondChance", "freeUpgrades"],
+      "passivePool": ["timeExtend", "secondChance", "freeUpgrades", "bigMoney"],
       "prices": {
         "hints": {
           "firstMove": 6,
@@ -95,7 +97,8 @@
         "passives": {
           "timeExtend": 12,
           "secondChance": 14,
-          "freeUpgrades": 10
+          "freeUpgrades": 10,
+          "bigMoney": 12
         }
       }
     },
@@ -112,6 +115,7 @@
       "timeExtend",
       "secondChance",
       "freeUpgrades",
+      "bigMoney",
       "friendlyCapture",
       "enemyCapture"
     ],

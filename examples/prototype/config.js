@@ -12,6 +12,7 @@ var DEFAULT_CONFIG = {
     timeExtend: { min: 1, max: 10 },
     secondChance: { min: 1, max: 10 },
     freeUpgrades: { min: 1, max: 10 },
+    bigMoney: { min: 1, max: 5 },
     hintMultipleChoice: { min: 1, max: 3 },
     hintRow: { min: 1, max: 3 },
     hintCol: { min: 1, max: 3 },
@@ -30,6 +31,7 @@ var DEFAULT_CONFIG = {
     timeExtendPercentPerLevel: 10,
     secondChance: { baseSeconds: 2, incrementPerLevel: 1, minSeconds: 1 },
     freeUpgrades: { baseChancePercent: 30, incrementPerLevel: 10 },
+    bigMoney: { baseMultiplier: 1.2, incrementPerLevel: 0.05 },
   },
   ghost: {
     flashSeconds: 5,
@@ -83,7 +85,7 @@ var DEFAULT_CONFIG = {
         "diagReveal",
         "eliminateRandom",
       ],
-      passivePool: ["timeExtend", "secondChance", "freeUpgrades"],
+      passivePool: ["timeExtend", "secondChance", "freeUpgrades", "bigMoney"],
       prices: {
         hints: {
           firstMove: 6,
@@ -98,6 +100,7 @@ var DEFAULT_CONFIG = {
           timeExtend: 12,
           secondChance: 14,
           freeUpgrades: 10,
+          bigMoney: 12,
         },
       },
     },
@@ -114,6 +117,7 @@ var DEFAULT_CONFIG = {
       "timeExtend",
       "secondChance",
       "freeUpgrades",
+      "bigMoney",
       "friendlyCapture",
       "enemyCapture",
     ],
@@ -245,6 +249,7 @@ function applyConfigToUI() {
   applyLevelRange(elements.timeExtendLevelInput, "timeExtend");
   applyLevelRange(elements.secondChanceLevelInput, "secondChance");
   applyLevelRange(elements.freeUpgradesLevelInput, "freeUpgrades");
+  applyLevelRange(elements.bigMoneyLevelInput, "bigMoney");
   applyLevelRange(elements.hintTwoLevelInput, "hintMultipleChoice");
   applyLevelRange(elements.hintRowLevelInput, "hintRow");
   applyLevelRange(elements.hintColLevelInput, "hintCol");
@@ -339,6 +344,15 @@ function applyConfigToUI() {
     app.passives.setFreeUpgradesLevel(freeUpgradesValue);
   } else if (app.passives && app.passives.updateFreeUpgradesLevelUI) {
     app.passives.updateFreeUpgradesLevelUI();
+  }
+
+  if (app.passives && app.passives.setBigMoneyLevel) {
+    var bigMoneyValue = elements.bigMoneyLevelInput
+      ? elements.bigMoneyLevelInput.value
+      : state.bigMoneyLevel;
+    app.passives.setBigMoneyLevel(bigMoneyValue);
+  } else if (app.passives && app.passives.updateBigMoneyLevelUI) {
+    app.passives.updateBigMoneyLevelUI();
   }
 
   if (app.hints && app.hints.setRowRevealLevel) {

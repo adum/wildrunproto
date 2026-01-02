@@ -87,6 +87,21 @@ function setFreeUpgradesLevel(level) {
   updateFreeUpgradesLevelUI();
 }
 
+function updateBigMoneyLevelUI() {
+  if (elements.bigMoneyLevelInput) {
+    elements.bigMoneyLevelInput.value = String(state.bigMoneyLevel);
+  }
+  if (elements.bigMoneyLevelValue) {
+    elements.bigMoneyLevelValue.textContent = String(state.bigMoneyLevel);
+  }
+}
+
+function setBigMoneyLevel(level) {
+  var nextLevel = clampLevel("bigMoney", level, 1, 5);
+  state.bigMoneyLevel = nextLevel;
+  updateBigMoneyLevelUI();
+}
+
 function getTimeExtendMultiplier() {
   if (!state.passiveTimeExtend) {
     return 1;
@@ -126,6 +141,22 @@ function getFreeUpgradesChance() {
   }
   percent = Math.max(0, Math.min(100, percent));
   return percent / 100;
+}
+
+function getBigMoneyMultiplier() {
+  if (!state.passiveBigMoney) {
+    return 1;
+  }
+  var config = app.config && app.config.passives ? app.config.passives : {};
+  var bigMoney = config.bigMoney || {};
+  var base = getNumber(bigMoney.baseMultiplier, 1.2);
+  var increment = getNumber(bigMoney.incrementPerLevel, 0.05);
+  var safeLevel = clampLevel("bigMoney", state.bigMoneyLevel, 1, 5);
+  var multiplier = base + (safeLevel - 1) * increment;
+  if (!Number.isFinite(multiplier) || multiplier <= 0) {
+    return 1;
+  }
+  return multiplier;
 }
 
 function updateSecondChanceTimerDisplay(seconds) {
@@ -188,6 +219,15 @@ function updatePassiveControls() {
       elements.passiveFreeUpgradesBtn.disabled = false;
     }
   }
+  if (elements.passiveBigMoneyBtn) {
+    if (state.passiveBigMoney) {
+      elements.passiveBigMoneyBtn.classList.add("active");
+      elements.passiveBigMoneyBtn.disabled = true;
+    } else {
+      elements.passiveBigMoneyBtn.classList.remove("active");
+      elements.passiveBigMoneyBtn.disabled = false;
+    }
+  }
 }
 
 function setTimeExtendActive(active) {
@@ -207,6 +247,12 @@ function setFreeUpgradesActive(active) {
   state.passiveFreeUpgrades = active;
   updatePassiveControls();
   updateFreeUpgradesLevelUI();
+}
+
+function setBigMoneyActive(active) {
+  state.passiveBigMoney = active;
+  updatePassiveControls();
+  updateBigMoneyLevelUI();
 }
 
 function clearSecondChanceTimer() {
@@ -368,12 +414,14 @@ function resetPassives() {
   state.passiveTimeExtend = false;
   state.passiveSecondChance = false;
   state.passiveFreeUpgrades = false;
+  state.passiveBigMoney = false;
   state.secondChanceUsed = false;
   clearSecondChanceTimer();
   updatePassiveControls();
   updateTimeExtendLevelUI();
   updateSecondChanceLevelUI();
   updateFreeUpgradesLevelUI();
+  updateBigMoneyLevelUI();
   updateSecondChanceUI();
   updateCaptureIndicators();
 }
@@ -396,3 +444,7 @@ app.passives.updateFreeUpgradesLevelUI = updateFreeUpgradesLevelUI;
 app.passives.setFreeUpgradesLevel = setFreeUpgradesLevel;
 app.passives.setFreeUpgradesActive = setFreeUpgradesActive;
 app.passives.getFreeUpgradesChance = getFreeUpgradesChance;
+app.passives.updateBigMoneyLevelUI = updateBigMoneyLevelUI;
+app.passives.setBigMoneyLevel = setBigMoneyLevel;
+app.passives.setBigMoneyActive = setBigMoneyActive;
+app.passives.getBigMoneyMultiplier = getBigMoneyMultiplier;

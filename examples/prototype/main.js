@@ -218,6 +218,15 @@ if (elements.passiveFreeUpgradesBtn) {
     app.ui.logMessage("Passive enabled: Free upgrades.");
   });
 }
+if (elements.passiveBigMoneyBtn) {
+  elements.passiveBigMoneyBtn.addEventListener("click", function () {
+    if (state.passiveBigMoney) {
+      return;
+    }
+    app.passives.setBigMoneyActive(true);
+    app.ui.logMessage("Passive enabled: Big money.");
+  });
+}
 
 if (elements.mysteryLevelInput) {
   elements.mysteryLevelInput.addEventListener("input", function (event) {
@@ -292,6 +301,14 @@ if (elements.freeUpgradesLevelInput) {
       return;
     }
     app.passives.setFreeUpgradesLevel(event.target.value);
+  });
+}
+if (elements.bigMoneyLevelInput) {
+  elements.bigMoneyLevelInput.addEventListener("input", function (event) {
+    if (!event || !event.target) {
+      return;
+    }
+    app.passives.setBigMoneyLevel(event.target.value);
   });
 }
 

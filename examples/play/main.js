@@ -73,6 +73,10 @@ var PASSIVE_DEFS = {
     label: "Free Upgrades",
     tooltip: "Chance to level up new hints for free.",
   },
+  bigMoney: {
+    label: "Big Money",
+    tooltip: "Boosts coin rewards (L1=1.2x, +0.05x per level).",
+  },
   friendlyCapture: {
     label: "Friendly Capture",
     tooltip: "Lights up if any correct line sacrifices a player stone.",
@@ -281,7 +285,7 @@ function getPlayConfig() {
     : hintPool.slice();
   var shopPassivePool = Array.isArray(shop.passivePool)
     ? shop.passivePool.slice()
-    : ["timeExtend", "secondChance", "freeUpgrades"];
+    : ["timeExtend", "secondChance", "freeUpgrades", "bigMoney"];
   return {
     startDifficulty: config.startDifficulty || "30kyu",
     difficultyStep: toNumber(config.difficultyStep, 1),
@@ -1041,6 +1045,9 @@ function applyPassives() {
     } else if (passive.id === "freeUpgrades") {
       app.passives.setFreeUpgradesLevel(passive.level);
       app.passives.setFreeUpgradesActive(true);
+    } else if (passive.id === "bigMoney") {
+      app.passives.setBigMoneyLevel(passive.level);
+      app.passives.setBigMoneyActive(true);
     }
   });
 }
@@ -1633,23 +1640,30 @@ function getCoinAwardBreakdown() {
   if (!Number.isFinite(bonus)) {
     bonus = 0;
   }
-  var total = base + bonus;
+  var challengeMultiplier = 1;
+  if (base > 0) {
+    challengeMultiplier = (base + bonus) / base;
+    if (!Number.isFinite(challengeMultiplier) || challengeMultiplier <= 0) {
+      challengeMultiplier = 1;
+    }
+  }
+  var bigMoneyMultiplier =
+    app.passives && app.passives.getBigMoneyMultiplier
+      ? app.passives.getBigMoneyMultiplier()
+      : 1;
+  if (!Number.isFinite(bigMoneyMultiplier) || bigMoneyMultiplier <= 0) {
+    bigMoneyMultiplier = 1;
+  }
+  var total = base * challengeMultiplier * bigMoneyMultiplier;
   if (!Number.isFinite(total)) {
     total = base;
   }
   total = Math.max(0, total);
-  var multiplier = 1;
-  if (base > 0) {
-    multiplier = total / base;
-    if (!Number.isFinite(multiplier) || multiplier <= 0) {
-      multiplier = 1;
-    }
-  }
   return {
     base: base,
-    bonus: bonus,
     total: total,
-    multiplier: multiplier,
+    challengeMultiplier: challengeMultiplier,
+    bigMoneyMultiplier: bigMoneyMultiplier,
   };
 }
 
@@ -1657,11 +1671,14 @@ function formatMultiplier(value) {
   if (!Number.isFinite(value) || value <= 0) {
     return "1x";
   }
-  var rounded = Math.round(value * 10) / 10;
+  var rounded = Math.round(value * 100) / 100;
   if (Math.abs(rounded - Math.round(rounded)) < 0.01) {
     return Math.round(rounded) + "x";
   }
-  return rounded.toFixed(1) + "x";
+  if (Math.abs(rounded * 10 - Math.round(rounded * 10)) < 0.01) {
+    return rounded.toFixed(1) + "x";
+  }
+  return rounded.toFixed(2) + "x";
 }
 
 function renderCoinBurst(breakdown) {
@@ -1674,7 +1691,8 @@ function renderCoinBurst(breakdown) {
   }
   var baseValue = Math.round(breakdown.base || 0);
   var totalValue = Math.round(breakdown.total || 0);
-  var multiplierText = formatMultiplier(breakdown.multiplier);
+  var challengeText = formatMultiplier(breakdown.challengeMultiplier);
+  var bigMoneyText = formatMultiplier(breakdown.bigMoneyMultiplier);
 
   var grid = document.createElement("div");
   grid.className = "coin-burst__grid";
@@ -1712,7 +1730,8 @@ function renderCoinBurst(breakdown) {
   }
 
   addSlot(baseValue, "Base", "base");
-  addSlot(multiplierText, "Challenge", "multiplier");
+  addSlot(challengeText, "Challenge", "multiplier");
+  addSlot(bigMoneyText, "Big Money", "multiplier");
   addSlot("", "", "extra", true);
   addSlot("", "", "extra", true);
   addSlot(totalValue, "Total", "total");
@@ -1739,9 +1758,9 @@ function flashCoinAward(amount) {
   }
   renderCoinBurst({
     base: value,
-    bonus: 0,
     total: value,
-    multiplier: 1,
+    challengeMultiplier: 1,
+    bigMoneyMultiplier: 1,
   });
 }
 
