@@ -34,6 +34,20 @@ var shopCoinsValue = document.getElementById("shopCoinsValue");
 var shopHintList = document.getElementById("shopHintList");
 var shopPassiveList = document.getElementById("shopPassiveList");
 var coinBurst = document.getElementById("coinBurst");
+var adminToggle = document.getElementById("adminToggle");
+var adminOverlay = document.getElementById("adminOverlay");
+var adminClose = document.getElementById("adminClose");
+var adminCoinsInput = document.getElementById("adminCoinsInput");
+var adminCoinsAdd = document.getElementById("adminCoinsAdd");
+var adminHintSelect = document.getElementById("adminHintSelect");
+var adminHintLevel = document.getElementById("adminHintLevel");
+var adminHintAdd = document.getElementById("adminHintAdd");
+var adminPassiveSelect = document.getElementById("adminPassiveSelect");
+var adminPassiveLevel = document.getElementById("adminPassiveLevel");
+var adminPassiveAdd = document.getElementById("adminPassiveAdd");
+var adminChallengeSelect = document.getElementById("adminChallengeSelect");
+var adminChallengeLevel = document.getElementById("adminChallengeLevel");
+var adminChallengeSet = document.getElementById("adminChallengeSet");
 var difficultyLabel = document.getElementById("difficultyLabel");
 var passiveList = document.getElementById("passiveList");
 var hintList = document.getElementById("hintList");
@@ -318,6 +332,27 @@ function getShopPrice(priceMap, id) {
   return Math.max(0, Math.round(value));
 }
 
+function getLevelBoundsSafe(levelKey, fallbackMin, fallbackMax) {
+  if (app.configUtils && app.configUtils.getLevelBounds) {
+    return app.configUtils.getLevelBounds(levelKey, fallbackMin, fallbackMax);
+  }
+  return { min: fallbackMin, max: fallbackMax };
+}
+
+function clampNumber(value, min, max) {
+  var num = Math.round(toNumber(value, min));
+  if (!Number.isFinite(num)) {
+    return min;
+  }
+  if (num < min) {
+    return min;
+  }
+  if (num > max) {
+    return max;
+  }
+  return num;
+}
+
 function shuffle(list) {
   var array = list.slice();
   for (var i = array.length - 1; i > 0; i -= 1) {
@@ -368,6 +403,11 @@ function getHintMaxLevel(hintId) {
     return 1;
   }
   return Math.max(1, Math.round(max));
+}
+
+function clampHintLevel(hintId, level) {
+  var maxLevel = getHintMaxLevel(hintId);
+  return clampNumber(level, 1, maxLevel);
 }
 
 function applyHintLevel(hintId, level) {
@@ -521,6 +561,9 @@ function ensureBoard(size) {
   }
   if (shopOverlay && shopOverlay.parentElement !== app.elements.mount) {
     app.elements.mount.appendChild(shopOverlay);
+  }
+  if (adminOverlay && adminOverlay.parentElement !== app.elements.mount) {
+    app.elements.mount.appendChild(adminOverlay);
   }
   if (coinBurst && coinBurst.parentElement !== app.elements.mount) {
     app.elements.mount.appendChild(coinBurst);
@@ -788,6 +831,204 @@ function renderShop() {
   renderShopList(shopPassiveList, game.shop.passives, PASSIVE_DEFS, "passive");
 }
 
+function getSortedDefIds(defs) {
+  return Object.keys(defs || {}).sort(function (a, b) {
+    var labelA = defs[a] && defs[a].label ? defs[a].label : a;
+    var labelB = defs[b] && defs[b].label ? defs[b].label : b;
+    return labelA.localeCompare(labelB);
+  });
+}
+
+function populateAdminSelect(select, defs, includeNone, noneLabel) {
+  if (!select) {
+    return;
+  }
+  select.textContent = "";
+  if (includeNone) {
+    var empty = document.createElement("option");
+    empty.value = "";
+    empty.textContent = noneLabel || "None";
+    select.appendChild(empty);
+  }
+  getSortedDefIds(defs).forEach(function (id) {
+    var def = defs[id];
+    if (!def) {
+      return;
+    }
+    var option = document.createElement("option");
+    option.value = id;
+    option.textContent = def.label || id;
+    select.appendChild(option);
+  });
+}
+
+function updateAdminHintLevel() {
+  if (!adminHintLevel || !adminHintSelect) {
+    return;
+  }
+  var id = adminHintSelect.value;
+  if (!id) {
+    adminHintLevel.disabled = true;
+    adminHintLevel.value = "1";
+    adminHintLevel.min = "1";
+    adminHintLevel.max = "1";
+    return;
+  }
+  var maxLevel = getHintMaxLevel(id);
+  adminHintLevel.disabled = false;
+  adminHintLevel.min = "1";
+  adminHintLevel.max = String(maxLevel);
+  adminHintLevel.value = String(clampHintLevel(id, adminHintLevel.value));
+}
+
+function updateAdminPassiveLevel() {
+  if (!adminPassiveLevel || !adminPassiveSelect) {
+    return;
+  }
+  var id = adminPassiveSelect.value;
+  var bounds = getPassiveLevelBounds(id);
+  adminPassiveLevel.disabled =
+    !id || (PASSIVE_DEFS[id] && PASSIVE_DEFS[id].indicatorKey);
+  adminPassiveLevel.min = String(bounds.min);
+  adminPassiveLevel.max = String(bounds.max);
+  adminPassiveLevel.value = String(
+    clampNumber(adminPassiveLevel.value, bounds.min, bounds.max)
+  );
+}
+
+function updateAdminChallengeLevel() {
+  if (!adminChallengeLevel || !adminChallengeSelect) {
+    return;
+  }
+  var id = adminChallengeSelect.value;
+  if (!id) {
+    adminChallengeLevel.disabled = true;
+    adminChallengeLevel.value = "1";
+    adminChallengeLevel.min = "1";
+    adminChallengeLevel.max = "1";
+    return;
+  }
+  var bounds = getChallengeLevelBounds(id);
+  adminChallengeLevel.disabled = false;
+  adminChallengeLevel.min = String(bounds.min);
+  adminChallengeLevel.max = String(bounds.max);
+  adminChallengeLevel.value = String(
+    clampNumber(adminChallengeLevel.value, bounds.min, bounds.max)
+  );
+}
+
+function refreshAdminLevels() {
+  updateAdminHintLevel();
+  updateAdminPassiveLevel();
+  updateAdminChallengeLevel();
+}
+
+function initAdminPanel() {
+  populateAdminSelect(adminHintSelect, HINT_DEFS, false);
+  populateAdminSelect(adminPassiveSelect, PASSIVE_DEFS, false);
+  populateAdminSelect(adminChallengeSelect, CHALLENGE_DEFS, true, "None");
+  refreshAdminLevels();
+  if (adminHintSelect) {
+    adminHintSelect.addEventListener("change", updateAdminHintLevel);
+  }
+  if (adminPassiveSelect) {
+    adminPassiveSelect.addEventListener("change", updateAdminPassiveLevel);
+  }
+  if (adminChallengeSelect) {
+    adminChallengeSelect.addEventListener("change", updateAdminChallengeLevel);
+  }
+  if (app.configReady && app.configReady.then) {
+    app.configReady.then(function () {
+      refreshAdminLevels();
+    });
+  }
+}
+
+function addAdminCoins() {
+  if (!adminCoinsInput) {
+    return;
+  }
+  var amount = Math.round(toNumber(adminCoinsInput.value, 0));
+  if (!Number.isFinite(amount) || amount <= 0) {
+    return;
+  }
+  state.coins = (state.coins || 0) + amount;
+  app.ui.updateHud();
+  updateShopCoins();
+  if (shopOverlay && !shopOverlay.classList.contains("is-hidden")) {
+    renderShop();
+  }
+  flashCoinAward(amount);
+}
+
+function addAdminHint() {
+  if (!adminHintSelect) {
+    return;
+  }
+  var id = adminHintSelect.value;
+  if (!id || !HINT_DEFS[id]) {
+    return;
+  }
+  var level = clampHintLevel(id, adminHintLevel ? adminHintLevel.value : 1);
+  game.hints.push({ id: id, used: false, level: level });
+  renderHints();
+}
+
+function addAdminPassive() {
+  if (!adminPassiveSelect) {
+    return;
+  }
+  var id = adminPassiveSelect.value;
+  var def = id ? PASSIVE_DEFS[id] : null;
+  if (!id || !def) {
+    return;
+  }
+  var bounds = getPassiveLevelBounds(id);
+  var level = clampNumber(
+    adminPassiveLevel ? adminPassiveLevel.value : 1,
+    bounds.min,
+    bounds.max
+  );
+  var existing = game.passives.find(function (passive) {
+    return passive.id === id;
+  });
+  if (existing) {
+    existing.level = level;
+  } else {
+    game.passives.push({ id: id, level: level });
+  }
+  if (app.passives && app.passives.updateCaptureIndicators) {
+    app.passives.updateCaptureIndicators();
+  }
+  applyPassives();
+  renderPassives();
+}
+
+function setAdminChallenge() {
+  if (!adminChallengeSelect) {
+    return;
+  }
+  var id = adminChallengeSelect.value;
+  if (!id) {
+    game.challenge = null;
+    applyChallenge();
+    return;
+  }
+  if (!CHALLENGE_DEFS[id]) {
+    return;
+  }
+  var level = clampChallengeLevel(
+    id,
+    adminChallengeLevel ? adminChallengeLevel.value : 1
+  );
+  game.challenge = { id: id, level: level };
+  applyChallenge();
+  if (app.board) {
+    app.board.updateBoard();
+    app.board.evaluatePosition();
+  }
+}
+
 function applyPassives() {
   app.passives.resetPassives();
   game.passives.forEach(function (passive) {
@@ -870,26 +1111,55 @@ function setupChallenge(config, isBoss) {
   applyChallenge();
 }
 
+function getChallengeLevelKey(challengeId) {
+  if (challengeId === "ghost") {
+    return "ghost";
+  }
+  if (challengeId === "mystery") {
+    return "mystery";
+  }
+  if (challengeId === "enigma") {
+    return "enigma";
+  }
+  if (challengeId === "infection") {
+    return "infection";
+  }
+  if (challengeId === "speed") {
+    return "speed";
+  }
+  if (challengeId === "fire") {
+    return "fire";
+  }
+  if (challengeId === "frost") {
+    return "frost";
+  }
+  return null;
+}
+
+function getChallengeLevelBounds(challengeId) {
+  var key = getChallengeLevelKey(challengeId);
+  if (!key) {
+    return { min: 1, max: 1 };
+  }
+  return getLevelBoundsSafe(key, 1, 10);
+}
+
+function getPassiveLevelBounds(passiveId) {
+  if (!passiveId) {
+    return { min: 1, max: 1 };
+  }
+  var def = PASSIVE_DEFS[passiveId];
+  if (def && def.indicatorKey) {
+    return { min: 1, max: 1 };
+  }
+  return getLevelBoundsSafe(passiveId, 1, 10);
+}
+
 function clampChallengeLevel(challengeId, level) {
   if (!app.configUtils || !app.configUtils.clampLevel) {
     return Math.max(1, Math.round(level));
   }
-  var key = null;
-  if (challengeId === "ghost") {
-    key = "ghost";
-  } else if (challengeId === "mystery") {
-    key = "mystery";
-  } else if (challengeId === "enigma") {
-    key = "enigma";
-  } else if (challengeId === "infection") {
-    key = "infection";
-  } else if (challengeId === "speed") {
-    key = "speed";
-  } else if (challengeId === "fire") {
-    key = "fire";
-  } else if (challengeId === "frost") {
-    key = "frost";
-  }
+  var key = getChallengeLevelKey(challengeId);
   if (!key) {
     return 1;
   }
@@ -1008,6 +1278,7 @@ function showAdvanceOverlay() {
   advanceOverlay.classList.remove("is-hidden");
   hideRetryOverlay();
   hideShopOverlay();
+  hideAdminOverlay();
   game.pendingNext = {
     difficulty: nextInfo.difficulty,
     levelNumber: nextInfo.levelNumber,
@@ -1040,6 +1311,7 @@ function showShopOverlay() {
   shopOverlay.classList.remove("is-hidden");
   hideRetryOverlay();
   hideAdvanceOverlay();
+  hideAdminOverlay();
   game.pendingNext = {
     difficulty: nextInfo.difficulty,
     levelNumber: nextInfo.levelNumber,
@@ -1053,10 +1325,42 @@ function hideShopOverlay() {
   }
 }
 
+function showAdminOverlay() {
+  if (!adminOverlay) {
+    return;
+  }
+  adminOverlay.classList.remove("is-hidden");
+  if (adminToggle) {
+    adminToggle.classList.add("is-active");
+  }
+  refreshAdminLevels();
+}
+
+function hideAdminOverlay() {
+  if (adminOverlay) {
+    adminOverlay.classList.add("is-hidden");
+  }
+  if (adminToggle) {
+    adminToggle.classList.remove("is-active");
+  }
+}
+
+function toggleAdminOverlay() {
+  if (!adminOverlay) {
+    return;
+  }
+  if (adminOverlay.classList.contains("is-hidden")) {
+    showAdminOverlay();
+  } else {
+    hideAdminOverlay();
+  }
+}
+
 function showStartOverlay() {
   if (startOverlay) {
     startOverlay.classList.remove("is-hidden");
   }
+  hideAdminOverlay();
 }
 
 function showRetryOverlay() {
@@ -1070,6 +1374,7 @@ function showRetryOverlay() {
   }
   retryOverlay.classList.remove("is-hidden");
   hideShopOverlay();
+  hideAdminOverlay();
 }
 
 function hideRetryOverlay() {
@@ -1121,6 +1426,7 @@ function endGame() {
   hideRetryOverlay();
   hideAdvanceOverlay();
   hideShopOverlay();
+  hideAdminOverlay();
   showStartOverlay();
 }
 
@@ -1144,6 +1450,7 @@ function startGame() {
   hideStartOverlay();
   hideRetryOverlay();
   hideShopOverlay();
+  hideAdminOverlay();
   loadLevel();
 }
 
@@ -1153,6 +1460,60 @@ if (startGameBtn) {
       event.stopPropagation();
     }
     startGame();
+  });
+}
+
+if (adminToggle) {
+  adminToggle.addEventListener("click", function (event) {
+    if (event) {
+      event.stopPropagation();
+    }
+    toggleAdminOverlay();
+  });
+}
+
+if (adminClose) {
+  adminClose.addEventListener("click", function (event) {
+    if (event) {
+      event.stopPropagation();
+    }
+    hideAdminOverlay();
+  });
+}
+
+if (adminCoinsAdd) {
+  adminCoinsAdd.addEventListener("click", function (event) {
+    if (event) {
+      event.stopPropagation();
+    }
+    addAdminCoins();
+  });
+}
+
+if (adminHintAdd) {
+  adminHintAdd.addEventListener("click", function (event) {
+    if (event) {
+      event.stopPropagation();
+    }
+    addAdminHint();
+  });
+}
+
+if (adminPassiveAdd) {
+  adminPassiveAdd.addEventListener("click", function (event) {
+    if (event) {
+      event.stopPropagation();
+    }
+    addAdminPassive();
+  });
+}
+
+if (adminChallengeSet) {
+  adminChallengeSet.addEventListener("click", function (event) {
+    if (event) {
+      event.stopPropagation();
+    }
+    setAdminChallenge();
   });
 }
 
@@ -1250,6 +1611,7 @@ document.addEventListener("keydown", function (event) {
   }
 });
 
+initAdminPanel();
 app.ui.updateHud();
 
 function calculateCoinAward() {

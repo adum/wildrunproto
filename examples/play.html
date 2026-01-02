@@ -23,6 +23,14 @@
                 <span class="coin-icon" aria-hidden="true"></span>
                 <span id="coinsValue" class="coins-value">0</span>
               </div>
+              <button
+                id="adminToggle"
+                class="button admin-toggle"
+                type="button"
+                title="Open admin cheats"
+              >
+                Admin
+              </button>
             </div>
             <div id="board" class="board">
               <div
@@ -106,6 +114,106 @@
                   >
                     Continue to 29kyu
                   </button>
+                </div>
+              </div>
+              <div
+                id="adminOverlay"
+                class="play-overlay play-overlay--admin is-hidden"
+              >
+                <div class="play-overlay__panel play-overlay__panel--admin">
+                  <div class="admin-header">
+                    <div class="play-overlay__title">Admin Cheats</div>
+                    <button
+                      id="adminClose"
+                      class="button admin-close"
+                      type="button"
+                    >
+                      Close
+                    </button>
+                  </div>
+                  <div class="admin-grid">
+                    <div class="admin-row admin-row--triple">
+                      <span class="admin-label">Coins</span>
+                      <input
+                        id="adminCoinsInput"
+                        class="admin-input"
+                        type="number"
+                        min="1"
+                        step="1"
+                        value="10"
+                      />
+                      <button
+                        id="adminCoinsAdd"
+                        class="button admin-action"
+                        type="button"
+                      >
+                        Add
+                      </button>
+                    </div>
+                    <div class="admin-row admin-row--quad">
+                      <span class="admin-label">Hint</span>
+                      <select id="adminHintSelect" class="admin-select"></select>
+                      <input
+                        id="adminHintLevel"
+                        class="admin-input admin-level"
+                        type="number"
+                        min="1"
+                        step="1"
+                        value="1"
+                      />
+                      <button
+                        id="adminHintAdd"
+                        class="button admin-action"
+                        type="button"
+                      >
+                        Add
+                      </button>
+                    </div>
+                    <div class="admin-row admin-row--quad">
+                      <span class="admin-label">Passive</span>
+                      <select
+                        id="adminPassiveSelect"
+                        class="admin-select"
+                      ></select>
+                      <input
+                        id="adminPassiveLevel"
+                        class="admin-input admin-level"
+                        type="number"
+                        min="1"
+                        step="1"
+                        value="1"
+                      />
+                      <button
+                        id="adminPassiveAdd"
+                        class="button admin-action"
+                        type="button"
+                      >
+                        Add
+                      </button>
+                    </div>
+                    <div class="admin-row admin-row--quad">
+                      <span class="admin-label">Challenge</span>
+                      <select
+                        id="adminChallengeSelect"
+                        class="admin-select"
+                      ></select>
+                      <input
+                        id="adminChallengeLevel"
+                        class="admin-input admin-level"
+                        type="number"
+                        min="1"
+                        step="1"
+                        value="1"
+                      />
+                      <button
+                        id="adminChallengeSet"
+                        class="button admin-action"
+                        type="button"
+                      >
+                        Set
+                      </button>
+                    </div>
+                  </div>
                 </div>
               </div>
               <div id="coinBurst" class="coin-burst" aria-live="polite"></div>
