@@ -43,457 +43,465 @@
               </select>
             </div>
 
-            <div>
-              <label>Hints</label>
-              <div class="controls controls--hints">
-                <button
-                  id="hintOne"
-                  class="button"
-                  type="button"
-                  title="Marks the next correct move."
-                >
-                  First Move
-                </button>
-                <div class="hint-row">
+            <div class="panel-grid">
+              <div class="panel-section">
+                <label>Hints</label>
+                <div class="controls controls--hints">
                   <button
-                    id="hintTwo"
+                    id="hintOne"
                     class="button"
                     type="button"
-                    title="Marks multiple options with one correct move."
+                    title="Marks the next correct move."
                   >
-                    Multiple Choice
+                    First Move
                   </button>
-                  <div class="hint-level">
-                    <label for="hintTwoLevel">Level</label>
-                    <input
-                      id="hintTwoLevel"
-                      type="range"
-                      min="1"
-                      max="3"
-                      step="1"
-                      value="1"
-                      title="Controls option count (L1=4, L2=3, L3=2)."
-                    />
-                    <span id="hintTwoLevelValue" class="hint-level__value"
-                      >1</span
+                  <div class="hint-row">
+                    <button
+                      id="hintTwo"
+                      class="button"
+                      type="button"
+                      title="Marks multiple options with one correct move."
                     >
+                      Multiple Choice
+                    </button>
+                    <div class="hint-level">
+                      <label for="hintTwoLevel">Level</label>
+                      <input
+                        id="hintTwoLevel"
+                        type="range"
+                        min="1"
+                        max="3"
+                        step="1"
+                        value="1"
+                        title="Controls option count (L1=4, L2=3, L3=2)."
+                      />
+                      <span id="hintTwoLevelValue" class="hint-level__value"
+                        >1</span
+                      >
+                    </div>
                   </div>
-                </div>
-                <button
-                  id="hintNeighbor"
-                  class="button"
-                  type="button"
-                  title="Highlights a stone adjacent to a correct move."
-                >
-                  Wave to Your Neighbor
-                </button>
-                <div class="hint-row">
                   <button
-                    id="hintRow"
+                    id="hintNeighbor"
                     class="button"
                     type="button"
-                    title="Reveals a row containing a correct move."
+                    title="Highlights a stone adjacent to a correct move."
                   >
-                    Row Reveal
+                    Wave to Your Neighbor
                   </button>
-                  <div class="hint-level">
-                    <label for="hintRowLevel">Level</label>
-                    <input
-                      id="hintRowLevel"
-                      type="range"
-                      min="1"
-                      max="3"
-                      step="1"
-                      value="1"
-                      title="Controls row band width (L1=3 rows, L2=2 rows, L3=1 row)."
-                    />
-                    <span id="hintRowLevelValue" class="hint-level__value"
-                      >1</span
+                  <div class="hint-row">
+                    <button
+                      id="hintRow"
+                      class="button"
+                      type="button"
+                      title="Reveals a row containing a correct move."
                     >
+                      Row Reveal
+                    </button>
+                    <div class="hint-level">
+                      <label for="hintRowLevel">Level</label>
+                      <input
+                        id="hintRowLevel"
+                        type="range"
+                        min="1"
+                        max="3"
+                        step="1"
+                        value="1"
+                        title="Controls row band width (L1=3 rows, L2=2 rows, L3=1 row)."
+                      />
+                      <span id="hintRowLevelValue" class="hint-level__value"
+                        >1</span
+                      >
+                    </div>
                   </div>
-                </div>
-                <div class="hint-row">
+                  <div class="hint-row">
+                    <button
+                      id="hintCol"
+                      class="button"
+                      type="button"
+                      title="Reveals a column containing a correct move."
+                    >
+                      Column Reveal
+                    </button>
+                    <div class="hint-level">
+                      <label for="hintColLevel">Level</label>
+                      <input
+                        id="hintColLevel"
+                        type="range"
+                        min="1"
+                        max="3"
+                        step="1"
+                        value="1"
+                        title="Controls column band width (L1=3 columns, L2=2 columns, L3=1 column)."
+                      />
+                      <span id="hintColLevelValue" class="hint-level__value"
+                        >1</span
+                      >
+                    </div>
+                  </div>
+                  <div class="hint-row">
+                    <button
+                      id="hintDiag"
+                      class="button"
+                      type="button"
+                      title="Reveals a diagonal containing a correct move."
+                    >
+                      Diagonal Reveal
+                    </button>
+                    <div class="hint-level">
+                      <label for="hintDiagLevel">Level</label>
+                      <input
+                        id="hintDiagLevel"
+                        type="range"
+                        min="1"
+                        max="3"
+                        step="1"
+                        value="1"
+                        title="Controls diagonal band width (L1=3 diagonals, L2=2 diagonals, L3=1 diagonal)."
+                      />
+                      <span id="hintDiagLevelValue" class="hint-level__value"
+                        >1</span
+                      >
+                    </div>
+                  </div>
+                  <div class="hint-row">
+                    <button
+                      id="elimRandom"
+                      class="button"
+                      type="button"
+                      title="Blocks a random wrong-path move."
+                    >
+                      Eliminate Random Move
+                    </button>
+                    <div class="hint-level">
+                      <label for="elimRandomLevel">Level</label>
+                      <input
+                        id="elimRandomLevel"
+                        type="range"
+                        min="1"
+                        max="3"
+                        step="1"
+                        value="1"
+                        title="Controls extra decoy moves (L1=+2, L2=+1, L3=+0; if no wrong moves exist, at least 1 decoy is added)."
+                      />
+                      <span
+                        id="elimRandomLevelValue"
+                        class="hint-level__value"
+                        >1</span
+                      >
+                    </div>
+                  </div>
                   <button
-                    id="hintCol"
+                    id="clearHints"
                     class="button"
                     type="button"
-                    title="Reveals a column containing a correct move."
+                    title="Clears all active hints."
                   >
-                    Column Reveal
+                    Clear Hints
                   </button>
-                  <div class="hint-level">
-                    <label for="hintColLevel">Level</label>
-                    <input
-                      id="hintColLevel"
-                      type="range"
-                      min="1"
-                      max="3"
-                      step="1"
-                      value="1"
-                      title="Controls column band width (L1=3 columns, L2=2 columns, L3=1 column)."
-                    />
-                    <span id="hintColLevelValue" class="hint-level__value"
-                      >1</span
-                    >
-                  </div>
-                </div>
-                <div class="hint-row">
-                  <button
-                    id="hintDiag"
-                    class="button"
-                    type="button"
-                    title="Reveals a diagonal containing a correct move."
-                  >
-                    Diagonal Reveal
-                  </button>
-                  <div class="hint-level">
-                    <label for="hintDiagLevel">Level</label>
-                    <input
-                      id="hintDiagLevel"
-                      type="range"
-                      min="1"
-                      max="3"
-                      step="1"
-                      value="1"
-                      title="Controls diagonal band width (L1=3 diagonals, L2=2 diagonals, L3=1 diagonal)."
-                    />
-                    <span id="hintDiagLevelValue" class="hint-level__value"
-                      >1</span
-                    >
-                  </div>
-                </div>
-                <div class="hint-row">
-                  <button
-                    id="elimRandom"
-                    class="button"
-                    type="button"
-                    title="Blocks a random wrong-path move."
-                  >
-                    Eliminate Random Move
-                  </button>
-                  <div class="hint-level">
-                    <label for="elimRandomLevel">Level</label>
-                    <input
-                      id="elimRandomLevel"
-                      type="range"
-                      min="1"
-                      max="3"
-                      step="1"
-                      value="1"
-                      title="Controls extra decoy moves (L1=+2, L2=+1, L3=+0; if no wrong moves exist, at least 1 decoy is added)."
-                    />
-                    <span
-                      id="elimRandomLevelValue"
-                      class="hint-level__value"
-                      >1</span
-                    >
-                  </div>
-                </div>
-                <button
-                  id="clearHints"
-                  class="button"
-                  type="button"
-                  title="Clears all active hints."
-                >
-                  Clear Hints
-                </button>
-              </div>
-            </div>
-
-            <div>
-              <label>Challenges</label>
-              <div class="controls controls--challenges">
-                <button
-                  id="challengeGray"
-                  class="button button--challenge"
-                  type="button"
-                  title="New stones are shown as gray."
-                >
-                  Gray Play
-                </button>
-                <div class="ghost-row">
-                  <button
-                    id="challengeGhost"
-                    class="button button--challenge"
-                    type="button"
-                    title="New stones flash, then become invisible."
-                  >
-                    Ghost Play
-                  </button>
-                  <div class="ghost-level">
-                    <label for="ghostLevel">Level</label>
-                    <input
-                      id="ghostLevel"
-                      type="range"
-                      min="1"
-                      max="10"
-                      step="1"
-                      value="1"
-                      title="Controls ghost flash time (L1=5s, -1s/level, min 0.5s) and reveal window for existing ghosts (L1=2s, L2=1s, L3+=0s)."
-                    />
-                    <span id="ghostLevelValue" class="ghost-level__value"
-                      >1</span
-                    >
-                  </div>
-                </div>
-                <div class="mystery-row">
-                  <button
-                    id="challengeMystery"
-                    class="button button--challenge"
-                    type="button"
-                    title="Hide stones; reveal them to start a timer."
-                  >
-                    Mystery Timer
-                  </button>
-                  <div class="mystery-level">
-                    <label for="mysteryLevel">Level</label>
-                    <input
-                      id="mysteryLevel"
-                      type="range"
-                      min="1"
-                      max="10"
-                      step="1"
-                      value="1"
-                      title="Controls hidden stones and timer (L1=1 stone/30s, +1 stone & -5s per level, min 5s)."
-                    />
-                    <span id="mysteryLevelValue" class="mystery-level__value"
-                      >1</span
-                    >
-                  </div>
-                </div>
-                <div class="enigma-row">
-                  <button
-                    id="challengeEnigma"
-                    class="button button--challenge"
-                    type="button"
-                    title="Marks stones or adjacent empties with rings; reveal to start a timer."
-                  >
-                    Enigma Timer
-                  </button>
-                  <div class="enigma-level">
-                    <label for="enigmaLevel">Level</label>
-                    <input
-                      id="enigmaLevel"
-                      type="range"
-                      min="1"
-                      max="10"
-                      step="1"
-                      value="1"
-                      title="Controls ring count and timer (L1=1 ring/30s, +1 ring & -5s per level, min 5s)."
-                    />
-                    <span id="enigmaLevelValue" class="enigma-level__value"
-                      >1</span
-                    >
-                  </div>
-                </div>
-                <div class="infection-row">
-                  <button
-                    id="challengeInfection"
-                    class="button button--challenge"
-                    type="button"
-                    title="Adds hollow rings next to newly played stones."
-                  >
-                    Infection
-                  </button>
-                  <div class="infection-level">
-                    <label for="infectionLevel">Level</label>
-                    <input
-                      id="infectionLevel"
-                      type="range"
-                      min="1"
-                      max="4"
-                      step="1"
-                      value="1"
-                      title="L1: player 1 ring. L2: +1 ring on opponent. L3: player 2 rings. L4: opponent 2 rings."
-                    />
-                    <span id="infectionLevelValue" class="infection-level__value"
-                      >1</span
-                    >
-                  </div>
-                </div>
-                <div class="speed-row">
-                  <button
-                    id="challengeSpeed"
-                    class="button button--challenge"
-                    type="button"
-                    title="Limits time for each move after your first."
-                  >
-                    Speed Play
-                  </button>
-                  <div class="speed-level">
-                    <label for="speedLevel">Level</label>
-                    <input
-                      id="speedLevel"
-                      type="range"
-                      min="1"
-                      max="10"
-                      step="1"
-                      value="1"
-                      title="Controls per-move timer (L1=30s, -5s per level, min 2s)."
-                    />
-                    <span id="speedLevelValue" class="speed-level__value"
-                      >1</span
-                    >
-                  </div>
-                </div>
-                <div class="fire-row">
-                  <button
-                    id="challengeFire"
-                    class="button button--challenge"
-                    type="button"
-                    title="Animated fire snake sweeps the board."
-                  >
-                    Fire Snake
-                  </button>
-                  <div class="fire-level">
-                    <label for="fireLevel">Level</label>
-                    <input
-                      id="fireLevel"
-                      type="range"
-                      min="1"
-                      max="10"
-                      step="1"
-                      value="1"
-                      title="Controls snake length (L1=4, +2 per level)."
-                    />
-                    <span id="fireLevelValue" class="fire-level__value">1</span>
-                  </div>
-                </div>
-                <div class="frost-row">
-                  <button
-                    id="challengeFrost"
-                    class="button button--challenge"
-                    type="button"
-                    title="Animated frost snake sweeps the board."
-                  >
-                    Frost Snake
-                  </button>
-                  <div class="frost-level">
-                    <label for="frostLevel">Level</label>
-                    <input
-                      id="frostLevel"
-                      type="range"
-                      min="1"
-                      max="10"
-                      step="1"
-                      value="1"
-                      title="Controls snake length (L1=4, +2 per level)."
-                    />
-                    <span id="frostLevelValue" class="frost-level__value"
-                      >1</span
-                    >
-                  </div>
                 </div>
               </div>
-            </div>
 
-            <div>
-              <label>Passives</label>
-              <div class="controls controls--passives">
-                <div class="passive-row">
+              <div class="panel-section">
+                <label>Challenges</label>
+                <div class="controls controls--challenges">
                   <button
-                    id="passiveTimeExtend"
-                    class="button"
+                    id="challengeGray"
+                    class="button button--challenge"
                     type="button"
-                    title="Slows countdown timers by 10% per level when enabled before they start."
+                    title="New stones are shown as gray."
                   >
-                    Time Extend
+                    Gray Play
                   </button>
-                  <div class="passive-level">
-                    <label for="timeExtendLevel">Level</label>
-                    <input
-                      id="timeExtendLevel"
-                      type="range"
-                      min="1"
-                      max="10"
-                      step="1"
-                      value="1"
-                      title="L1=10% slower timers, +10% per level."
-                    />
-                    <span id="timeExtendLevelValue" class="passive-level__value"
-                      >1</span
+                  <div class="ghost-row">
+                    <button
+                      id="challengeGhost"
+                      class="button button--challenge"
+                      type="button"
+                      title="New stones flash, then become invisible."
                     >
+                      Ghost Play
+                    </button>
+                    <div class="ghost-level">
+                      <label for="ghostLevel">Level</label>
+                      <input
+                        id="ghostLevel"
+                        type="range"
+                        min="1"
+                        max="10"
+                        step="1"
+                        value="1"
+                        title="Controls ghost flash time (L1=5s, -1s/level, min 0.5s) and reveal window for existing ghosts (L1=2s, L2=1s, L3+=0s)."
+                      />
+                      <span id="ghostLevelValue" class="ghost-level__value"
+                        >1</span
+                      >
+                    </div>
                   </div>
-                </div>
-                <div class="passive-row">
-                  <button
-                    id="passiveSecondChance"
-                    class="button"
-                    type="button"
-                    title="Gives one timed chance per puzzle to correct a mistake."
-                  >
-                    Second Chance
-                  </button>
-                  <div class="passive-level">
-                    <label for="secondChanceLevel">Level</label>
-                    <input
-                      id="secondChanceLevel"
-                      type="range"
-                      min="1"
-                      max="10"
-                      step="1"
-                      value="1"
-                      title="Timer length (L1=2s, +1s per level)."
-                    />
-                    <span
-                      id="secondChanceLevelValue"
-                      class="passive-level__value"
-                      >1</span
+                  <div class="mystery-row">
+                    <button
+                      id="challengeMystery"
+                      class="button button--challenge"
+                      type="button"
+                      title="Hide stones; reveal them to start a timer."
                     >
+                      Mystery Timer
+                    </button>
+                    <div class="mystery-level">
+                      <label for="mysteryLevel">Level</label>
+                      <input
+                        id="mysteryLevel"
+                        type="range"
+                        min="1"
+                        max="10"
+                        step="1"
+                        value="1"
+                        title="Controls hidden stones and timer (L1=1 stone/30s, +1 stone & -5s per level, min 5s)."
+                      />
+                      <span id="mysteryLevelValue" class="mystery-level__value"
+                        >1</span
+                      >
+                    </div>
                   </div>
-                </div>
-                <div class="passive-row">
-                  <button
-                    id="passiveFreeUpgrades"
-                    class="button"
-                    type="button"
-                    title="Chance to upgrade a newly acquired hint by one level."
-                  >
-                    Free Upgrades
-                  </button>
-                  <div class="passive-level">
-                    <label for="freeUpgradesLevel">Level</label>
-                    <input
-                      id="freeUpgradesLevel"
-                      type="range"
-                      min="1"
-                      max="10"
-                      step="1"
-                      value="1"
-                      title="Upgrade chance (L1=30%, +10% per level)."
-                    />
-                    <span
-                      id="freeUpgradesLevelValue"
-                      class="passive-level__value"
-                      >1</span
+                  <div class="enigma-row">
+                    <button
+                      id="challengeEnigma"
+                      class="button button--challenge"
+                      type="button"
+                      title="Marks stones or adjacent empties with rings; reveal to start a timer."
                     >
+                      Enigma Timer
+                    </button>
+                    <div class="enigma-level">
+                      <label for="enigmaLevel">Level</label>
+                      <input
+                        id="enigmaLevel"
+                        type="range"
+                        min="1"
+                        max="10"
+                        step="1"
+                        value="1"
+                        title="Controls ring count and timer (L1=1 ring/30s, +1 ring & -5s per level, min 5s)."
+                      />
+                      <span id="enigmaLevelValue" class="enigma-level__value"
+                        >1</span
+                      >
+                    </div>
+                  </div>
+                  <div class="infection-row">
+                    <button
+                      id="challengeInfection"
+                      class="button button--challenge"
+                      type="button"
+                      title="Adds hollow rings next to newly played stones."
+                    >
+                      Infection
+                    </button>
+                    <div class="infection-level">
+                      <label for="infectionLevel">Level</label>
+                      <input
+                        id="infectionLevel"
+                        type="range"
+                        min="1"
+                        max="4"
+                        step="1"
+                        value="1"
+                        title="L1: player 1 ring. L2: +1 ring on opponent. L3: player 2 rings. L4: opponent 2 rings."
+                      />
+                      <span
+                        id="infectionLevelValue"
+                        class="infection-level__value"
+                        >1</span
+                      >
+                    </div>
+                  </div>
+                  <div class="speed-row">
+                    <button
+                      id="challengeSpeed"
+                      class="button button--challenge"
+                      type="button"
+                      title="Limits time for each move after your first."
+                    >
+                      Speed Play
+                    </button>
+                    <div class="speed-level">
+                      <label for="speedLevel">Level</label>
+                      <input
+                        id="speedLevel"
+                        type="range"
+                        min="1"
+                        max="10"
+                        step="1"
+                        value="1"
+                        title="Controls per-move timer (L1=30s, -5s per level, min 2s)."
+                      />
+                      <span id="speedLevelValue" class="speed-level__value"
+                        >1</span
+                      >
+                    </div>
+                  </div>
+                  <div class="fire-row">
+                    <button
+                      id="challengeFire"
+                      class="button button--challenge"
+                      type="button"
+                      title="Animated fire snake sweeps the board."
+                    >
+                      Fire Snake
+                    </button>
+                    <div class="fire-level">
+                      <label for="fireLevel">Level</label>
+                      <input
+                        id="fireLevel"
+                        type="range"
+                        min="1"
+                        max="10"
+                        step="1"
+                        value="1"
+                        title="Controls snake length (L1=4, +2 per level)."
+                      />
+                      <span id="fireLevelValue" class="fire-level__value"
+                        >1</span
+                      >
+                    </div>
+                  </div>
+                  <div class="frost-row">
+                    <button
+                      id="challengeFrost"
+                      class="button button--challenge"
+                      type="button"
+                      title="Animated frost snake sweeps the board."
+                    >
+                      Frost Snake
+                    </button>
+                    <div class="frost-level">
+                      <label for="frostLevel">Level</label>
+                      <input
+                        id="frostLevel"
+                        type="range"
+                        min="1"
+                        max="10"
+                        step="1"
+                        value="1"
+                        title="Controls snake length (L1=4, +2 per level)."
+                      />
+                      <span id="frostLevelValue" class="frost-level__value"
+                        >1</span
+                      >
+                    </div>
                   </div>
                 </div>
-                <div class="passive-row passive-row--indicator">
-                  <div
-                    class="passive-label"
-                    title="Lights up if any correct line sacrifices a player stone."
-                  >
-                    Friendly Capture
+              </div>
+
+              <div class="panel-section">
+                <label>Passives</label>
+                <div class="controls controls--passives">
+                  <div class="passive-row">
+                    <button
+                      id="passiveTimeExtend"
+                      class="button"
+                      type="button"
+                      title="Slows countdown timers by 10% per level when enabled before they start."
+                    >
+                      Time Extend
+                    </button>
+                    <div class="passive-level">
+                      <label for="timeExtendLevel">Level</label>
+                      <input
+                        id="timeExtendLevel"
+                        type="range"
+                        min="1"
+                        max="10"
+                        step="1"
+                        value="1"
+                        title="L1=10% slower timers, +10% per level."
+                      />
+                      <span
+                        id="timeExtendLevelValue"
+                        class="passive-level__value"
+                        >1</span
+                      >
+                    </div>
                   </div>
-                  <div
-                    id="friendlyCaptureIndicator"
-                    class="passive-indicator"
-                    aria-label="Friendly capture indicator"
-                  ></div>
-                </div>
-                <div class="passive-row passive-row--indicator">
-                  <div
-                    class="passive-label"
-                    title="Lights up if any correct line captures an enemy stone."
-                  >
-                    Enemy Capture
+                  <div class="passive-row">
+                    <button
+                      id="passiveSecondChance"
+                      class="button"
+                      type="button"
+                      title="Gives one timed chance per puzzle to correct a mistake."
+                    >
+                      Second Chance
+                    </button>
+                    <div class="passive-level">
+                      <label for="secondChanceLevel">Level</label>
+                      <input
+                        id="secondChanceLevel"
+                        type="range"
+                        min="1"
+                        max="10"
+                        step="1"
+                        value="1"
+                        title="Timer length (L1=2s, +1s per level)."
+                      />
+                      <span
+                        id="secondChanceLevelValue"
+                        class="passive-level__value"
+                        >1</span
+                      >
+                    </div>
                   </div>
-                  <div
-                    id="enemyCaptureIndicator"
-                    class="passive-indicator"
-                    aria-label="Enemy capture indicator"
-                  ></div>
+                  <div class="passive-row">
+                    <button
+                      id="passiveFreeUpgrades"
+                      class="button"
+                      type="button"
+                      title="Chance to upgrade a newly acquired hint by one level."
+                    >
+                      Free Upgrades
+                    </button>
+                    <div class="passive-level">
+                      <label for="freeUpgradesLevel">Level</label>
+                      <input
+                        id="freeUpgradesLevel"
+                        type="range"
+                        min="1"
+                        max="10"
+                        step="1"
+                        value="1"
+                        title="Upgrade chance (L1=30%, +10% per level)."
+                      />
+                      <span
+                        id="freeUpgradesLevelValue"
+                        class="passive-level__value"
+                        >1</span
+                      >
+                    </div>
+                  </div>
+                  <div class="passive-row passive-row--indicator">
+                    <div
+                      class="passive-label"
+                      title="Lights up if any correct line sacrifices a player stone."
+                    >
+                      Friendly Capture
+                    </div>
+                    <div
+                      id="friendlyCaptureIndicator"
+                      class="passive-indicator"
+                      aria-label="Friendly capture indicator"
+                    ></div>
+                  </div>
+                  <div class="passive-row passive-row--indicator">
+                    <div
+                      class="passive-label"
+                      title="Lights up if any correct line captures an enemy stone."
+                    >
+                      Enemy Capture
+                    </div>
+                    <div
+                      id="enemyCaptureIndicator"
+                      class="passive-indicator"
+                      aria-label="Enemy capture indicator"
+                    ></div>
+                  </div>
                 </div>
               </div>
             </div>

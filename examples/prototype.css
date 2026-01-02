@@ -41,14 +41,14 @@ body {
 }
 
 .shell {
-  width: min(1200px, 96vw);
+  width: min(1500px, 96vw);
   margin: 0 auto;
   padding: 8px 4px;
 }
 
 .layout {
   display: grid;
-  grid-template-columns: minmax(280px, 1fr) minmax(260px, 320px);
+  grid-template-columns: minmax(560px, 1fr) minmax(640px, 1.2fr);
   gap: 16px;
   align-items: start;
 }
@@ -56,6 +56,7 @@ body {
 .board-panel {
   display: grid;
   gap: 10px;
+  justify-items: start;
 }
 
 .board {
@@ -417,6 +418,19 @@ body {
   border: 1px solid var(--panel-edge);
 }
 
+.panel-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(200px, 1fr));
+  gap: 12px;
+  align-items: start;
+}
+
+.panel-section {
+  display: grid;
+  gap: 8px;
+  align-content: start;
+}
+
 label {
   font-size: 13px;
   color: var(--muted);
@@ -502,7 +516,7 @@ select {
 .passive-row,
 .hint-row {
   display: grid;
-  grid-template-columns: auto minmax(120px, 1fr);
+  grid-template-columns: minmax(0, 1fr) minmax(120px, 1fr);
   align-items: center;
   gap: 8px;
 }
@@ -539,10 +553,18 @@ select {
 }
 
 .hint-row {
-  grid-template-columns: minmax(0, 1fr) minmax(140px, 1fr);
+  grid-template-columns: minmax(0, 1fr) minmax(130px, 1fr);
 }
 
 .hint-row .button {
+  width: 100%;
+  min-width: 0;
+  white-space: normal;
+  text-align: center;
+}
+
+.controls--challenges .button,
+.controls--passives .button {
   width: 100%;
   min-width: 0;
   white-space: normal;
@@ -594,8 +616,9 @@ select {
 .frost-level input[type="range"],
 .passive-level input[type="range"],
 .hint-level input[type="range"] {
-  width: 100%;
-  min-width: 60px;
+  width: auto;
+  min-width: 0;
+  flex: 1 1 0;
 }
 
 .hint-level input[type="range"] {
@@ -1007,12 +1030,16 @@ select {
   padding: 12px 18px;
 }
 
-@media (max-width: 960px) {
+@media (max-width: 1120px) {
   .layout {
     grid-template-columns: 1fr;
   }
 
   .board {
     width: min(92vw, 560px);
+  }
+
+  .panel-grid {
+    grid-template-columns: 1fr;
   }
 }
