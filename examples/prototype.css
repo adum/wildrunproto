@@ -510,6 +510,11 @@ select {
   background: rgba(90, 70, 50, 0.05);
 }
 
+.controls--challenges {
+  border-color: rgba(140, 85, 60, 0.4);
+  background: rgba(170, 90, 70, 0.07);
+}
+
 .button {
   border: 1px solid var(--panel-edge);
   background: #fff;
@@ -538,12 +543,12 @@ select {
 
 .button--challenge {
   border-color: rgba(90, 70, 50, 0.55);
-  background: #f6f0e6;
+  background: #f7ece2;
   color: #4b3d2c;
 }
 
 .button--challenge.active {
-  background: rgba(90, 70, 50, 0.18);
+  background: rgba(120, 70, 50, 0.22);
   border-color: rgba(90, 70, 50, 0.7);
   color: #3a2d1f;
 }
@@ -826,6 +831,11 @@ select {
 
 .controls--passives .play-chip {
   background: rgba(160, 200, 245, 0.18);
+}
+
+.controls--challenges .play-chip {
+  background: rgba(190, 120, 90, 0.12);
+  border-color: rgba(140, 90, 60, 0.45);
 }
 
 .play-chip__level {
