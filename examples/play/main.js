@@ -1364,6 +1364,7 @@ function showStartOverlay() {
     startOverlay.classList.remove("is-hidden");
   }
   hideAdminOverlay();
+  clearCoinBurst();
 }
 
 function showRetryOverlay() {
@@ -1398,6 +1399,7 @@ function advanceToPendingLevel() {
   }
   hideAdvanceOverlay();
   hideShopOverlay();
+  clearCoinBurst();
   game.difficulty = game.pendingNext.difficulty;
   game.levelNumber = game.pendingNext.levelNumber;
   game.pendingNext = null;
@@ -1430,6 +1432,7 @@ function endGame() {
   hideAdvanceOverlay();
   hideShopOverlay();
   hideAdminOverlay();
+  clearCoinBurst();
   showStartOverlay();
 }
 
@@ -1454,6 +1457,7 @@ function startGame() {
   hideRetryOverlay();
   hideShopOverlay();
   hideAdminOverlay();
+  clearCoinBurst();
   loadLevel();
 }
 
@@ -1617,42 +1621,133 @@ document.addEventListener("keydown", function (event) {
 initAdminPanel();
 app.ui.updateHud();
 
-function calculateCoinAward() {
+function getCoinAwardBreakdown() {
   var config = getPlayConfig();
   var steps = Math.max(0, game.levelNumber - 1) * config.difficultyStep;
-  var amount = config.coins.base + steps * config.coins.perDifficulty;
-  if (game.isBoss) {
-    amount += config.coins.bossBonus;
+  var base = config.coins.base + steps * config.coins.perDifficulty;
+  if (!Number.isFinite(base)) {
+    base = 0;
   }
-  if (!Number.isFinite(amount)) {
-    amount = 0;
+  base = Math.max(0, base);
+  var bonus = game.isBoss ? config.coins.bossBonus : 0;
+  if (!Number.isFinite(bonus)) {
+    bonus = 0;
   }
-  return Math.max(0, amount);
+  var total = base + bonus;
+  if (!Number.isFinite(total)) {
+    total = base;
+  }
+  total = Math.max(0, total);
+  var multiplier = 1;
+  if (base > 0) {
+    multiplier = total / base;
+    if (!Number.isFinite(multiplier) || multiplier <= 0) {
+      multiplier = 1;
+    }
+  }
+  return {
+    base: base,
+    bonus: bonus,
+    total: total,
+    multiplier: multiplier,
+  };
 }
 
-function flashCoinAward(amount) {
-  if (!coinBurst || amount <= 0) {
+function formatMultiplier(value) {
+  if (!Number.isFinite(value) || value <= 0) {
+    return "1x";
+  }
+  var rounded = Math.round(value * 10) / 10;
+  if (Math.abs(rounded - Math.round(rounded)) < 0.01) {
+    return Math.round(rounded) + "x";
+  }
+  return rounded.toFixed(1) + "x";
+}
+
+function renderCoinBurst(breakdown) {
+  if (!coinBurst) {
     return;
   }
   coinBurst.classList.remove("is-active");
   while (coinBurst.firstChild) {
     coinBurst.removeChild(coinBurst.firstChild);
   }
-  var icon = document.createElement("span");
-  icon.className = "coin-icon coin-burst__icon";
-  icon.setAttribute("aria-hidden", "true");
-  var text = document.createElement("span");
-  text.className = "coin-burst__value";
-  text.textContent = "+" + amount;
-  coinBurst.appendChild(icon);
-  coinBurst.appendChild(text);
+  var baseValue = Math.round(breakdown.base || 0);
+  var totalValue = Math.round(breakdown.total || 0);
+  var multiplierText = formatMultiplier(breakdown.multiplier);
+
+  var grid = document.createElement("div");
+  grid.className = "coin-burst__grid";
+
+  function addSlot(value, label, type, placeholder) {
+    var slot = document.createElement("div");
+    slot.className = "coin-burst__slot";
+    if (type) {
+      slot.classList.add("coin-burst__slot--" + type);
+    }
+    if (placeholder) {
+      slot.classList.add("is-placeholder");
+      slot.setAttribute("aria-hidden", "true");
+    }
+    var valueEl = document.createElement("div");
+    valueEl.className = "coin-burst__value";
+    if (type === "total") {
+      valueEl.classList.add("coin-burst__value--total");
+      var icon = document.createElement("span");
+      icon.className = "coin-icon coin-burst__icon";
+      icon.setAttribute("aria-hidden", "true");
+      var text = document.createElement("span");
+      text.textContent = String(value);
+      valueEl.appendChild(icon);
+      valueEl.appendChild(text);
+    } else {
+      valueEl.textContent = String(value);
+    }
+    var labelEl = document.createElement("div");
+    labelEl.className = "coin-burst__label";
+    labelEl.textContent = label || "";
+    slot.appendChild(valueEl);
+    slot.appendChild(labelEl);
+    grid.appendChild(slot);
+  }
+
+  addSlot(baseValue, "Base", "base");
+  addSlot(multiplierText, "Challenge", "multiplier");
+  addSlot("", "", "extra", true);
+  addSlot("", "", "extra", true);
+  addSlot(totalValue, "Total", "total");
+
+  coinBurst.appendChild(grid);
   void coinBurst.offsetWidth;
   coinBurst.classList.add("is-active");
 }
 
+function clearCoinBurst() {
+  if (!coinBurst) {
+    return;
+  }
+  coinBurst.classList.remove("is-active");
+  while (coinBurst.firstChild) {
+    coinBurst.removeChild(coinBurst.firstChild);
+  }
+}
+
+function flashCoinAward(amount) {
+  var value = Math.round(amount || 0);
+  if (value <= 0) {
+    return;
+  }
+  renderCoinBurst({
+    base: value,
+    bonus: 0,
+    total: value,
+    multiplier: 1,
+  });
+}
+
 function awardCoins() {
-  var raw = calculateCoinAward();
-  var award = Math.round(raw);
+  var breakdown = getCoinAwardBreakdown();
+  var award = Math.round(breakdown.total);
   if (award <= 0) {
     return;
   }
@@ -1662,5 +1757,5 @@ function awardCoins() {
   if (shopOverlay && !shopOverlay.classList.contains("is-hidden")) {
     renderShop();
   }
-  flashCoinAward(award);
+  renderCoinBurst(breakdown);
 }
