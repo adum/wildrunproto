@@ -116,7 +116,7 @@ function updateValues() {
 function getConfig() {
   return {
     height: Number(heightInput.value),
-    maxWidth: Number(widthInput.value),
+    maxWidth: Math.max(2, Number(widthInput.value)),
     weights: {
       problem: Number(problemInput.value),
       boss: Number(bossInput.value),
@@ -131,30 +131,53 @@ function getConfig() {
   };
 }
 
-function buildRowWidths(height, maxWidth) {
-  const widths = [1];
+function getVoidBias(weights, allowVoid) {
+  if (!allowVoid) {
+    return 0;
+  }
+  const total =
+    weights.problem +
+    weights.boss +
+    weights.empty +
+    weights.shop +
+    weights.treasure +
+    weights.void;
+  if (!total) {
+    return 0;
+  }
+  return weights.void / total;
+}
+
+function pickWeighted(candidates, weights) {
+  const total = weights.reduce(function (sum, value) {
+    return sum + value;
+  }, 0);
+  if (!total) {
+    return candidates[0];
+  }
+  var roll = Math.random() * total;
+  for (let i = 0; i < candidates.length; i += 1) {
+    roll -= weights[i];
+    if (roll <= 0) {
+      return candidates[i];
+    }
+  }
+  return candidates[candidates.length - 1];
+}
+
+function buildRowCounts(height, maxWidth, voidBias) {
+  const counts = [1];
   if (height <= 1) {
-    return widths;
+    return counts;
   }
   if (height === 2) {
     return [1, 1];
   }
 
-  const remainingAfterRow1 = height - 2;
-  const row1Candidates = [];
-  for (let width = 3; width <= maxWidth; width += 1) {
-    if (Math.abs(width - 1) <= remainingAfterRow1) {
-      row1Candidates.push(width);
-    }
-  }
-  const row1Fallback = Math.min(maxWidth, 3);
-  const row1Width =
-    row1Candidates[Math.floor(Math.random() * row1Candidates.length)] ||
-    row1Fallback;
-  widths.push(row1Width);
+  counts.push(Math.min(maxWidth, 2));
 
   for (let row = 2; row < height - 1; row += 1) {
-    const prev = widths[row - 1];
+    const prev = counts[row - 1];
     const remaining = height - 1 - row;
     const candidates = [-1, 0, 1]
       .map(function (step) {
@@ -166,12 +189,46 @@ function buildRowWidths(height, maxWidth) {
         }
         return Math.abs(next - 1) <= remaining;
       });
-    const nextWidth =
-      candidates[Math.floor(Math.random() * candidates.length)] || 1;
-    widths.push(nextWidth);
+    if (!candidates.length) {
+      counts.push(1);
+      continue;
+    }
+    const weights = candidates.map(function (next) {
+      return 1 + voidBias * (maxWidth - next);
+    });
+    counts.push(pickWeighted(candidates, weights));
   }
-  widths.push(1);
-  return widths;
+  counts.push(1);
+  return counts;
+}
+
+function buildRowRanges(counts) {
+  const ranges = [{ start: 0, width: 1 }];
+  if (counts.length === 1) {
+    return ranges;
+  }
+
+  if (counts[1] === 1) {
+    ranges.push({ start: 0, width: 1 });
+  } else {
+    ranges.push({ start: -1, width: counts[1] });
+  }
+
+  for (let row = 2; row < counts.length; row += 1) {
+    const prev = ranges[row - 1];
+    const width = counts[row];
+    const prevL = prev.start;
+    const prevR = prev.start + prev.width - 1;
+    const minL = Math.max(prevL - 1, prevR - width);
+    const maxL = Math.min(prevL, prevR - width + 1);
+    if (minL > maxL) {
+      return null;
+    }
+    const start = Math.floor(Math.random() * (maxL - minL + 1)) + minL;
+    ranges.push({ start: start, width: width });
+  }
+
+  return ranges;
 }
 
 function pickType(weights, allowVoid) {
@@ -203,31 +260,28 @@ function pickType(weights, allowVoid) {
 
 function buildMap(config) {
   for (let attempt = 0; attempt < MAX_ATTEMPTS; attempt += 1) {
-    const widths = buildRowWidths(config.height, config.maxWidth);
+    const voidBias = getVoidBias(config.weights, config.allowVoid);
+    const counts = buildRowCounts(config.height, config.maxWidth, voidBias);
+    const ranges = buildRowRanges(counts);
+    if (!ranges) {
+      continue;
+    }
     const nodes = [];
     const nodeById = new Map();
     const rows = [];
-    let valid = true;
 
     for (let row = 0; row < config.height; row += 1) {
       const rowNodes = [];
-      const width = widths[row];
-      const qStart = -Math.floor((width - 1) / 2);
-      for (let i = 0; i < width; i += 1) {
-        const q = qStart + i;
+      const range = ranges[row];
+      for (let i = 0; i < range.width; i += 1) {
+        const q = range.start + i;
         let type = 'empty';
         if (row === 0) {
           type = 'start';
         } else if (row === config.height - 1) {
           type = 'levelBoss';
         } else {
-          type = pickType(config.weights, config.allowVoid);
-        }
-        if (row === 1 && (q === -1 || q === 0) && type === 'void') {
-          type = 'empty';
-        }
-        if (type === 'void') {
-          continue;
+          type = pickType(config.weights, false);
         }
         const id = q + ',' + row;
         const def = TYPE_DEFS[type] || TYPE_DEFS.empty;
@@ -244,15 +298,7 @@ function buildMap(config) {
         nodeById.set(id, node);
         rowNodes.push(node);
       }
-      if (!rowNodes.length) {
-        valid = false;
-        break;
-      }
       rows.push(rowNodes);
-    }
-
-    if (!valid) {
-      continue;
     }
 
     const startId = nodes.find(function (node) {
@@ -274,7 +320,11 @@ function buildMap(config) {
     const startBranches = getNeighbors(startNode, map).filter(function (neighbor) {
       return neighbor.r === startNode.r + 1;
     });
-    if (startBranches.length < 2) {
+    if (config.height > 2 && startBranches.length < 2) {
+      continue;
+    }
+
+    if (!hasRequiredLinks(map)) {
       continue;
     }
 
@@ -291,28 +341,42 @@ function buildFallbackMap(height) {
   const nodeById = new Map();
   const rows = [];
   for (let row = 0; row < height; row += 1) {
-    const type = row === 0 ? 'start' : row === height - 1 ? 'levelBoss' : 'empty';
-    const id = '0,' + row;
-    const def = TYPE_DEFS[type] || TYPE_DEFS.empty;
-    const node = {
-      id: id,
-      q: 0,
-      r: row,
-      type: type,
-      label: def.label,
-      description: def.description,
-      icon: def.icon
-    };
-    nodes.push(node);
-    nodeById.set(id, node);
-    rows.push([node]);
+    let qs = [0];
+    if (row === 1 && height > 2) {
+      qs = [-1, 0];
+    } else if (row > 1) {
+      qs = [-1];
+    }
+    const rowNodes = [];
+    qs.forEach(function (q) {
+      const type =
+        row === 0 ? 'start' : row === height - 1 ? 'levelBoss' : 'empty';
+      const id = q + ',' + row;
+      const def = TYPE_DEFS[type] || TYPE_DEFS.empty;
+      const node = {
+        id: id,
+        q: q,
+        r: row,
+        type: type,
+        label: def.label,
+        description: def.description,
+        icon: def.icon
+      };
+      nodes.push(node);
+      nodeById.set(id, node);
+      rowNodes.push(node);
+    });
+    rows.push(rowNodes);
   }
+  const endNode = nodes.find(function (node) {
+    return node.type === 'levelBoss';
+  });
   return {
     nodes: nodes,
     nodeById: nodeById,
     rows: rows,
     startId: '0,0',
-    endId: '0,' + (height - 1)
+    endId: endNode ? endNode.id : '0,' + (height - 1)
   };
 }
 
@@ -336,6 +400,28 @@ function hasForwardPath(map) {
     });
   }
   return false;
+}
+
+function hasRequiredLinks(map) {
+  const height = map.rows.length;
+  for (let i = 0; i < map.nodes.length; i += 1) {
+    const node = map.nodes[i];
+    if (node.r > 0) {
+      const parentLeft = map.nodeById.get(node.q + ',' + (node.r - 1));
+      const parentRight = map.nodeById.get((node.q + 1) + ',' + (node.r - 1));
+      if (!parentLeft && !parentRight) {
+        return false;
+      }
+    }
+    if (node.r < height - 1) {
+      const childLeft = map.nodeById.get(node.q + ',' + (node.r + 1));
+      const childRight = map.nodeById.get((node.q - 1) + ',' + (node.r + 1));
+      if (!childLeft && !childRight) {
+        return false;
+      }
+    }
+  }
+  return true;
 }
 
 function getNeighbors(node, map) {
@@ -486,10 +572,12 @@ function renderMap(config, animate) {
       hex.appendChild(icon);
     }
 
-    const label = document.createElement('div');
-    label.className = 'hex__label';
-    label.textContent = node.label;
-    hex.appendChild(label);
+    if (node.type !== 'empty') {
+      const label = document.createElement('div');
+      label.className = 'hex__label';
+      label.textContent = node.label;
+      hex.appendChild(label);
+    }
 
     if (node.id === state.currentId) {
       const marker = document.createElement('div');
