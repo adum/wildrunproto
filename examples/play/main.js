@@ -1998,6 +1998,7 @@ function getCoinAwardBreakdown() {
     app.passives && app.passives.getBigMoneyMultiplier
       ? app.passives.getBigMoneyMultiplier()
       : 1;
+  var bigMoneyActive = !!state.passiveBigMoney;
   if (!Number.isFinite(bigMoneyMultiplier) || bigMoneyMultiplier <= 0) {
     bigMoneyMultiplier = 1;
   }
@@ -2011,6 +2012,7 @@ function getCoinAwardBreakdown() {
     total: total,
     challengeMultiplier: challengeMultiplier,
     bigMoneyMultiplier: bigMoneyMultiplier,
+    bigMoneyActive: bigMoneyActive,
   };
 }
 
@@ -2040,6 +2042,7 @@ function renderCoinBurst(breakdown) {
   var totalValue = Math.round(breakdown.total || 0);
   var challengeText = formatMultiplier(breakdown.challengeMultiplier);
   var bigMoneyText = formatMultiplier(breakdown.bigMoneyMultiplier);
+  var bigMoneyActive = !!breakdown.bigMoneyActive;
 
   var grid = document.createElement("div");
   grid.className = "coin-burst__grid";
@@ -2078,7 +2081,11 @@ function renderCoinBurst(breakdown) {
 
   addSlot(baseValue, "Base", "base");
   addSlot(challengeText, "Challenge", "multiplier");
-  addSlot(bigMoneyText, "Big Money", "multiplier");
+  if (bigMoneyActive) {
+    addSlot(bigMoneyText, "Big Money", "multiplier");
+  } else {
+    addSlot("", "", "multiplier", true);
+  }
   addSlot("", "", "extra", true);
   addSlot("", "", "extra", true);
   addSlot(totalValue, "Total", "total");
@@ -2108,6 +2115,7 @@ function flashCoinAward(amount) {
     total: value,
     challengeMultiplier: 1,
     bigMoneyMultiplier: 1,
+    bigMoneyActive: false,
   });
 }
 
