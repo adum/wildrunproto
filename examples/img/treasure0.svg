@@ -1,0 +1,49 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 96" width="128" height="128" role="img" aria-label="Fun treasure chest icon">
+  <defs>
+    <linearGradient id="wood" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#ffb35c"></stop>
+      <stop offset="100%" stop-color="#c86b2c"></stop>
+    </linearGradient>
+    <linearGradient id="gold" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#fff3a0"></stop>
+      <stop offset="100%" stop-color="#f0b400"></stop>
+    </linearGradient>
+    <filter id="pop">
+      <feDropShadow dx="0" dy="2" stdDeviation="2" flood-color="#000" flood-opacity="0.25"></feDropShadow>
+    </filter>
+  </defs>
+
+  <!-- bounce shadow -->
+  <ellipse cx="48" cy="82" rx="30" ry="6" fill="#000" opacity="0.18"></ellipse>
+
+  <!-- lid back -->
+  <path d="M18 34c0-14 14-24 30-24s30 10 30 24v8H18z" fill="#ff9f43" stroke="#7a3f00" stroke-width="4" stroke-linejoin="round"></path>
+
+  <!-- lid front -->
+  <path d="M14 38c0-16 16-28 34-28s34 12 34 28v14H14z" fill="url(#wood)" stroke="#7a3f00" stroke-width="4" stroke-linejoin="round" filter="url(#pop)"></path>
+
+  <!-- lid shine -->
+  <path d="M24 40c4-12 14-20 24-20" fill="none" stroke="#ffd28a" stroke-width="5" stroke-linecap="round"></path>
+
+  <!-- base -->
+  <rect x="12" y="46" width="72" height="34" rx="10" fill="#d97a2b" stroke="#7a3f00" stroke-width="4" filter="url(#pop)"></rect>
+
+  <!-- cartoon slats -->
+  <path d="M28 46v34M48 46v34M68 46v34" stroke="#7a3f00" stroke-width="4" opacity="0.8"></path>
+
+  <!-- metal bands -->
+  <rect x="12" y="56" width="72" height="8" rx="4" fill="#e6e9ef" stroke="#9aa0a8" stroke-width="4"></rect>
+  <rect x="12" y="68" width="72" height="8" rx="4" fill="#e6e9ef" stroke="#9aa0a8" stroke-width="4"></rect>
+
+  <!-- big friendly latch -->
+  <rect x="40" y="50" width="16" height="22" rx="4" fill="url(#gold)" stroke="#b27b00" stroke-width="4"></rect>
+  <circle cx="48" cy="60" r="3.5" fill="#8a5c00"></circle>
+  <path d="M48 64v6" stroke="#8a5c00" stroke-width="3" stroke-linecap="round"></path>
+
+  <!-- sparkles -->
+  <g fill="#fff7c2" stroke="#f6c000" stroke-width="2">
+    <path d="M78 22l2 4 4 2-4 2-2 4-2-4-4-2 4-2z"></path>
+    <path d="M18 22l1.5 3 3 1.5-3 1.5-1.5 3-1.5-3-3-1.5 3-1.5z"></path>
+    <path d="M70 44l1.5 3 3 1.5-3 1.5-1.5 3-1.5-3-3-1.5 3-1.5z"></path>
+  </g>
+</svg>
