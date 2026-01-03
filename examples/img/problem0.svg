@@ -1,0 +1,47 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 96" width="128" height="128" role="img" aria-label="Go problem icon">
+  <defs>
+    <filter id="shadow">
+      <feDropShadow dx="0" dy="2" stdDeviation="2" flood-color="#000" flood-opacity="0.18"></feDropShadow>
+    </filter>
+  </defs>
+
+  <!-- rounded badge -->
+  <rect x="10" y="10" width="76" height="76" rx="18" fill="#ffffff" stroke="#121212" stroke-width="4" filter="url(#shadow)"></rect>
+
+  <!-- small go board tile -->
+  <rect x="22" y="22" width="52" height="52" rx="10" fill="#f2d3a6" stroke="#121212" stroke-width="4"></rect>
+
+  <!-- 5x5 grid -->
+  <g stroke="#121212" stroke-width="2.5" stroke-linecap="round" opacity="0.9">
+    <!-- vertical lines -->
+    <path d="M32 28v40"></path>
+    <path d="M40 28v40"></path>
+    <path d="M48 28v40"></path>
+    <path d="M56 28v40"></path>
+    <path d="M64 28v40"></path>
+    <!-- horizontal lines -->
+    <path d="M28 32h40"></path>
+    <path d="M28 40h40"></path>
+    <path d="M28 48h40"></path>
+    <path d="M28 56h40"></path>
+    <path d="M28 64h40"></path>
+  </g>
+
+  <!-- stones: a tiny "problem" snapshot -->
+  <g>
+    <!-- black -->
+    <circle cx="40" cy="40" r="5.2" fill="#121212"></circle>
+    <circle cx="56" cy="48" r="5.2" fill="#121212"></circle>
+    <circle cx="48" cy="56" r="5.2" fill="#121212"></circle>
+    <!-- white -->
+    <circle cx="48" cy="40" r="5.2" fill="#ffffff" stroke="#121212" stroke-width="2"></circle>
+    <circle cx="64" cy="56" r="5.2" fill="#ffffff" stroke="#121212" stroke-width="2"></circle>
+  </g>
+
+  <!-- "problem" indicator: a playful corner badge with a ? -->
+  <g transform="translate(62 16)">
+    <path d="M8 2h10l4 4v10l-4 4H8L4 16V6z" fill="#ff4d6d" stroke="#121212" stroke-width="3" stroke-linejoin="round"></path>
+    <path d="M13 8c0-2 2-3 4-2.4 1.4.4 2.3 2 .9 3.2-.7.6-1.8 1-1.8 2.2" fill="none" stroke="#ffffff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"></path>
+    <circle cx="15" cy="15" r="1.6" fill="#ffffff"></circle>
+  </g>
+</svg>

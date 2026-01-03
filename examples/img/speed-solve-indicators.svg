@@ -1,0 +1,177 @@
+<svg viewBox="0 0 800 600" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background -->
+  <rect width="800" height="600" fill="#f8f9fa"/>
+  
+  <!-- Title -->
+  <text x="400" y="30" text-anchor="middle" font-family="Arial, sans-serif" font-size="20" font-weight="bold" fill="#333">Electric Blue Lightning Bolt Indicators</text>
+  
+  <!-- Sample text for size reference -->
+  <text x="50" y="70" font-family="Arial, sans-serif" font-size="16" fill="#333">Size reference at actual text height (16px)</text>
+  
+  <!-- Row 1: Lightning bolt variations -->
+  <text x="50" y="110" font-family="Arial, sans-serif" font-size="14" fill="#666" font-weight="bold">Lightning Bolt Design Variations:</text>
+  
+  <!-- Version 1: White lightning on blue -->
+  <g transform="translate(50, 130)">
+    <circle cx="8" cy="8" r="8" fill="#0ea5e9"/>
+    <path d="M 9 2 L 5 8 L 8 8 L 7 14 L 11 8 L 8 8 L 9 2" fill="white" stroke="none"/>
+    <text x="25" y="12" font-family="Arial, sans-serif" font-size="14" fill="#333">White lightning on sky blue</text>
+  </g>
+  
+  <!-- Version 2: Yellow lightning on blue -->
+  <g transform="translate(50, 160)">
+    <circle cx="8" cy="8" r="8" fill="#0ea5e9"/>
+    <path d="M 9 2 L 5 8 L 8 8 L 7 14 L 11 8 L 8 8 L 9 2" fill="#fbbf24" stroke="none"/>
+    <text x="25" y="12" font-family="Arial, sans-serif" font-size="14" fill="#333">Yellow lightning on sky blue</text>
+  </g>
+  
+  <!-- Version 3: Deeper blue with white -->
+  <g transform="translate(50, 190)">
+    <circle cx="8" cy="8" r="8" fill="#2563eb"/>
+    <path d="M 9 2 L 5 8 L 8 8 L 7 14 L 11 8 L 8 8 L 9 2" fill="white" stroke="none"/>
+    <text x="25" y="12" font-family="Arial, sans-serif" font-size="14" fill="#333">White lightning on deeper blue</text>
+  </g>
+  
+  <!-- Version 4: Electric blue with bright yellow -->
+  <g transform="translate(50, 220)">
+    <circle cx="8" cy="8" r="8" fill="#3b82f6"/>
+    <path d="M 9 2 L 5 8 L 8 8 L 7 14 L 11 8 L 8 8 L 9 2" fill="#ffeb3b" stroke="none"/>
+    <text x="25" y="12" font-family="Arial, sans-serif" font-size="14" fill="#333">Bright yellow lightning on electric blue</text>
+  </g>
+  
+  <!-- Version 5: Cyan blue with white -->
+  <g transform="translate(50, 250)">
+    <circle cx="8" cy="8" r="8" fill="#06b6d4"/>
+    <path d="M 9 2 L 5 8 L 8 8 L 7 14 L 11 8 L 8 8 L 9 2" fill="white" stroke="none"/>
+    <text x="25" y="12" font-family="Arial, sans-serif" font-size="14" fill="#333">White lightning on cyan</text>
+  </g>
+  
+  <!-- Row 2: Different lightning bolt styles -->
+  <text x="50" y="300" font-family="Arial, sans-serif" font-size="14" fill="#666" font-weight="bold">Lightning Bolt Style Variations:</text>
+  
+  <!-- Thick bolt -->
+  <g transform="translate(50, 320)">
+    <circle cx="8" cy="8" r="8" fill="#0ea5e9"/>
+    <path d="M 10 2 L 4 9 L 8 9 L 6 14 L 12 7 L 8 7 L 10 2" fill="white" stroke="none"/>
+    <text x="25" y="12" font-family="Arial, sans-serif" font-size="14" fill="#333">Thicker bolt</text>
+  </g>
+  
+  <!-- Thin bolt -->
+  <g transform="translate(50, 350)">
+    <circle cx="8" cy="8" r="8" fill="#0ea5e9"/>
+    <path d="M 8.5 3 L 6 8 L 7.5 8 L 7 13 L 10 8 L 8.5 8 L 8.5 3" fill="white" stroke="none"/>
+    <text x="25" y="12" font-family="Arial, sans-serif" font-size="14" fill="#333">Thinner bolt</text>
+  </g>
+  
+  <!-- Angled bolt -->
+  <g transform="translate(50, 380)">
+    <circle cx="8" cy="8" r="8" fill="#0ea5e9"/>
+    <path d="M 11 3 L 5 8 L 8 8 L 5 13 L 11 8 L 8 8 L 11 3" fill="white" stroke="none"/>
+    <text x="25" y="12" font-family="Arial, sans-serif" font-size="14" fill="#333">Angled bolt</text>
+  </g>
+  
+  <!-- Stylized bolt -->
+  <g transform="translate(50, 410)">
+    <circle cx="8" cy="8" r="8" fill="#0ea5e9"/>
+    <path d="M 9 2 L 5 7 L 7 7 L 5 12 L 7 9 L 9 9 L 7 14 L 11 9 L 9 9 L 11 6 L 9 6 L 9 2" fill="white" stroke="none"/>
+    <text x="25" y="12" font-family="Arial, sans-serif" font-size="14" fill="#333">Stylized/complex bolt</text>
+  </g>
+  
+  <!-- Row 3: With effects -->
+  <text x="400" y="110" font-family="Arial, sans-serif" font-size="14" fill="#666" font-weight="bold">With Effects:</text>
+  
+  <!-- With glow -->
+  <g transform="translate(400, 130)">
+    <circle cx="8" cy="8" r="10" fill="#0ea5e9" opacity="0.3"/>
+    <circle cx="8" cy="8" r="8" fill="#0ea5e9"/>
+    <path d="M 9 2 L 5 8 L 8 8 L 7 14 L 11 8 L 8 8 L 9 2" fill="white" stroke="none"/>
+    <text x="25" y="12" font-family="Arial, sans-serif" font-size="14" fill="#333">With glow effect</text>
+  </g>
+  
+  <!-- With border -->
+  <g transform="translate(400, 160)">
+    <circle cx="8" cy="8" r="9" fill="none" stroke="#fbbf24" stroke-width="1"/>
+    <circle cx="8" cy="8" r="8" fill="#0ea5e9"/>
+    <path d="M 9 2 L 5 8 L 8 8 L 7 14 L 11 8 L 8 8 L 9 2" fill="white" stroke="none"/>
+    <text x="25" y="12" font-family="Arial, sans-serif" font-size="14" fill="#333">With gold border</text>
+  </g>
+  
+  <!-- Gradient background -->
+  <g transform="translate(400, 190)">
+    <defs>
+      <linearGradient id="blueGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" style="stop-color:#0ea5e9;stop-opacity:1" />
+        <stop offset="100%" style="stop-color:#2563eb;stop-opacity:1" />
+      </linearGradient>
+    </defs>
+    <circle cx="8" cy="8" r="8" fill="url(#blueGradient)"/>
+    <path d="M 9 2 L 5 8 L 8 8 L 7 14 L 11 8 L 8 8 L 9 2" fill="white" stroke="none"/>
+    <text x="25" y="12" font-family="Arial, sans-serif" font-size="14" fill="#333">Gradient blue</text>
+  </g>
+  
+  <!-- With shadow -->
+  <g transform="translate(400, 220)">
+    <circle cx="8.5" cy="8.5" r="8" fill="#000" opacity="0.2"/>
+    <circle cx="8" cy="8" r="8" fill="#0ea5e9"/>
+    <path d="M 9 2 L 5 8 L 8 8 L 7 14 L 11 8 L 8 8 L 9 2" fill="white" stroke="none"/>
+    <text x="25" y="12" font-family="Arial, sans-serif" font-size="14" fill="#333">With shadow</text>
+  </g>
+  
+  <!-- Comparison section -->
+  <rect x="50" y="460" width="700" height="120" fill="#e5e7eb" rx="5"/>
+  <text x="60" y="485" font-family="Arial, sans-serif" font-size="16" font-weight="bold" fill="#333">In Context Comparison:</text>
+  
+  <!-- Standard green check -->
+  <text x="60" y="510" font-family="Arial, sans-serif" font-size="14" fill="#333">Standard solve: Problem #1234 </text>
+  <circle cx="230" cy="506" r="8" fill="#22c55e"/>
+  <path d="M 226 506 L 229 509 L 234 504" stroke="white" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+  <text x="245" y="510" font-family="Arial, sans-serif" font-size="14" fill="#333"> (45 seconds)</text>
+  
+  <!-- Lightning solve -->
+  <text x="60" y="535" font-family="Arial, sans-serif" font-size="14" fill="#333">Speed solve: Problem #1235 </text>
+  <circle cx="218" cy="531" r="8" fill="#0ea5e9"/>
+  <path d="M 219 525 L 215 531 L 218 531 L 217 537 L 221 531 L 218 531 L 219 525" fill="white" stroke="none"/>
+  <text x="233" y="535" font-family="Arial, sans-serif" font-size="14" fill="#333"> (12 seconds!)</text>
+  
+  <!-- Multiple in a row -->
+  <text x="60" y="560" font-family="Arial, sans-serif" font-size="14" fill="#333">Problem history: </text>
+  <!-- Regular -->
+  <circle cx="180" cy="556" r="8" fill="#22c55e"/>
+  <path d="M 176 556 L 179 559 L 184 554" stroke="white" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+  <!-- Lightning -->
+  <circle cx="200" cy="556" r="8" fill="#0ea5e9"/>
+  <path d="M 201 550 L 197 556 L 200 556 L 199 562 L 203 556 L 200 556 L 201 550" fill="white" stroke="none"/>
+  <!-- Lightning -->
+  <circle cx="220" cy="556" r="8" fill="#0ea5e9"/>
+  <path d="M 221 550 L 217 556 L 220 556 L 219 562 L 223 556 L 220 556 L 221 550" fill="white" stroke="none"/>
+  <!-- Regular -->
+  <circle cx="240" cy="556" r="8" fill="#22c55e"/>
+  <path d="M 236 556 L 239 559 L 244 554" stroke="white" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+  <!-- Lightning -->
+  <circle cx="260" cy="556" r="8" fill="#0ea5e9"/>
+  <path d="M 261 550 L 257 556 L 260 556 L 259 562 L 263 556 L 260 556 L 261 550" fill="white" stroke="none"/>
+  <text x="275" y="560" font-family="Arial, sans-serif" font-size="14" fill="#333"> (3 speed solves!)</text>
+  
+  <!-- Recommended versions -->
+  <text x="400" y="300" font-family="Arial, sans-serif" font-size="14" fill="#666" font-weight="bold">Top Recommendations:</text>
+  
+  <rect x="400" y="320" width="320" height="140" fill="white" stroke="#e5e7eb" stroke-width="2" rx="5"/>
+  
+  <!-- Best option 1 -->
+  <g transform="translate(420, 340)">
+    <circle cx="20" cy="20" r="20" fill="#0ea5e9"/>
+    <path d="M 22 8 L 12 20 L 18 20 L 16 32 L 26 20 L 20 20 L 22 8" fill="white" stroke="none"/>
+    <text x="50" y="15" font-family="Arial, sans-serif" font-size="13" font-weight="bold" fill="#333">Primary Choice</text>
+    <text x="50" y="30" font-family="Arial, sans-serif" font-size="12" fill="#666">Sky blue (#0ea5e9) with white bolt</text>
+    <text x="50" y="45" font-family="Arial, sans-serif" font-size="12" fill="#666">Clean, clear, great contrast</text>
+  </g>
+  
+  <!-- Best option 2 -->
+  <g transform="translate(420, 400)">
+    <circle cx="20" cy="20" r="20" fill="#3b82f6"/>
+    <path d="M 22 8 L 12 20 L 18 20 L 16 32 L 26 20 L 20 20 L 22 8" fill="#ffeb3b" stroke="none"/>
+    <text x="50" y="15" font-family="Arial, sans-serif" font-size="13" font-weight="bold" fill="#333">Alternative</text>
+    <text x="50" y="30" font-family="Arial, sans-serif" font-size="12" fill="#666">Electric blue (#3b82f6) with yellow bolt</text>
+    <text x="50" y="45" font-family="Arial, sans-serif" font-size="12" fill="#666">More energetic, "electric" feel</text>
+  </g>
+</svg>
