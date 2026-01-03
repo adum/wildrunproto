@@ -1,0 +1,23 @@
+<svg width="64" height="64" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">
+  <title>Small Treasure Chest Icon</title>
+  <desc>A small, flat icon of a treasure chest overflowing with gold coins and gems.</desc>
+
+  <rect x="10" y="28" width="44" height="26" rx="2" ry="2" fill="#C69C6D" stroke="#8C6239" stroke-width="2"/>
+
+  <path d="M10 28 C 10 18, 54 18, 54 28 L 54 34 L 10 34 Z" fill="#DAA520" stroke="#8C6239" stroke-width="2" transform="rotate(-5, 32, 34)"/>
+
+  <rect x="16" y="24" width="4" height="30" fill="#F0E68C" stroke="#DAA520" stroke-width="1"/>
+  <rect x="44" y="24" width="4" height="30" fill="#F0E68C" stroke="#DAA520" stroke-width="1"/>
+  <rect x="28" y="30" width="8" height="8" rx="1" ry="1" fill="#F0E68C" stroke="#DAA520" stroke-width="1"/>
+  <circle cx="32" cy="34" r="1.5" fill="#DAA520"/>
+
+  <g fill="#FFD700" stroke="#DAA520" stroke-width="0.5">
+    <circle cx="18" cy="26" r="2.5"/>
+    <circle cx="24" cy="24" r="3"/>
+    <circle cx="38" cy="25" r="2.5"/>
+    <circle cx="46" cy="27" r="2"/>
+  </g>
+  <path d="M28 22 L 30 25 L 28 28 L 26 25 Z" fill="#E0115F" stroke="none"/>
+  <path d="M41 23 L 43 26 L 41 29 L 39 26 Z" fill="#0047AB" stroke="none"/>
+
+</svg>
