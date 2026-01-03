@@ -610,15 +610,22 @@ function renderTooltip(bounds) {
   });
 
   if (!chosen) {
-    chosen = placements[0];
-    chosen.left = Math.min(
-      Math.max(chosen.left, margin),
-      bounds.width - tooltipWidth - margin
-    );
-    chosen.top = Math.min(
-      Math.max(chosen.top, margin),
-      bounds.height - tooltipHeight - margin
-    );
+    chosen = placements
+      .map(function (placement) {
+        const visibleWidth = Math.min(
+          bounds.width - margin,
+          placement.left + tooltipWidth
+        ) - Math.max(margin, placement.left);
+        const visibleHeight = Math.min(
+          bounds.height - margin,
+          placement.top + tooltipHeight
+        ) - Math.max(margin, placement.top);
+        const area = Math.max(0, visibleWidth) * Math.max(0, visibleHeight);
+        return { placement: placement, area: area };
+      })
+      .sort(function (a, b) {
+        return b.area - a.area;
+      })[0].placement;
   }
 
   tooltip.dataset.side = chosen.side;
@@ -667,6 +674,29 @@ function renderMap(config, animate) {
       hex.classList.add('hex--animate');
       hex.style.animationDelay = node.r * 60 + 'ms';
     }
+
+    const shape = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    shape.classList.add('hex__shape');
+    shape.setAttribute('viewBox', '0 0 100 100');
+    shape.setAttribute('preserveAspectRatio', 'none');
+    shape.setAttribute('aria-hidden', 'true');
+    const borderPolygon = document.createElementNS(
+      'http://www.w3.org/2000/svg',
+      'polygon'
+    );
+    borderPolygon.setAttribute(
+      'points',
+      '50 2 93 25 93 75 50 98 7 75 7 25'
+    );
+    const fillPolygon = document.createElementNS(
+      'http://www.w3.org/2000/svg',
+      'polygon'
+    );
+    fillPolygon.classList.add('hex__shape-fill');
+    fillPolygon.setAttribute('points', '50 2 93 25 93 75 50 98 7 75 7 25');
+    shape.appendChild(borderPolygon);
+    shape.appendChild(fillPolygon);
+    hex.appendChild(shape);
 
     if (ICON_SOURCES[node.type]) {
       const icon = document.createElement('div');
