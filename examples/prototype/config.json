@@ -69,6 +69,51 @@
     "challengeLevelStart": 1,
     "challengeLevelRamp": 1,
     "coins": { "base": 5, "perDifficulty": 1, "bossBonus": 5 },
+    "map": {
+      "height": 7,
+      "maxWidth": 5,
+      "allowVoid": true,
+      "maxAttempts": 60,
+      "weights": {
+        "problem": 6,
+        "boss": 1,
+        "empty": 2,
+        "shop": 1,
+        "treasure": 1,
+        "void": 1
+      }
+    },
+    "treasure": {
+      "coinMin": 6,
+      "coinMax": 12,
+      "hintPool": [
+        "firstMove",
+        "multipleChoice",
+        "neighbor",
+        "rowReveal",
+        "colReveal",
+        "diagReveal",
+        "eliminateRandom"
+      ],
+      "passivePool": [
+        "timeExtend",
+        "secondChance",
+        "freeUpgrades",
+        "bigMoney",
+        "friendlyCapture",
+        "enemyCapture"
+      ]
+    },
+    "challengeCombos": {
+      "gray": ["ghost", "mystery", "enigma", "infection", "speed", "fire", "frost"],
+      "ghost": ["gray", "mystery", "enigma", "infection", "speed", "fire", "frost"],
+      "mystery": ["gray", "ghost", "infection", "speed", "fire", "frost"],
+      "enigma": ["gray", "ghost", "infection", "speed", "fire", "frost"],
+      "infection": ["gray", "ghost", "mystery", "enigma", "speed"],
+      "speed": ["gray", "ghost", "mystery", "enigma", "infection", "fire", "frost"],
+      "fire": ["gray", "ghost", "mystery", "enigma", "speed"],
+      "frost": ["gray", "ghost", "mystery", "enigma", "speed"]
+    },
     "shop": {
       "frequency": 3,
       "startAfterLevel": 1,

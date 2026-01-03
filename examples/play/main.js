@@ -10,6 +10,7 @@ import "../prototype/timers.js";
 import "../prototype/challenges.js";
 import "../prototype/hints.js";
 import "../prototype/board.js";
+import { createPlayMap } from "./map-ui.js";
 
 if (!app.GB) {
   throw new Error("ghostban library not found.");
@@ -53,8 +54,17 @@ var passiveList = document.getElementById("passiveList");
 var hintList = document.getElementById("hintList");
 var challengeSection = document.getElementById("challengeSection");
 var challengeList = document.getElementById("challengeList");
+var mapOverlay = document.getElementById("mapOverlay");
+var mapStatus = document.getElementById("mapStatus");
+var playMapCanvas = document.getElementById("playMapCanvas");
+var playMapInfoTitle = document.getElementById("playMapInfoTitle");
+var playMapInfoDesc = document.getElementById("playMapInfoDesc");
+var playMapInfoHint = document.getElementById("playMapInfoHint");
+var treasureOverlay = document.getElementById("treasureOverlay");
+var treasureList = document.getElementById("treasureList");
 
 var problems = Array.isArray(window.gpProblems) ? window.gpProblems : [];
+var playMap = null;
 
 app.handlers.onTimerExpired = function () {
   app.board.evaluatePosition();
@@ -227,16 +237,18 @@ var game = {
   started: false,
   levelNumber: 0,
   bossCount: 0,
+  mapIndex: 0,
   difficulty: null,
   levelActive: false,
   currentProblem: null,
+  currentNode: null,
   passives: [],
   hints: [],
-  challenge: null,
+  challenges: [],
   shop: { hints: [], passives: [] },
-  pendingNext: null,
   maxLives: 3,
   isBoss: false,
+  map: null,
 };
 
 app.handlers.onPuzzleSolved = function () {
@@ -245,11 +257,12 @@ app.handlers.onPuzzleSolved = function () {
   }
   game.levelActive = false;
   awardCoins();
-  var config = getPlayConfig();
-  if (isShopLevel(config, game.levelNumber)) {
-    showShopOverlay();
+  advanceAfterSolve();
+  var node = game.currentNode;
+  if (node && node.type === "levelBoss") {
+    startNewMap();
   } else {
-    showAdvanceOverlay();
+    showMapOverlay();
   }
 };
 
@@ -258,7 +271,7 @@ app.handlers.onPuzzleFailed = function () {
     return;
   }
   game.levelActive = false;
-  hideAdvanceOverlay();
+  hideMapOverlay();
   if (state.lives <= 0) {
     endGame();
   } else {
@@ -269,6 +282,9 @@ app.handlers.onPuzzleFailed = function () {
 function getPlayConfig() {
   var config = app.config && app.config.play ? app.config.play : {};
   var coins = config.coins || {};
+  var mapConfig = config.map || {};
+  var mapWeights = mapConfig.weights || {};
+  var treasureConfig = config.treasure || {};
   var hintPool = Array.isArray(config.hintPool)
     ? config.hintPool.slice()
     : Object.keys(HINT_DEFS);
@@ -278,6 +294,12 @@ function getPlayConfig() {
   var challengePool = Array.isArray(config.challengePool)
     ? config.challengePool.slice()
     : Object.keys(CHALLENGE_DEFS);
+  var treasureHintPool = Array.isArray(treasureConfig.hintPool)
+    ? treasureConfig.hintPool.slice()
+    : hintPool.slice();
+  var treasurePassivePool = Array.isArray(treasureConfig.passivePool)
+    ? treasureConfig.passivePool.slice()
+    : passivePool.slice();
   var shop = config.shop || {};
   var shopPrices = shop.prices || {};
   var shopHintPool = Array.isArray(shop.hintPool)
@@ -291,7 +313,6 @@ function getPlayConfig() {
     difficultyStep: toNumber(config.difficultyStep, 1),
     hintsPerLevel: Math.max(0, toNumber(config.hintsPerLevel, 2)),
     passivesPerRun: Math.max(0, toNumber(config.passivesPerRun, 1)),
-    bossFrequency: Math.max(0, toNumber(config.bossFrequency, 0)),
     challengeLevelStart: toNumber(config.challengeLevelStart, 1),
     challengeLevelRamp: toNumber(config.challengeLevelRamp, 1),
     coins: {
@@ -299,9 +320,28 @@ function getPlayConfig() {
       perDifficulty: toNumber(coins.perDifficulty, 1),
       bossBonus: toNumber(coins.bossBonus, 0),
     },
+    map: {
+      height: Math.max(3, toNumber(mapConfig.height, 7)),
+      maxWidth: Math.max(2, toNumber(mapConfig.maxWidth, 5)),
+      allowVoid: mapConfig.allowVoid !== false,
+      maxAttempts: Math.max(10, toNumber(mapConfig.maxAttempts, 60)),
+      weights: {
+        problem: Math.max(0, toNumber(mapWeights.problem, 6)),
+        boss: Math.max(0, toNumber(mapWeights.boss, 1)),
+        empty: Math.max(0, toNumber(mapWeights.empty, 2)),
+        shop: Math.max(0, toNumber(mapWeights.shop, 1)),
+        treasure: Math.max(0, toNumber(mapWeights.treasure, 1)),
+        void: Math.max(0, toNumber(mapWeights.void, 1)),
+      },
+    },
+    treasure: {
+      coinMin: Math.max(0, toNumber(treasureConfig.coinMin, 6)),
+      coinMax: Math.max(0, toNumber(treasureConfig.coinMax, 12)),
+      hintPool: treasureHintPool,
+      passivePool: treasurePassivePool,
+    },
+    challengeCombos: config.challengeCombos || null,
     shop: {
-      frequency: Math.max(0, toNumber(shop.frequency, 3)),
-      startAfterLevel: Math.max(0, toNumber(shop.startAfterLevel, 1)),
       hintCount: Math.max(0, toNumber(shop.hintCount, 2)),
       passiveCount: Math.max(0, toNumber(shop.passiveCount, 1)),
       hintPool: shopHintPool,
@@ -569,6 +609,12 @@ function ensureBoard(size) {
   if (adminOverlay && adminOverlay.parentElement !== app.elements.mount) {
     app.elements.mount.appendChild(adminOverlay);
   }
+  if (mapOverlay && mapOverlay.parentElement !== app.elements.mount) {
+    app.elements.mount.appendChild(mapOverlay);
+  }
+  if (treasureOverlay && treasureOverlay.parentElement !== app.elements.mount) {
+    app.elements.mount.appendChild(treasureOverlay);
+  }
   if (coinBurst && coinBurst.parentElement !== app.elements.mount) {
     app.elements.mount.appendChild(coinBurst);
   }
@@ -663,27 +709,28 @@ function renderChallenges() {
     return;
   }
   challengeList.textContent = "";
-  if (!game.challenge) {
-    challengeSection.classList.add("is-hidden");
-    return;
-  }
-  var def = CHALLENGE_DEFS[game.challenge.id];
-  if (!def) {
+  if (!game.challenges || !game.challenges.length) {
     challengeSection.classList.add("is-hidden");
     return;
   }
   challengeSection.classList.remove("is-hidden");
-  var item = document.createElement("div");
-  item.className = "play-chip";
-  item.title = def.tooltip;
-  var label = document.createElement("span");
-  label.textContent = def.label;
-  var level = document.createElement("span");
-  level.className = "play-chip__level";
-  level.textContent = "L" + game.challenge.level;
-  item.appendChild(label);
-  item.appendChild(level);
-  challengeList.appendChild(item);
+  game.challenges.forEach(function (challenge) {
+    var def = CHALLENGE_DEFS[challenge.id];
+    if (!def) {
+      return;
+    }
+    var item = document.createElement("div");
+    item.className = "play-chip";
+    item.title = def.tooltip;
+    var label = document.createElement("span");
+    label.textContent = def.label;
+    var level = document.createElement("span");
+    level.className = "play-chip__level";
+    level.textContent = "L" + challenge.level;
+    item.appendChild(label);
+    item.appendChild(level);
+    challengeList.appendChild(item);
+  });
 }
 
 function updateShopCoins() {
@@ -1014,8 +1061,8 @@ function setAdminChallenge() {
   }
   var id = adminChallengeSelect.value;
   if (!id) {
-    game.challenge = null;
-    applyChallenge();
+    game.challenges = [];
+    applyChallenges();
     return;
   }
   if (!CHALLENGE_DEFS[id]) {
@@ -1025,8 +1072,8 @@ function setAdminChallenge() {
     id,
     adminChallengeLevel ? adminChallengeLevel.value : 1
   );
-  game.challenge = { id: id, level: level };
-  applyChallenge();
+  game.challenges = [{ id: id, level: level }];
+  applyChallenges();
   if (app.board) {
     app.board.updateBoard();
     app.board.evaluatePosition();
@@ -1052,22 +1099,22 @@ function applyPassives() {
   });
 }
 
-function applyChallenge() {
+function applyChallenges() {
   app.challenges.resetChallenges();
-  if (!game.challenge) {
+  if (!game.challenges || !game.challenges.length) {
     renderChallenges();
     return;
   }
-  var def = CHALLENGE_DEFS[game.challenge.id];
-  if (!def) {
-    game.challenge = null;
-    renderChallenges();
-    return;
-  }
-  if (def.setLevel) {
-    def.setLevel(game.challenge.level);
-  }
-  def.enable();
+  game.challenges.forEach(function (challenge) {
+    var def = CHALLENGE_DEFS[challenge.id];
+    if (!def) {
+      return;
+    }
+    if (def.setLevel) {
+      def.setLevel(challenge.level);
+    }
+    def.enable();
+  });
   renderChallenges();
 }
 
@@ -1094,28 +1141,6 @@ function setupPassives(config) {
   });
   renderPassives();
   applyPassives();
-}
-
-function setupChallenge(config, isBoss) {
-  if (!isBoss) {
-    game.challenge = null;
-    applyChallenge();
-    return;
-  }
-  var challengeIds = pickRandom(config.challengePool, 1);
-  var challengeId = challengeIds.length ? challengeIds[0] : null;
-  if (!challengeId) {
-    game.challenge = null;
-    applyChallenge();
-    return;
-  }
-  var bossLevel = game.bossCount;
-  var level =
-    config.challengeLevelStart +
-    Math.max(0, bossLevel - 1) * config.challengeLevelRamp;
-  var clamped = clampChallengeLevel(challengeId, level);
-  game.challenge = { id: challengeId, level: clamped };
-  applyChallenge();
 }
 
 function getChallengeLevelKey(challengeId) {
@@ -1173,7 +1198,7 @@ function clampChallengeLevel(challengeId, level) {
   return app.configUtils.clampLevel(key, level, 1, 10);
 }
 
-function loadProblem(problem, difficultyLabelText, isBoss) {
+function loadProblem(problem, difficultyLabelText) {
   var sgf = new app.GB.Sgf(problem.sgf);
   if (!sgf.root) {
     return;
@@ -1212,7 +1237,7 @@ function loadProblem(problem, difficultyLabelText, isBoss) {
 
   applyPassives();
   renderPassives();
-  setupChallenge(getPlayConfig(), isBoss);
+  applyChallenges();
 
   app.board.autoPlayOpponent();
   app.board.updateBoard();
@@ -1224,114 +1249,426 @@ function loadProblem(problem, difficultyLabelText, isBoss) {
   }
 }
 
-function loadLevel() {
+function advanceAfterSolve() {
   var config = getPlayConfig();
-  var isBoss = isBossLevel(config, game.levelNumber);
-  if (isBoss) {
-    game.bossCount += 1;
+  game.levelNumber += 1;
+  game.difficulty = advanceDifficulty(game.difficulty, config.difficultyStep);
+  game.currentProblem = null;
+  game.isBoss = false;
+  game.challenges = [];
+  renderChallenges();
+  if (
+    game.currentNode &&
+    (game.currentNode.type === "boss" || game.currentNode.type === "levelBoss")
+  ) {
+    var bossIndex = game.currentNode.bossIndex || game.bossCount + 1;
+    if (bossIndex > game.bossCount) {
+      game.bossCount = bossIndex;
+    }
   }
-  game.isBoss = isBoss;
+}
 
-  var pick = pickProblemForDifficulty(game.difficulty);
-  if (!pick) {
+function getChallengePool(config) {
+  return config.challengePool.filter(function (id) {
+    return CHALLENGE_DEFS[id];
+  });
+}
+
+function isComboAllowed(primary, candidate, combos) {
+  if (!combos || typeof combos !== "object") {
+    return true;
+  }
+  var listA = combos[primary];
+  if (Array.isArray(listA)) {
+    if (listA.indexOf("*") === -1 && listA.indexOf(candidate) === -1) {
+      return false;
+    }
+  }
+  var listB = combos[candidate];
+  if (Array.isArray(listB)) {
+    if (listB.indexOf("*") === -1 && listB.indexOf(primary) === -1) {
+      return false;
+    }
+  }
+  return true;
+}
+
+function buildBossChallenges(config, bossIndex, count) {
+  var pool = getChallengePool(config);
+  if (!pool.length || count <= 0) {
+    return [];
+  }
+  var levelBase =
+    config.challengeLevelStart +
+    Math.max(0, bossIndex - 1) * config.challengeLevelRamp;
+  var primary = pool[Math.floor(Math.random() * pool.length)];
+  var challenges = [
+    { id: primary, level: clampChallengeLevel(primary, levelBase) },
+  ];
+  if (count === 1) {
+    return challenges;
+  }
+  var combos = config.challengeCombos;
+  var secondPool = pool.filter(function (id) {
+    return id !== primary && isComboAllowed(primary, id, combos);
+  });
+  if (!secondPool.length && !combos) {
+    secondPool = pool.filter(function (id) {
+      return id !== primary;
+    });
+  }
+  if (!secondPool.length) {
+    return challenges;
+  }
+  var secondary = secondPool[Math.floor(Math.random() * secondPool.length)];
+  challenges.push({
+    id: secondary,
+    level: clampChallengeLevel(secondary, levelBase),
+  });
+  return challenges;
+}
+
+function assignBossChallenges(map, config) {
+  map.nodes.forEach(function (node) {
+    node.challenges = [];
+  });
+  var bossNodes = map.nodes.filter(function (node) {
+    return node.type === "boss" || node.type === "levelBoss";
+  });
+  bossNodes.sort(function (a, b) {
+    if (a.r === b.r) {
+      return a.q - b.q;
+    }
+    return a.r - b.r;
+  });
+  bossNodes.forEach(function (node, index) {
+    var bossIndex = game.bossCount + index + 1;
+    node.bossIndex = bossIndex;
+    node.challenges = buildBossChallenges(
+      config,
+      bossIndex,
+      node.type === "levelBoss" ? 2 : 1
+    );
+  });
+}
+
+function buildMap(config) {
+  if (!playMap) {
+    return null;
+  }
+  var map = playMap.createMap(config.map, {
+    maxAttempts: config.map.maxAttempts,
+  });
+  if (!map) {
+    map = playMap.createFallbackMap(config.map.height);
+  }
+  if (!map) {
+    return null;
+  }
+  assignBossChallenges(map, config);
+  return map;
+}
+
+function startNewMap() {
+  var config = getPlayConfig();
+  if (!playMap) {
     return;
   }
-
-  game.currentProblem = pick.problem;
-  game.levelActive = true;
-  loadProblem(pick.problem, pick.label, isBoss);
-  pruneUsedHints();
-  renderHints();
-}
-
-function isBossLevel(config, levelNumber) {
-  if (!config.bossFrequency) {
-    return false;
-  }
-  return levelNumber % config.bossFrequency === 0;
-}
-
-function isShopLevel(config, levelNumber) {
-  if (!config.shop || !config.shop.frequency) {
-    return false;
-  }
-  var startAfter = Math.max(0, toNumber(config.shop.startAfterLevel, 1));
-  if (levelNumber < startAfter) {
-    return false;
-  }
-  return (levelNumber - startAfter) % config.shop.frequency === 0;
-}
-
-function getNextLevelInfo(config) {
-  var nextDifficulty = advanceDifficulty(game.difficulty, config.difficultyStep);
-  var nextLevelNumber = game.levelNumber + 1;
-  var nextIsBoss = isBossLevel(config, nextLevelNumber);
-  var label = formatDifficulty(nextDifficulty);
-  var buttonLabel = nextIsBoss ? label + " (Boss)" : label;
-  return {
-    difficulty: nextDifficulty,
-    levelNumber: nextLevelNumber,
-    isBoss: nextIsBoss,
-    label: label,
-    buttonLabel: buttonLabel,
-  };
-}
-
-function showAdvanceOverlay() {
-  if (!advanceOverlay || !advanceLabel || !advanceBtn) {
+  game.mapIndex += 1;
+  game.map = buildMap(config);
+  game.currentNode = null;
+  if (!game.map) {
     return;
   }
-  var config = getPlayConfig();
-  var nextInfo = getNextLevelInfo(config);
-  advanceLabel.textContent = "On to " + nextInfo.label;
-  advanceBtn.textContent = "Continue to " + nextInfo.buttonLabel;
-  advanceOverlay.classList.remove("is-hidden");
+  playMap.setMap(game.map);
+  showMapOverlay();
+}
+
+function showMapOverlay() {
+  if (!mapOverlay) {
+    return;
+  }
+  game.levelActive = false;
+  mapOverlay.classList.remove("is-hidden");
   hideRetryOverlay();
   hideShopOverlay();
+  hideTreasureOverlay();
   hideAdminOverlay();
-  game.pendingNext = {
-    difficulty: nextInfo.difficulty,
-    levelNumber: nextInfo.levelNumber,
-    isBoss: nextInfo.isBoss,
-  };
+  if (playMap) {
+    if (playMap.setStatus) {
+      playMap.setStatus("Choose your next node.");
+    }
+    playMap.render();
+  }
 }
 
-function hideAdvanceOverlay() {
-  if (advanceOverlay) {
-    advanceOverlay.classList.add("is-hidden");
+function hideMapOverlay() {
+  if (mapOverlay) {
+    mapOverlay.classList.add("is-hidden");
   }
 }
 
 function showShopOverlay() {
   if (!shopOverlay || !shopContinueBtn) {
-    showAdvanceOverlay();
+    showMapOverlay();
     return;
   }
+  game.levelActive = false;
   var config = getPlayConfig();
-  var nextInfo = getNextLevelInfo(config);
   if (shopTitle) {
     shopTitle.textContent = "Shop";
   }
   if (shopSubtitle) {
-    shopSubtitle.textContent = "Next: " + nextInfo.buttonLabel;
+    shopSubtitle.textContent = "Pick an item, then return to the map.";
   }
-  shopContinueBtn.textContent = "Continue to " + nextInfo.buttonLabel;
+  shopContinueBtn.textContent = "Back to Map";
   buildShopInventory(config);
   renderShop();
   shopOverlay.classList.remove("is-hidden");
   hideRetryOverlay();
-  hideAdvanceOverlay();
   hideAdminOverlay();
-  game.pendingNext = {
-    difficulty: nextInfo.difficulty,
-    levelNumber: nextInfo.levelNumber,
-    isBoss: nextInfo.isBoss,
-  };
+  hideMapOverlay();
+  hideTreasureOverlay();
 }
 
 function hideShopOverlay() {
   if (shopOverlay) {
     shopOverlay.classList.add("is-hidden");
+  }
+}
+
+function showTreasureOverlay() {
+  if (!treasureOverlay || !treasureList) {
+    showMapOverlay();
+    return;
+  }
+  game.levelActive = false;
+  var options = buildTreasureOptions(getPlayConfig());
+  renderTreasureOptions(options);
+  treasureOverlay.classList.remove("is-hidden");
+  hideRetryOverlay();
+  hideAdminOverlay();
+  hideShopOverlay();
+  hideMapOverlay();
+}
+
+function hideTreasureOverlay() {
+  if (treasureOverlay) {
+    treasureOverlay.classList.add("is-hidden");
+  }
+}
+
+function randomInt(min, max) {
+  var low = Math.min(min, max);
+  var high = Math.max(min, max);
+  return Math.floor(Math.random() * (high - low + 1)) + low;
+}
+
+function buildTreasureHintOption(config) {
+  var pool = config.treasure.hintPool.filter(function (id) {
+    return HINT_DEFS[id];
+  });
+  if (!pool.length) {
+    pool = Object.keys(HINT_DEFS);
+  }
+  var hintId = pool[Math.floor(Math.random() * pool.length)];
+  var hintDef = HINT_DEFS[hintId];
+  var hintItem = createHintItem(hintId);
+  var label = hintDef ? hintDef.label : "New Hint";
+  return {
+    title: label,
+    desc: "Gain a new hint at level " + hintItem.level + ".",
+    apply: function () {
+      game.hints.push(hintItem);
+      renderHints();
+    },
+  };
+}
+
+function pickUpgradableHint() {
+  var candidates = game.hints.filter(function (hint) {
+    return !hint.used && hint.level < getHintMaxLevel(hint.id);
+  });
+  if (!candidates.length) {
+    candidates = game.hints.filter(function (hint) {
+      return hint.level < getHintMaxLevel(hint.id);
+    });
+  }
+  if (!candidates.length) {
+    return null;
+  }
+  return candidates[Math.floor(Math.random() * candidates.length)];
+}
+
+function pickUpgradablePassive() {
+  var candidates = game.passives.filter(function (passive) {
+    var bounds = getPassiveLevelBounds(passive.id);
+    return passive.level < bounds.max;
+  });
+  if (!candidates.length) {
+    return null;
+  }
+  return candidates[Math.floor(Math.random() * candidates.length)];
+}
+
+function buildTreasureUpgradeOption(config) {
+  return {
+    title: "Upgrade",
+    desc: "Level up a random hint or passive.",
+    apply: function () {
+      var hintTarget = pickUpgradableHint();
+      var passiveTarget = pickUpgradablePassive();
+      var options = [];
+      if (hintTarget) {
+        options.push({ type: "hint", target: hintTarget });
+      }
+      if (passiveTarget) {
+        options.push({ type: "passive", target: passiveTarget });
+      }
+      var choice =
+        options.length > 0
+          ? options[Math.floor(Math.random() * options.length)]
+          : null;
+      if (!choice) {
+        var ownedPassives = new Set(
+          game.passives.map(function (passive) {
+            return passive.id;
+          })
+        );
+        var passivePool = config.treasure.passivePool.filter(function (id) {
+          var def = PASSIVE_DEFS[id];
+          return def && !def.indicatorKey && !ownedPassives.has(id);
+        });
+        if (passivePool.length && Math.random() < 0.5) {
+          var passiveId =
+            passivePool[Math.floor(Math.random() * passivePool.length)];
+          game.passives.push({ id: passiveId, level: 1 });
+          applyPassives();
+          renderPassives();
+          return;
+        }
+        buildTreasureHintOption(config).apply();
+        return;
+      }
+      if (choice.type === "hint") {
+        choice.target.level = clampHintLevel(
+          choice.target.id,
+          choice.target.level + 1
+        );
+        renderHints();
+        return;
+      }
+      var bounds = getPassiveLevelBounds(choice.target.id);
+      choice.target.level = clampNumber(
+        choice.target.level + 1,
+        bounds.min,
+        bounds.max
+      );
+      applyPassives();
+      renderPassives();
+    },
+  };
+}
+
+function buildTreasureOptions(config) {
+  var coinMin = config.treasure.coinMin;
+  var coinMax = config.treasure.coinMax;
+  var coinAmount = randomInt(coinMin, coinMax);
+  var coinOption = {
+    title: coinAmount + " Coins",
+    desc: "Pocket a stash of extra coins.",
+    apply: function () {
+      state.coins = (state.coins || 0) + coinAmount;
+      app.ui.updateHud();
+      updateShopCoins();
+      flashCoinAward(coinAmount);
+    },
+  };
+  return [
+    coinOption,
+    buildTreasureHintOption(config),
+    buildTreasureUpgradeOption(config),
+  ];
+}
+
+function renderTreasureOptions(options) {
+  if (!treasureList) {
+    return;
+  }
+  treasureList.textContent = "";
+  options.forEach(function (option) {
+    var button = document.createElement("button");
+    button.type = "button";
+    button.className = "treasure-card";
+    var title = document.createElement("div");
+    title.className = "treasure-card__title";
+    title.textContent = option.title || "Treasure";
+    var desc = document.createElement("div");
+    desc.className = "treasure-card__desc";
+    desc.textContent = option.desc || "";
+    button.appendChild(title);
+    button.appendChild(desc);
+    button.addEventListener("click", function () {
+      option.apply();
+      hideTreasureOverlay();
+      showMapOverlay();
+    });
+    treasureList.appendChild(button);
+  });
+}
+
+function startEncounterForNode(node) {
+  if (!node) {
+    return;
+  }
+  var pick = pickProblemForDifficulty(game.difficulty);
+  if (!pick) {
+    showMapOverlay();
+    return;
+  }
+  game.currentNode = node;
+  game.currentProblem = pick.problem;
+  game.levelActive = true;
+  game.isBoss = node.type === "boss" || node.type === "levelBoss";
+  game.challenges = Array.isArray(node.challenges)
+    ? node.challenges.map(function (challenge) {
+        return { id: challenge.id, level: challenge.level };
+      })
+    : [];
+  hideMapOverlay();
+  hideShopOverlay();
+  hideTreasureOverlay();
+  hideRetryOverlay();
+  clearCoinBurst();
+  pruneUsedHints();
+  renderHints();
+  loadProblem(pick.problem, pick.label);
+}
+
+function handleMapMove(node) {
+  if (!node) {
+    return;
+  }
+  game.currentNode = node;
+  if (node.type === "shop") {
+    showShopOverlay();
+    return;
+  }
+  if (node.type === "treasure") {
+    showTreasureOverlay();
+    return;
+  }
+  if (
+    node.type === "problem" ||
+    node.type === "boss" ||
+    node.type === "levelBoss"
+  ) {
+    startEncounterForNode(node);
+    return;
+  }
+  showMapOverlay();
+  if (playMap && playMap.setStatus) {
+    playMap.setStatus("Path is clear. Choose the next hex.");
   }
 }
 
@@ -1370,6 +1707,9 @@ function showStartOverlay() {
   if (startOverlay) {
     startOverlay.classList.remove("is-hidden");
   }
+  hideMapOverlay();
+  hideTreasureOverlay();
+  hideShopOverlay();
   hideAdminOverlay();
   clearCoinBurst();
 }
@@ -1384,6 +1724,8 @@ function showRetryOverlay() {
     retryLabel.textContent = "Retry this level";
   }
   retryOverlay.classList.remove("is-hidden");
+  hideMapOverlay();
+  hideTreasureOverlay();
   hideShopOverlay();
   hideAdminOverlay();
 }
@@ -1400,30 +1742,19 @@ function hideStartOverlay() {
   }
 }
 
-function advanceToPendingLevel() {
-  if (!game.pendingNext) {
-    return;
-  }
-  hideAdvanceOverlay();
-  hideShopOverlay();
-  clearCoinBurst();
-  game.difficulty = game.pendingNext.difficulty;
-  game.levelNumber = game.pendingNext.levelNumber;
-  game.pendingNext = null;
-  loadLevel();
-}
-
 function endGame() {
   game.started = false;
   game.levelActive = false;
   game.levelNumber = 0;
   game.bossCount = 0;
+  game.mapIndex = 0;
   game.difficulty = null;
   game.currentProblem = null;
-  game.pendingNext = null;
+  game.currentNode = null;
+  game.map = null;
   game.hints = [];
   game.passives = [];
-  game.challenge = null;
+  game.challenges = [];
   game.shop = { hints: [], passives: [] };
   game.isBoss = false;
   state.coins = 0;
@@ -1436,7 +1767,8 @@ function endGame() {
   app.ui.setStatus("Game over. Start a new run.", "error");
   app.ui.updateHud();
   hideRetryOverlay();
-  hideAdvanceOverlay();
+  hideMapOverlay();
+  hideTreasureOverlay();
   hideShopOverlay();
   hideAdminOverlay();
   clearCoinBurst();
@@ -1446,10 +1778,15 @@ function endGame() {
 function startGame() {
   var config = getPlayConfig();
   game.started = true;
+  game.levelActive = false;
   game.levelNumber = 1;
   game.bossCount = 0;
+  game.mapIndex = 0;
   game.isBoss = false;
   game.shop = { hints: [], passives: [] };
+  game.challenges = [];
+  game.map = null;
+  game.currentNode = null;
   game.difficulty = parseDifficulty(config.startDifficulty) || {
     type: "kyu",
     value: 30,
@@ -1463,9 +1800,10 @@ function startGame() {
   hideStartOverlay();
   hideRetryOverlay();
   hideShopOverlay();
+  hideTreasureOverlay();
   hideAdminOverlay();
   clearCoinBurst();
-  loadLevel();
+  startNewMap();
 }
 
 if (startGameBtn) {
@@ -1536,7 +1874,7 @@ if (advanceBtn) {
     if (event) {
       event.stopPropagation();
     }
-    advanceToPendingLevel();
+    showMapOverlay();
   });
 }
 
@@ -1545,7 +1883,8 @@ if (shopContinueBtn) {
     if (event) {
       event.stopPropagation();
     }
-    advanceToPendingLevel();
+    hideShopOverlay();
+    showMapOverlay();
   });
 }
 
@@ -1565,7 +1904,7 @@ if (retryBtn) {
     game.levelActive = true;
     app.board.resetPuzzle();
     applyPassives();
-    applyChallenge();
+    applyChallenges();
     renderHints();
     app.board.updateBoard();
     app.board.evaluatePosition();
@@ -1608,22 +1947,30 @@ document.addEventListener("keydown", function (event) {
   if (event.target && event.target.tagName === "SELECT") {
     return;
   }
-  var advanceVisible =
-    advanceOverlay && !advanceOverlay.classList.contains("is-hidden");
   var shopVisible = shopOverlay && !shopOverlay.classList.contains("is-hidden");
-  if (!advanceVisible && !shopVisible) {
+  if (!shopVisible) {
     return;
   }
   var key = event.key;
   if (key === " " || key === "Enter" || key === "n" || key === "N") {
     event.preventDefault();
-    if (shopVisible && shopContinueBtn) {
+    if (shopContinueBtn) {
       shopContinueBtn.click();
-    } else if (advanceVisible && advanceBtn) {
-      advanceBtn.click();
     }
   }
 });
+
+if (playMapCanvas) {
+  playMap = createPlayMap({
+    canvas: playMapCanvas,
+    status: mapStatus,
+    infoTitle: playMapInfoTitle,
+    infoDesc: playMapInfoDesc,
+    infoHint: playMapInfoHint,
+    overlay: mapOverlay,
+    onMove: handleMapMove,
+  });
+}
 
 initAdminPanel();
 app.ui.updateHud();

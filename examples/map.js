@@ -140,7 +140,7 @@ function getConfig() {
   };
 }
 
-function getVoidBias(weights, allowVoid) {
+function getVoidChance(weights, allowVoid) {
   if (!allowVoid) {
     return 0;
   }
@@ -174,7 +174,7 @@ function pickWeighted(candidates, weights) {
   return candidates[candidates.length - 1];
 }
 
-function buildRowCounts(height, maxWidth, voidBias) {
+function buildRowCounts(height, maxWidth, voidChance) {
   const counts = [1];
   if (height <= 1) {
     return counts;
@@ -203,7 +203,7 @@ function buildRowCounts(height, maxWidth, voidBias) {
       continue;
     }
     const weights = candidates.map(function (next) {
-      return 1 + voidBias * (maxWidth - next);
+      return 1 + voidChance * (maxWidth - next);
     });
     counts.push(pickWeighted(candidates, weights));
   }
@@ -269,8 +269,8 @@ function pickType(weights, allowVoid) {
 
 function buildMap(config) {
   for (let attempt = 0; attempt < MAX_ATTEMPTS; attempt += 1) {
-    const voidBias = getVoidBias(config.weights, config.allowVoid);
-    const counts = buildRowCounts(config.height, config.maxWidth, voidBias);
+    const voidChance = getVoidChance(config.weights, config.allowVoid);
+    const counts = buildRowCounts(config.height, config.maxWidth, voidChance);
     const ranges = buildRowRanges(counts);
     if (!ranges) {
       continue;
@@ -278,13 +278,11 @@ function buildMap(config) {
     const nodes = [];
     const nodeById = new Map();
     const rows = [];
+    let valid = true;
 
-    for (let row = 0; row < config.height; row += 1) {
-      const rowNodes = [];
-      const range = ranges[row];
-      for (let i = 0; i < range.width; i += 1) {
-        const q = range.start + i;
-        let type = 'empty';
+    function addNode(q, row, forcedType) {
+      let type = forcedType || 'empty';
+      if (!forcedType) {
         if (row === 0) {
           type = 'start';
         } else if (row === config.height - 1) {
@@ -292,22 +290,58 @@ function buildMap(config) {
         } else {
           type = pickType(config.weights, false);
         }
-        const id = q + ',' + row;
-        const def = TYPE_DEFS[type] || TYPE_DEFS.empty;
-        const node = {
-          id: id,
-          q: q,
-          r: row,
-          type: type,
-          label: def.label,
-          description: def.description,
-          icon: def.icon
-        };
-        nodes.push(node);
-        nodeById.set(id, node);
-        rowNodes.push(node);
+      }
+      const id = q + ',' + row;
+      const def = TYPE_DEFS[type] || TYPE_DEFS.empty;
+      const node = {
+        id: id,
+        q: q,
+        r: row,
+        type: type,
+        label: def.label,
+        description: def.description,
+        icon: def.icon
+      };
+      nodes.push(node);
+      nodeById.set(id, node);
+      return node;
+    }
+
+    for (let row = 0; row < config.height; row += 1) {
+      const rowNodes = [];
+      const range = ranges[row];
+      if (row === 1 && config.height > 2) {
+        if (range.start > -1 || range.start + range.width - 1 < 0) {
+          valid = false;
+          break;
+        }
+      }
+      const requiredQs =
+        row === 1 && config.height > 2 ? new Set([-1, 0]) : new Set();
+      for (let i = 0; i < range.width; i += 1) {
+        const q = range.start + i;
+        let keep = true;
+        if (row > 0 && row < config.height - 1) {
+          if (requiredQs.has(q)) {
+            keep = true;
+          } else if (config.allowVoid && Math.random() < voidChance) {
+            keep = false;
+          }
+        }
+        if (!keep) {
+          continue;
+        }
+        rowNodes.push(addNode(q, row));
+      }
+      if (!rowNodes.length) {
+        const fallbackQ = range.start + Math.floor(range.width / 2);
+        rowNodes.push(addNode(fallbackQ, row));
       }
       rows.push(rowNodes);
+    }
+
+    if (!valid) {
+      continue;
     }
 
     const startId = nodes.find(function (node) {

@@ -216,6 +216,45 @@
                   </div>
                 </div>
               </div>
+              <div
+                id="mapOverlay"
+                class="play-overlay play-overlay--map is-hidden"
+              >
+                <div class="play-map">
+                  <div class="play-map__header">
+                    <div class="play-map__title">Choose your path</div>
+                    <div id="mapStatus" class="play-map__status">
+                      Map ready.
+                    </div>
+                  </div>
+                  <div class="play-map__stage">
+                    <div id="playMapCanvas" class="play-map__canvas"></div>
+                  </div>
+                  <div class="play-map__info">
+                    <div id="playMapInfoTitle" class="play-map__info-title">
+                      Select a node
+                    </div>
+                    <div id="playMapInfoDesc" class="play-map__info-desc">
+                      Click a neighboring hex to preview it.
+                    </div>
+                    <div id="playMapInfoHint" class="play-map__info-hint">
+                      Click again to move.
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div
+                id="treasureOverlay"
+                class="play-overlay play-overlay--treasure is-hidden"
+              >
+                <div class="play-overlay__panel play-overlay__panel--treasure">
+                  <div class="play-overlay__title">Treasure</div>
+                  <div class="treasure-subtitle">
+                    Choose one reward before moving on.
+                  </div>
+                  <div id="treasureList" class="treasure-list"></div>
+                </div>
+              </div>
               <div id="coinBurst" class="coin-burst" aria-live="polite"></div>
             </div>
           </div>
