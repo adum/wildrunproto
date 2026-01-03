@@ -34,7 +34,13 @@ const HEX_H_SPACING = HEX_WIDTH;
 const HEX_V_SPACING = HEX_SIZE * 1.5;
 const CANVAS_PADDING = 28;
 const MAX_ATTEMPTS = 50;
-const TREASURE_ICON_SOURCE = './img/treasure0.svg';
+const ICON_SOURCES = {
+  problem: './img/problem0.svg',
+  boss: './img/boss_problem0.svg',
+  levelBoss: './img/levelboss_problem0.svg',
+  shop: './img/shop0.svg',
+  treasure: './img/treasure0.svg'
+};
 
 const TYPE_DEFS = {
   start: {
@@ -49,22 +55,22 @@ const TYPE_DEFS = {
   },
   problem: {
     label: 'Problem',
-    icon: 'P',
+    icon: '',
     description: 'A standard go problem battle.'
   },
   boss: {
     label: 'Boss',
-    icon: 'B',
+    icon: '',
     description: 'A tougher go problem with bonus stakes.'
   },
   levelBoss: {
     label: 'Level Boss',
-    icon: 'LB',
+    icon: '',
     description: 'The final fight for this map.'
   },
   shop: {
     label: 'Shop',
-    icon: 'SH',
+    icon: '',
     description: 'Spend coins on hints or passives.'
   },
   treasure: {
@@ -534,23 +540,24 @@ function closeTooltip() {
   renderMap(getConfig(), false);
 }
 
-function renderTreasureTooltip(bounds) {
+function renderTooltip(bounds) {
   if (!state.tooltipId || !state.map) {
     return;
   }
   const node = state.map.nodeById.get(state.tooltipId);
-  if (!node || node.type !== 'treasure') {
+  if (!node || node.type === 'empty') {
     return;
   }
+  const def = TYPE_DEFS[node.type] || node;
 
   const tooltip = document.createElement('div');
   tooltip.className = 'map-tooltip';
   const title = document.createElement('div');
   title.className = 'map-tooltip__title';
-  title.textContent = 'Treasure';
+  title.textContent = def.label || node.label || 'Unknown';
   const body = document.createElement('div');
   body.className = 'map-tooltip__body';
-  body.textContent = 'Items to help you on your journey.';
+  body.textContent = def.description || node.description || '';
   tooltip.appendChild(title);
   tooltip.appendChild(body);
 
@@ -661,12 +668,12 @@ function renderMap(config, animate) {
       hex.style.animationDelay = node.r * 60 + 'ms';
     }
 
-    if (node.type === 'treasure') {
+    if (ICON_SOURCES[node.type]) {
       const icon = document.createElement('div');
       icon.className = 'hex__icon hex__icon--image';
       const img = document.createElement('img');
-      img.alt = 'Treasure';
-      img.src = TREASURE_ICON_SOURCE;
+      img.alt = node.label;
+      img.src = ICON_SOURCES[node.type];
       icon.appendChild(img);
       hex.appendChild(icon);
     } else if (node.icon) {
@@ -676,7 +683,7 @@ function renderMap(config, animate) {
       hex.appendChild(icon);
     }
 
-    if (node.type !== 'empty' && node.type !== 'treasure') {
+    if (node.type !== 'empty' && !ICON_SOURCES[node.type]) {
       const label = document.createElement('div');
       label.className = 'hex__label';
       label.textContent = node.label;
@@ -692,7 +699,7 @@ function renderMap(config, animate) {
     mapCanvas.appendChild(hex);
   });
 
-  renderTreasureTooltip(bounds);
+  renderTooltip(bounds);
 }
 
 function setStatus(message) {
@@ -753,8 +760,12 @@ function handleHexClick(event) {
     return;
   }
 
-  if (node.type === 'treasure') {
-    if (state.tooltipId === node.id) {
+  const reachableIds = getReachableIds();
+  const isReachable = reachableIds.has(node.id);
+  const hasTooltip = node.type !== 'empty';
+
+  if (hasTooltip) {
+    if (!isReachable && state.tooltipId === node.id) {
       closeTooltip();
       return;
     }
@@ -771,9 +782,8 @@ function handleHexClick(event) {
     return;
   }
 
-  const reachableIds = getReachableIds();
-  if (!reachableIds.has(node.id)) {
-    if (node.type !== 'treasure') {
+  if (!isReachable) {
+    if (!hasTooltip) {
       setStatus('That hex is not reachable yet.');
     }
     renderMap(getConfig(), false);
