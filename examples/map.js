@@ -34,6 +34,7 @@ const HEX_H_SPACING = HEX_WIDTH;
 const HEX_V_SPACING = HEX_SIZE * 1.5;
 const CANVAS_PADDING = 28;
 const MAX_ATTEMPTS = 50;
+const TREASURE_ICON_SOURCE = './img/treasure0.svg';
 
 const TYPE_DEFS = {
   start: {
@@ -68,7 +69,7 @@ const TYPE_DEFS = {
   },
   treasure: {
     label: 'Treasure',
-    icon: 'TR',
+    icon: '',
     description: 'Collect a reward or bonus.'
   }
 };
@@ -86,6 +87,8 @@ const state = {
   map: null,
   currentId: null,
   selectedId: null,
+  tooltipId: null,
+  suppressClose: false,
   visited: new Set(),
   pendingReset: null
 };
@@ -523,6 +526,99 @@ function updateInfo(node, isPreview) {
   }
 }
 
+function closeTooltip() {
+  if (!state.tooltipId) {
+    return;
+  }
+  state.tooltipId = null;
+  renderMap(getConfig(), false);
+}
+
+function renderTreasureTooltip(bounds) {
+  if (!state.tooltipId || !state.map) {
+    return;
+  }
+  const node = state.map.nodeById.get(state.tooltipId);
+  if (!node || node.type !== 'treasure') {
+    return;
+  }
+
+  const tooltip = document.createElement('div');
+  tooltip.className = 'map-tooltip';
+  const title = document.createElement('div');
+  title.className = 'map-tooltip__title';
+  title.textContent = 'Treasure';
+  const body = document.createElement('div');
+  body.className = 'map-tooltip__body';
+  body.textContent = 'Items to help you on your journey.';
+  tooltip.appendChild(title);
+  tooltip.appendChild(body);
+
+  mapCanvas.appendChild(tooltip);
+
+  const margin = 12;
+  const gap = 10;
+  const baseX = node.pixel.x;
+  const baseY = node.pixel.y;
+  const hexRect = {
+    left: baseX - HEX_WIDTH / 2,
+    right: baseX + HEX_WIDTH / 2,
+    top: baseY - HEX_HEIGHT / 2,
+    bottom: baseY + HEX_HEIGHT / 2
+  };
+
+  const tooltipWidth = tooltip.offsetWidth;
+  const tooltipHeight = tooltip.offsetHeight;
+
+  const placements = [
+    {
+      side: 'right',
+      left: hexRect.right + gap,
+      top: baseY - tooltipHeight / 2
+    },
+    {
+      side: 'left',
+      left: hexRect.left - gap - tooltipWidth,
+      top: baseY - tooltipHeight / 2
+    },
+    {
+      side: 'bottom',
+      left: baseX - tooltipWidth / 2,
+      top: hexRect.bottom + gap
+    },
+    {
+      side: 'top',
+      left: baseX - tooltipWidth / 2,
+      top: hexRect.top - gap - tooltipHeight
+    }
+  ];
+
+  let chosen = placements.find(function (placement) {
+    return (
+      placement.left >= margin &&
+      placement.left + tooltipWidth <= bounds.width - margin &&
+      placement.top >= margin &&
+      placement.top + tooltipHeight <= bounds.height - margin
+    );
+  });
+
+  if (!chosen) {
+    chosen = placements[0];
+    chosen.left = Math.min(
+      Math.max(chosen.left, margin),
+      bounds.width - tooltipWidth - margin
+    );
+    chosen.top = Math.min(
+      Math.max(chosen.top, margin),
+      bounds.height - tooltipHeight - margin
+    );
+  }
+
+  tooltip.dataset.side = chosen.side;
+  tooltip.style.left = chosen.left + 'px';
+  tooltip.style.top = chosen.top + 'px';
+}
+
 function renderMap(config, animate) {
   mapCanvas.innerHTML = '';
   mapCanvas.classList.toggle('map-canvas--hide-labels', !config.showLabels);
@@ -565,14 +661,22 @@ function renderMap(config, animate) {
       hex.style.animationDelay = node.r * 60 + 'ms';
     }
 
-    if (node.icon) {
+    if (node.type === 'treasure') {
+      const icon = document.createElement('div');
+      icon.className = 'hex__icon hex__icon--image';
+      const img = document.createElement('img');
+      img.alt = 'Treasure';
+      img.src = TREASURE_ICON_SOURCE;
+      icon.appendChild(img);
+      hex.appendChild(icon);
+    } else if (node.icon) {
       const icon = document.createElement('div');
       icon.className = 'hex__icon';
       icon.textContent = node.icon;
       hex.appendChild(icon);
     }
 
-    if (node.type !== 'empty') {
+    if (node.type !== 'empty' && node.type !== 'treasure') {
       const label = document.createElement('div');
       label.className = 'hex__label';
       label.textContent = node.label;
@@ -587,6 +691,8 @@ function renderMap(config, animate) {
 
     mapCanvas.appendChild(hex);
   });
+
+  renderTreasureTooltip(bounds);
 }
 
 function setStatus(message) {
@@ -597,6 +703,8 @@ function resetState(map) {
   state.map = map;
   state.currentId = map.startId;
   state.selectedId = null;
+  state.tooltipId = null;
+  state.suppressClose = false;
   state.visited = new Set([map.startId]);
 }
 
@@ -644,14 +752,31 @@ function handleHexClick(event) {
   if (!node) {
     return;
   }
+
+  if (node.type === 'treasure') {
+    if (state.tooltipId === node.id) {
+      closeTooltip();
+      return;
+    }
+    state.tooltipId = node.id;
+    state.suppressClose = true;
+    updateInfo(node, true);
+  } else {
+    closeTooltip();
+  }
+
   if (node.id === state.currentId) {
     updateInfo(node, false);
+    renderMap(getConfig(), false);
     return;
   }
 
   const reachableIds = getReachableIds();
   if (!reachableIds.has(node.id)) {
-    setStatus('That hex is not reachable yet.');
+    if (node.type !== 'treasure') {
+      setStatus('That hex is not reachable yet.');
+    }
+    renderMap(getConfig(), false);
     return;
   }
 
@@ -705,6 +830,23 @@ function attachListeners() {
   });
 
   mapCanvas.addEventListener('click', handleHexClick);
+
+  document.addEventListener('click', function () {
+    if (!state.tooltipId) {
+      return;
+    }
+    if (state.suppressClose) {
+      state.suppressClose = false;
+      return;
+    }
+    closeTooltip();
+  });
+
+  document.addEventListener('keydown', function (event) {
+    if (event.key === 'Escape') {
+      closeTooltip();
+    }
+  });
 }
 
 attachListeners();
