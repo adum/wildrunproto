@@ -1,0 +1,175 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Wildrun Map Prototype</title>
+    <link rel="stylesheet" href="./map.css" />
+  </head>
+  <body>
+    <div class="page">
+      <header class="hero">
+        <div>
+          <p class="hero__kicker">Wildrun Prototype</p>
+          <h1 class="hero__title">Hex Map Pathing</h1>
+          <p class="hero__subtitle">
+            Pick your route through a hex map. Click a neighboring hex to preview
+            it, then click again to move forward.
+          </p>
+        </div>
+        <div class="hero__status" id="mapStatus">Map ready.</div>
+      </header>
+
+      <main class="layout">
+        <section class="map-panel">
+          <div class="map-toolbar">
+            <div class="map-toolbar__title">Map Preview</div>
+            <button id="regenBtn" class="button button--ghost" type="button">
+              Regenerate
+            </button>
+          </div>
+          <div class="map-stage">
+            <div id="mapCanvas" class="map-canvas"></div>
+          </div>
+          <div class="map-info" id="mapInfo">
+            <div class="map-info__title" id="mapInfoTitle">Select a neighbor</div>
+            <div class="map-info__desc" id="mapInfoDesc">
+              Click a neighboring hex to preview it.
+            </div>
+            <div class="map-info__hint" id="mapInfoHint">
+              Click the same hex again to move.
+            </div>
+          </div>
+        </section>
+
+        <aside class="controls-panel">
+          <div class="controls-card">
+            <h2 class="controls-title">Generation Controls</h2>
+            <div class="control-grid">
+              <label class="control">
+                <span class="control__label"
+                  >Height <span id="heightValue">7</span></span
+                >
+                <input
+                  id="heightInput"
+                  type="range"
+                  min="4"
+                  max="12"
+                  step="1"
+                  value="7"
+                />
+              </label>
+              <label class="control">
+                <span class="control__label"
+                  >Width <span id="widthValue">5</span></span
+                >
+                <input
+                  id="widthInput"
+                  type="range"
+                  min="1"
+                  max="7"
+                  step="1"
+                  value="5"
+                />
+              </label>
+              <label class="control">
+                <span class="control__label"
+                  >Problem Weight <span id="problemValue">6</span></span
+                >
+                <input
+                  id="problemInput"
+                  type="range"
+                  min="0"
+                  max="10"
+                  step="1"
+                  value="6"
+                />
+              </label>
+              <label class="control">
+                <span class="control__label"
+                  >Boss Weight <span id="bossValue">2</span></span
+                >
+                <input
+                  id="bossInput"
+                  type="range"
+                  min="0"
+                  max="10"
+                  step="1"
+                  value="2"
+                />
+              </label>
+              <label class="control">
+                <span class="control__label"
+                  >Empty Weight <span id="emptyValue">2</span></span
+                >
+                <input
+                  id="emptyInput"
+                  type="range"
+                  min="0"
+                  max="10"
+                  step="1"
+                  value="2"
+                />
+              </label>
+              <label class="control">
+                <span class="control__label"
+                  >Shop Weight <span id="shopValue">2</span></span
+                >
+                <input
+                  id="shopInput"
+                  type="range"
+                  min="0"
+                  max="10"
+                  step="1"
+                  value="2"
+                />
+              </label>
+              <label class="control">
+                <span class="control__label"
+                  >Treasure Weight <span id="treasureValue">2</span></span
+                >
+                <input
+                  id="treasureInput"
+                  type="range"
+                  min="0"
+                  max="10"
+                  step="1"
+                  value="2"
+                />
+              </label>
+              <label class="control">
+                <span class="control__label"
+                  >Void Weight <span id="voidValue">1</span></span
+                >
+                <input
+                  id="voidInput"
+                  type="range"
+                  min="0"
+                  max="10"
+                  step="1"
+                  value="1"
+                />
+              </label>
+            </div>
+            <div class="control-checks">
+              <label class="check">
+                <input id="allowVoidInput" type="checkbox" checked />
+                <span>Allow voids</span>
+              </label>
+              <label class="check">
+                <input id="showLinksInput" type="checkbox" checked />
+                <span>Show connections</span>
+              </label>
+              <label class="check">
+                <input id="showLabelsInput" type="checkbox" checked />
+                <span>Show labels</span>
+              </label>
+            </div>
+          </div>
+        </aside>
+      </main>
+    </div>
+
+    <script type="module" src="./map.js"></script>
+  </body>
+</html>
