@@ -133,7 +133,27 @@ function getConfig() {
 
 function buildRowWidths(height, maxWidth) {
   const widths = [1];
-  for (let row = 1; row < height - 1; row += 1) {
+  if (height <= 1) {
+    return widths;
+  }
+  if (height === 2) {
+    return [1, 1];
+  }
+
+  const remainingAfterRow1 = height - 2;
+  const row1Candidates = [];
+  for (let width = 3; width <= maxWidth; width += 1) {
+    if (Math.abs(width - 1) <= remainingAfterRow1) {
+      row1Candidates.push(width);
+    }
+  }
+  const row1Fallback = Math.min(maxWidth, 3);
+  const row1Width =
+    row1Candidates[Math.floor(Math.random() * row1Candidates.length)] ||
+    row1Fallback;
+  widths.push(row1Width);
+
+  for (let row = 2; row < height - 1; row += 1) {
     const prev = widths[row - 1];
     const remaining = height - 1 - row;
     const candidates = [-1, 0, 1]
@@ -203,6 +223,9 @@ function buildMap(config) {
         } else {
           type = pickType(config.weights, config.allowVoid);
         }
+        if (row === 1 && (q === -1 || q === 0) && type === 'void') {
+          type = 'empty';
+        }
         if (type === 'void') {
           continue;
         }
@@ -246,6 +269,14 @@ function buildMap(config) {
       startId: startId,
       endId: endId
     };
+
+    const startNode = map.nodeById.get(map.startId);
+    const startBranches = getNeighbors(startNode, map).filter(function (neighbor) {
+      return neighbor.r === startNode.r + 1;
+    });
+    if (startBranches.length < 2) {
+      continue;
+    }
 
     if (hasForwardPath(map)) {
       return map;
