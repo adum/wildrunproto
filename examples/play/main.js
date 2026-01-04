@@ -682,10 +682,13 @@ function renderPassives() {
     }
     item.appendChild(label);
     if (!def.indicatorKey) {
-      var level = document.createElement("span");
-      level.className = "play-chip__level";
-      level.textContent = "L" + passive.level;
-      item.appendChild(level);
+      var bounds = getPassiveLevelBounds(passive.id);
+      if (bounds.max > 1) {
+        var level = document.createElement("span");
+        level.className = "play-chip__level";
+        level.textContent = "L" + passive.level;
+        item.appendChild(level);
+      }
     }
     passiveList.appendChild(item);
   });
@@ -707,11 +710,13 @@ function renderHints() {
     button.title = def.tooltip;
     var label = document.createElement("span");
     label.textContent = def.label;
-    var level = document.createElement("span");
-    level.className = "play-chip__level";
-    level.textContent = "L" + (hint.level || 1);
     button.appendChild(label);
-    button.appendChild(level);
+    if (getHintMaxLevel(hint.id) > 1) {
+      var level = document.createElement("span");
+      level.className = "play-chip__level";
+      level.textContent = "L" + (hint.level || 1);
+      button.appendChild(level);
+    }
     if (hint.used) {
       button.classList.add("is-used");
       button.disabled = true;
@@ -753,11 +758,13 @@ function renderChallenges() {
     item.title = def.tooltip;
     var label = document.createElement("span");
     label.textContent = def.label;
-    var level = document.createElement("span");
-    level.className = "play-chip__level";
-    level.textContent = "L" + challenge.level;
     item.appendChild(label);
-    item.appendChild(level);
+    if (getChallengeLevelBounds(challenge.id).max > 1) {
+      var level = document.createElement("span");
+      level.className = "play-chip__level";
+      level.textContent = "L" + challenge.level;
+      item.appendChild(level);
+    }
     challengeList.appendChild(item);
   });
 }
@@ -859,12 +866,11 @@ function renderShopList(listEl, items, defs, type) {
     var button = document.createElement("button");
     button.type = "button";
     button.className = "button shop-buy";
-    var lockAfterPurchase = type === "passive";
-    var isOwned = lockAfterPurchase && item.purchased;
+    var isSoldOut = item.purchased;
     var canAfford = item.price <= (state.coins || 0);
-    if (isOwned) {
+    if (isSoldOut) {
       row.classList.add("is-owned");
-      button.textContent = "Owned";
+      button.textContent = "Sold out";
       button.disabled = true;
     } else {
       button.textContent = "Buy";
@@ -877,7 +883,7 @@ function renderShopList(listEl, items, defs, type) {
       if (event) {
         event.stopPropagation();
       }
-      if (isOwned) {
+      if (isSoldOut) {
         return;
       }
       var currentCoins = state.coins || 0;
@@ -891,6 +897,7 @@ function renderShopList(listEl, items, defs, type) {
       if (type === "hint") {
         game.hints.push(createHintItem(item.id));
         renderHints();
+        item.purchased = true;
       } else if (type === "passive") {
         game.passives.push({ id: item.id, level: 1 });
         applyPassives();
@@ -2070,9 +2077,6 @@ if (app.elements.mount) {
 
 if (coinBurst) {
   coinBurst.addEventListener("click", function (event) {
-    if (event) {
-      event.stopPropagation();
-    }
     if (coinBurst.classList.contains("is-active")) {
       clearCoinBurst();
       logEvent("Coin panel dismissed.");
@@ -2167,6 +2171,17 @@ function formatMultiplier(value) {
   return rounded.toFixed(2) + "x";
 }
 
+function formatMultiplierTenths(value) {
+  if (!Number.isFinite(value) || value <= 0) {
+    return "1x";
+  }
+  var truncated = Math.floor(value * 10) / 10;
+  if (Math.abs(truncated - Math.round(truncated)) < 0.01) {
+    return Math.round(truncated) + "x";
+  }
+  return truncated.toFixed(1) + "x";
+}
+
 function renderCoinBurst(breakdown) {
   if (!coinBurst) {
     return;
@@ -2177,7 +2192,7 @@ function renderCoinBurst(breakdown) {
   }
   var baseValue = Math.round(breakdown.base || 0);
   var totalValue = Math.round(breakdown.total || 0);
-  var challengeText = formatMultiplier(breakdown.challengeMultiplier);
+  var challengeText = formatMultiplierTenths(breakdown.challengeMultiplier);
   var bigMoneyText = formatMultiplier(breakdown.bigMoneyMultiplier);
   var bigMoneyActive = !!breakdown.bigMoneyActive;
 
