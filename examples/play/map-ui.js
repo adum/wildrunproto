@@ -485,6 +485,21 @@ function createPlayMap(options) {
     body.textContent = node.description || '';
     tooltip.appendChild(title);
     tooltip.appendChild(body);
+
+    var reachable = mapState.reachable && mapState.reachable.has(node.id);
+    if (reachable) {
+      var goButton = document.createElement('button');
+      goButton.type = 'button';
+      goButton.className = 'button play-map__tooltip-cta';
+      goButton.textContent = 'Go';
+      goButton.addEventListener('click', function (event) {
+        if (event) {
+          event.stopPropagation();
+        }
+        moveToNode(node);
+      });
+      tooltip.appendChild(goButton);
+    }
     canvas.appendChild(tooltip);
 
     var margin = 12;
@@ -577,6 +592,27 @@ function createPlayMap(options) {
     return reachable;
   }
 
+  function moveToNode(node) {
+    if (!node) {
+      return;
+    }
+    var reachable = mapState.reachable || getReachableIds();
+    if (!reachable.has(node.id)) {
+      return;
+    }
+    mapState.currentId = node.id;
+    mapState.visited.add(node.id);
+    mapState.selectedId = null;
+    mapState.tooltipId = null;
+    updateInfo(node, false);
+    setStatus('Moved to ' + node.label + '.');
+
+    render(false);
+    if (onMove) {
+      onMove(node);
+    }
+  }
+
   function render(animate) {
     if (!canvas || !mapState.map) {
       return;
@@ -592,6 +628,7 @@ function createPlayMap(options) {
     canvas.style.setProperty('--map-hex-height', HEX_HEIGHT + 'px');
 
     var reachable = getReachableIds();
+    mapState.reachable = reachable;
 
     mapState.map.nodes.forEach(function (node) {
       var hex = document.createElement('button');
@@ -740,17 +777,7 @@ function createPlayMap(options) {
       render(false);
       return;
     }
-
-    mapState.currentId = node.id;
-    mapState.visited.add(node.id);
-    mapState.selectedId = null;
-    updateInfo(node, false);
-    setStatus('Moved to ' + node.label + '.');
-
-    render(false);
-    if (onMove) {
-      onMove(node);
-    }
+    moveToNode(node);
   }
 
   function setMap(map) {

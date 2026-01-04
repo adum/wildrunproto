@@ -60,11 +60,23 @@ var playMapCanvas = document.getElementById("playMapCanvas");
 var playMapInfoTitle = document.getElementById("playMapInfoTitle");
 var playMapInfoDesc = document.getElementById("playMapInfoDesc");
 var playMapInfoHint = document.getElementById("playMapInfoHint");
+var mapLevelLabel = document.getElementById("mapLevelLabel");
+var levelCongratsOverlay = document.getElementById("levelCongratsOverlay");
+var levelCongratsTitle = document.getElementById("levelCongratsTitle");
+var levelCongratsBtn = document.getElementById("levelCongratsBtn");
 var treasureOverlay = document.getElementById("treasureOverlay");
 var treasureList = document.getElementById("treasureList");
 
 var problems = Array.isArray(window.gpProblems) ? window.gpProblems : [];
 var playMap = null;
+
+function logEvent(message, data) {
+  if (data !== undefined) {
+    console.log("[Play]", message, data);
+    return;
+  }
+  console.log("[Play]", message);
+}
 
 app.handlers.onTimerExpired = function () {
   app.board.evaluatePosition();
@@ -242,6 +254,7 @@ var game = {
   levelActive: false,
   currentProblem: null,
   currentNode: null,
+  blockClicksUntil: 0,
   passives: [],
   hints: [],
   challenges: [],
@@ -257,10 +270,16 @@ app.handlers.onPuzzleSolved = function () {
   }
   game.levelActive = false;
   awardCoins();
+  logEvent("Puzzle solved.", {
+    difficulty: formatDifficulty(game.difficulty),
+    node: game.currentNode ? game.currentNode.type : null,
+  });
   advanceAfterSolve();
   var node = game.currentNode;
   if (node && node.type === "levelBoss") {
+    logEvent("Level boss cleared. Generating new map.");
     startNewMap();
+    showCongratsOverlay();
   } else {
     showMapOverlay();
   }
@@ -271,6 +290,10 @@ app.handlers.onPuzzleFailed = function () {
     return;
   }
   game.levelActive = false;
+  logEvent("Puzzle failed.", {
+    difficulty: formatDifficulty(game.difficulty),
+    node: game.currentNode ? game.currentNode.type : null,
+  });
   hideMapOverlay();
   if (state.lives <= 0) {
     endGame();
@@ -608,6 +631,12 @@ function ensureBoard(size) {
   }
   if (adminOverlay && adminOverlay.parentElement !== app.elements.mount) {
     app.elements.mount.appendChild(adminOverlay);
+  }
+  if (
+    levelCongratsOverlay &&
+    levelCongratsOverlay.parentElement !== app.elements.mount
+  ) {
+    app.elements.mount.appendChild(levelCongratsOverlay);
   }
   if (mapOverlay && mapOverlay.parentElement !== app.elements.mount) {
     app.elements.mount.appendChild(mapOverlay);
@@ -1199,6 +1228,7 @@ function clampChallengeLevel(challengeId, level) {
 }
 
 function loadProblem(problem, difficultyLabelText) {
+  game.blockClicksUntil = Date.now() + 500;
   var sgf = new app.GB.Sgf(problem.sgf);
   if (!sgf.root) {
     return;
@@ -1238,6 +1268,14 @@ function loadProblem(problem, difficultyLabelText) {
   applyPassives();
   renderPassives();
   applyChallenges();
+  if (state.challengeMystery) {
+    state.mysteryStoneKeys = [];
+    state.mysteryRevealed = false;
+  }
+  if (state.challengeEnigma) {
+    state.enigmaPoints = [];
+    state.enigmaRevealed = false;
+  }
 
   app.board.autoPlayOpponent();
   app.board.updateBoard();
@@ -1350,6 +1388,10 @@ function assignBossChallenges(map, config) {
       node.type === "levelBoss" ? 2 : 1
     );
   });
+  logEvent("Boss challenges assigned.", {
+    count: bossNodes.length,
+    mapIndex: game.mapIndex,
+  });
 }
 
 function buildMap(config) {
@@ -1366,6 +1408,11 @@ function buildMap(config) {
     return null;
   }
   assignBossChallenges(map, config);
+  logEvent("Map generated.", {
+    height: config.map.height,
+    maxWidth: config.map.maxWidth,
+    allowVoid: config.map.allowVoid,
+  });
   return map;
 }
 
@@ -1381,6 +1428,7 @@ function startNewMap() {
     return;
   }
   playMap.setMap(game.map);
+  logEvent("Map ready.", { mapIndex: game.mapIndex });
   showMapOverlay();
 }
 
@@ -1390,6 +1438,9 @@ function showMapOverlay() {
   }
   game.levelActive = false;
   mapOverlay.classList.remove("is-hidden");
+  if (mapLevelLabel) {
+    mapLevelLabel.textContent = "Level " + Math.max(1, game.mapIndex || 1);
+  }
   hideRetryOverlay();
   hideShopOverlay();
   hideTreasureOverlay();
@@ -1405,6 +1456,24 @@ function showMapOverlay() {
 function hideMapOverlay() {
   if (mapOverlay) {
     mapOverlay.classList.add("is-hidden");
+  }
+}
+
+function showCongratsOverlay() {
+  if (!levelCongratsOverlay) {
+    return;
+  }
+  if (levelCongratsTitle) {
+    levelCongratsTitle.textContent =
+      "Level " + Math.max(1, game.mapIndex || 1) + " Unlocked";
+  }
+  levelCongratsOverlay.classList.remove("is-hidden");
+  hideMapOverlay();
+}
+
+function hideCongratsOverlay() {
+  if (levelCongratsOverlay) {
+    levelCongratsOverlay.classList.add("is-hidden");
   }
 }
 
@@ -1429,6 +1498,7 @@ function showShopOverlay() {
   hideAdminOverlay();
   hideMapOverlay();
   hideTreasureOverlay();
+  logEvent("Shop opened.");
 }
 
 function hideShopOverlay() {
@@ -1450,6 +1520,7 @@ function showTreasureOverlay() {
   hideAdminOverlay();
   hideShopOverlay();
   hideMapOverlay();
+  logEvent("Treasure opened.");
 }
 
 function hideTreasureOverlay() {
@@ -1481,6 +1552,7 @@ function buildTreasureHintOption(config) {
     apply: function () {
       game.hints.push(hintItem);
       renderHints();
+      logEvent("Treasure claimed: hint.", { hint: hintId, level: hintItem.level });
     },
   };
 }
@@ -1545,6 +1617,7 @@ function buildTreasureUpgradeOption(config) {
           game.passives.push({ id: passiveId, level: 1 });
           applyPassives();
           renderPassives();
+          logEvent("Treasure claimed: passive.", { passive: passiveId, level: 1 });
           return;
         }
         buildTreasureHintOption(config).apply();
@@ -1556,6 +1629,10 @@ function buildTreasureUpgradeOption(config) {
           choice.target.level + 1
         );
         renderHints();
+        logEvent("Treasure claimed: hint upgrade.", {
+          hint: choice.target.id,
+          level: choice.target.level,
+        });
         return;
       }
       var bounds = getPassiveLevelBounds(choice.target.id);
@@ -1566,6 +1643,10 @@ function buildTreasureUpgradeOption(config) {
       );
       applyPassives();
       renderPassives();
+      logEvent("Treasure claimed: passive upgrade.", {
+        passive: choice.target.id,
+        level: choice.target.level,
+      });
     },
   };
 }
@@ -1582,6 +1663,7 @@ function buildTreasureOptions(config) {
       app.ui.updateHud();
       updateShopCoins();
       flashCoinAward(coinAmount);
+      logEvent("Treasure claimed: coins.", { amount: coinAmount });
     },
   };
   return [
@@ -1643,6 +1725,13 @@ function startEncounterForNode(node) {
   pruneUsedHints();
   renderHints();
   loadProblem(pick.problem, pick.label);
+  logEvent("Encounter started.", {
+    type: node.type,
+    difficulty: pick.label,
+    challenges: game.challenges.map(function (challenge) {
+      return challenge.id + " L" + challenge.level;
+    }),
+  });
 }
 
 function handleMapMove(node) {
@@ -1650,6 +1739,7 @@ function handleMapMove(node) {
     return;
   }
   game.currentNode = node;
+  logEvent("Map move selected.", { type: node.type });
   if (node.type === "shop") {
     showShopOverlay();
     return;
@@ -1710,6 +1800,7 @@ function showStartOverlay() {
   hideMapOverlay();
   hideTreasureOverlay();
   hideShopOverlay();
+  hideCongratsOverlay();
   hideAdminOverlay();
   clearCoinBurst();
 }
@@ -1727,6 +1818,7 @@ function showRetryOverlay() {
   hideMapOverlay();
   hideTreasureOverlay();
   hideShopOverlay();
+  hideCongratsOverlay();
   hideAdminOverlay();
 }
 
@@ -1770,9 +1862,11 @@ function endGame() {
   hideMapOverlay();
   hideTreasureOverlay();
   hideShopOverlay();
+  hideCongratsOverlay();
   hideAdminOverlay();
   clearCoinBurst();
   showStartOverlay();
+  logEvent("Game over.");
 }
 
 function startGame() {
@@ -1801,9 +1895,11 @@ function startGame() {
   hideRetryOverlay();
   hideShopOverlay();
   hideTreasureOverlay();
+  hideCongratsOverlay();
   hideAdminOverlay();
   clearCoinBurst();
   startNewMap();
+  logEvent("Game started.", { difficulty: formatDifficulty(game.difficulty) });
 }
 
 if (startGameBtn) {
@@ -1830,6 +1926,16 @@ if (adminClose) {
       event.stopPropagation();
     }
     hideAdminOverlay();
+  });
+}
+
+if (levelCongratsBtn) {
+  levelCongratsBtn.addEventListener("click", function (event) {
+    if (event) {
+      event.stopPropagation();
+    }
+    hideCongratsOverlay();
+    showMapOverlay();
   });
 }
 
@@ -1885,6 +1991,7 @@ if (shopContinueBtn) {
     }
     hideShopOverlay();
     showMapOverlay();
+    logEvent("Shop closed.");
   });
 }
 
@@ -1902,18 +2009,36 @@ if (retryBtn) {
     }
     hideRetryOverlay();
     game.levelActive = true;
+    game.blockClicksUntil = Date.now() + 500;
     app.board.resetPuzzle();
     applyPassives();
     applyChallenges();
     renderHints();
     app.board.updateBoard();
     app.board.evaluatePosition();
+    logEvent("Retry puzzle.");
   });
 }
 
 if (app.elements.mount) {
   app.elements.mount.addEventListener("click", function (event) {
     if (!game.started || !game.levelActive) {
+      return;
+    }
+    if (
+      (mapOverlay && !mapOverlay.classList.contains("is-hidden")) ||
+      (shopOverlay && !shopOverlay.classList.contains("is-hidden")) ||
+      (treasureOverlay && !treasureOverlay.classList.contains("is-hidden")) ||
+      (startOverlay && !startOverlay.classList.contains("is-hidden")) ||
+      (retryOverlay && !retryOverlay.classList.contains("is-hidden")) ||
+      (levelCongratsOverlay &&
+        !levelCongratsOverlay.classList.contains("is-hidden")) ||
+      (adminOverlay && !adminOverlay.classList.contains("is-hidden")) ||
+      (coinBurst && coinBurst.classList.contains("is-active"))
+    ) {
+      return;
+    }
+    if (Date.now() < (game.blockClicksUntil || 0)) {
       return;
     }
     if (
@@ -1940,6 +2065,18 @@ if (app.elements.mount) {
       return;
     }
     app.board.handleMoveSelection(pos[0], pos[1]);
+  });
+}
+
+if (coinBurst) {
+  coinBurst.addEventListener("click", function (event) {
+    if (event) {
+      event.stopPropagation();
+    }
+    if (coinBurst.classList.contains("is-active")) {
+      clearCoinBurst();
+      logEvent("Coin panel dismissed.");
+    }
   });
 }
 
@@ -2132,4 +2269,8 @@ function awardCoins() {
     renderShop();
   }
   renderCoinBurst(breakdown);
+  logEvent("Coins awarded.", {
+    amount: award,
+    total: Math.round(state.coins || 0),
+  });
 }
