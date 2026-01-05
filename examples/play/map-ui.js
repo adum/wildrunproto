@@ -434,6 +434,8 @@ function createPlayMap(options) {
     visited: new Set(),
     tooltipId: null,
     suppressClose: false,
+    debugJumpId: null,
+    debugJumpAt: 0,
     bounds: { width: 0, height: 0 }
   };
 
@@ -464,6 +466,25 @@ function createPlayMap(options) {
     }
     mapState.tooltipId = null;
     render(false);
+  }
+
+  function isDebugJumpEvent(event) {
+    return (
+      event &&
+      (event.ctrlKey || event.metaKey || event.shiftKey || event.altKey)
+    );
+  }
+
+  function recordDebugJump(node) {
+    mapState.debugJumpId = node.id;
+    mapState.debugJumpAt = Date.now();
+  }
+
+  function isDuplicateDebugJump(node) {
+    return (
+      mapState.debugJumpId === node.id &&
+      Date.now() - mapState.debugJumpAt < 350
+    );
   }
 
   function renderTooltip() {
@@ -592,13 +613,15 @@ function createPlayMap(options) {
     return reachable;
   }
 
-  function moveToNode(node) {
+  function moveToNode(node, force) {
     if (!node) {
       return;
     }
-    var reachable = mapState.reachable || getReachableIds();
-    if (!reachable.has(node.id)) {
-      return;
+    if (!force) {
+      var reachable = mapState.reachable || getReachableIds();
+      if (!reachable.has(node.id)) {
+        return;
+      }
     }
     mapState.currentId = node.id;
     mapState.visited.add(node.id);
@@ -739,6 +762,14 @@ function createPlayMap(options) {
     if (!node) {
       return;
     }
+    if (isDebugJumpEvent(event) && event.detail > 1) {
+      if (node.id === mapState.currentId || isDuplicateDebugJump(node)) {
+        return;
+      }
+      moveToNode(node, true);
+      recordDebugJump(node);
+      return;
+    }
 
     var reachable = getReachableIds();
     var isReachable = reachable.has(node.id);
@@ -780,6 +811,34 @@ function createPlayMap(options) {
     moveToNode(node);
   }
 
+  function handleCanvasDoubleClick(event) {
+    if (!isDebugJumpEvent(event)) {
+      return;
+    }
+    if (!mapState.map) {
+      return;
+    }
+    var target = event.target.closest('.play-map__hex');
+    if (!target || !canvas.contains(target)) {
+      return;
+    }
+    var node = mapState.map.nodeById.get(target.dataset.id);
+    if (!node) {
+      return;
+    }
+    if (node.id === mapState.currentId) {
+      return;
+    }
+    if (isDuplicateDebugJump(node)) {
+      return;
+    }
+    moveToNode(node, true);
+    recordDebugJump(node);
+    if (event.preventDefault) {
+      event.preventDefault();
+    }
+  }
+
   function setMap(map) {
     mapState.map = map;
     mapState.currentId = map.startId;
@@ -798,6 +857,7 @@ function createPlayMap(options) {
   function attachListeners() {
     if (canvas) {
       canvas.addEventListener('click', handleCanvasClick);
+      canvas.addEventListener('dblclick', handleCanvasDoubleClick);
     }
     document.addEventListener('click', function () {
       if (!mapState.tooltipId || !isVisible()) {

@@ -689,3 +689,4 @@ app.board.handleMoveSelection = handleMoveSelection;
 app.board.eliminateRandomMove = eliminateRandomMove;
 app.board.resetSpeedSolveTracking = resetSpeedSolveTracking;
 app.board.ensureSpeedSolveStart = ensureSpeedSolveStart;
+app.board.getSpeedSolveMark = getSpeedSolveMark;

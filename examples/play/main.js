@@ -357,6 +357,12 @@ function getPlayConfig() {
       base: toNumber(coins.base, 5),
       perDifficulty: toNumber(coins.perDifficulty, 1),
       bossBonus: toNumber(coins.bossBonus, 0),
+      levelBossBonusMultiplier: Math.max(
+        1,
+        toNumber(coins.levelBossBonusMultiplier, 2)
+      ),
+      speedPlayMultiplier: Math.max(1, toNumber(coins.speedPlayMultiplier, 1)),
+      speedSolveMultiplier: Math.max(1, toNumber(coins.speedSolveMultiplier, 1)),
     },
     map: {
       height: Math.max(3, toNumber(mapConfig.height, 7)),
@@ -685,6 +691,7 @@ function renderPassives() {
     var item = document.createElement("div");
     item.className = "play-chip";
     item.title = def.tooltip;
+    item.dataset.passiveId = passive.id;
     var label = document.createElement("span");
     label.textContent = def.label;
     if (def.indicatorKey) {
@@ -723,6 +730,7 @@ function renderHints() {
     button.type = "button";
     button.className = "button play-hint";
     button.title = def.tooltip;
+    button.dataset.hintId = hint.id;
     var label = document.createElement("span");
     label.textContent = def.label;
     button.appendChild(label);
@@ -751,6 +759,31 @@ function renderHints() {
     });
     hintList.appendChild(button);
   });
+}
+
+function flashUpgradedItem(type, id) {
+  var list = type === "hint" ? hintList : passiveList;
+  if (!list || !id) {
+    return;
+  }
+  var selector =
+    type === "hint"
+      ? '[data-hint-id="' + id + '"]'
+      : '[data-passive-id="' + id + '"]';
+  var item = list.querySelector(selector);
+  if (!item) {
+    return;
+  }
+  if (item._upgradeTimeoutId) {
+    clearTimeout(item._upgradeTimeoutId);
+  }
+  item.classList.remove("is-upgraded");
+  void item.offsetWidth;
+  item.classList.add("is-upgraded");
+  item._upgradeTimeoutId = window.setTimeout(function () {
+    item.classList.remove("is-upgraded");
+    item._upgradeTimeoutId = null;
+  }, 400);
 }
 
 function renderChallenges() {
@@ -1367,14 +1400,23 @@ function isComboAllowed(primary, candidate, combos) {
   return true;
 }
 
-function buildBossChallenges(config, bossIndex, count) {
+function buildBossChallenges(config, mapLevel, count) {
   var pool = getChallengePool(config);
   if (!pool.length || count <= 0) {
     return [];
   }
-  var levelBase =
-    config.challengeLevelStart +
-    Math.max(0, bossIndex - 1) * config.challengeLevelRamp;
+  var ramp = toNumber(config.challengeLevelRamp, 1);
+  if (!Number.isFinite(ramp) || ramp < 0) {
+    ramp = 1;
+  }
+  var start = toNumber(config.challengeLevelStart, 1);
+  if (!Number.isFinite(start)) {
+    start = 1;
+  }
+  var levelBase = Math.max(
+    1,
+    Math.round(start + Math.max(0, toNumber(mapLevel, 1) - 1) * ramp)
+  );
   var primary = pool[Math.floor(Math.random() * pool.length)];
   var challenges = [
     { id: primary, level: clampChallengeLevel(primary, levelBase) },
@@ -1420,7 +1462,7 @@ function assignBossChallenges(map, config) {
     node.bossIndex = bossIndex;
     node.challenges = buildBossChallenges(
       config,
-      bossIndex,
+      Math.max(1, game.mapIndex || 1),
       node.type === "levelBoss" ? 2 : 1
     );
   });
@@ -1665,6 +1707,7 @@ function buildTreasureUpgradeOption(config) {
           choice.target.level + 1
         );
         renderHints();
+        flashUpgradedItem("hint", choice.target.id);
         logEvent("Treasure claimed: hint upgrade.", {
           hint: choice.target.id,
           level: choice.target.level,
@@ -1679,6 +1722,7 @@ function buildTreasureUpgradeOption(config) {
       );
       applyPassives();
       renderPassives();
+      flashUpgradedItem("passive", choice.target.id);
       logEvent("Treasure claimed: passive upgrade.", {
         passive: choice.target.id,
         level: choice.target.level,
@@ -2153,7 +2197,13 @@ function getCoinAwardBreakdown() {
     base = 0;
   }
   base = Math.max(0, base);
-  var bonus = game.isBoss ? config.coins.bossBonus : 0;
+  var bonus = 0;
+  if (game.isBoss) {
+    bonus = config.coins.bossBonus;
+    if (game.currentNode && game.currentNode.type === "levelBoss") {
+      bonus *= config.coins.levelBossBonusMultiplier;
+    }
+  }
   if (!Number.isFinite(bonus)) {
     bonus = 0;
   }
@@ -2172,7 +2222,24 @@ function getCoinAwardBreakdown() {
   if (!Number.isFinite(bigMoneyMultiplier) || bigMoneyMultiplier <= 0) {
     bigMoneyMultiplier = 1;
   }
-  var total = base * challengeMultiplier * bigMoneyMultiplier;
+  var speedMark =
+    app.board && app.board.getSpeedSolveMark
+      ? app.board.getSpeedSolveMark()
+      : null;
+  var speedMultiplier = 1;
+  var speedLabel = "";
+  if (speedMark === "speed-play") {
+    speedMultiplier = config.coins.speedPlayMultiplier;
+    speedLabel = "Speed Play";
+  } else if (speedMark === "speed-solve") {
+    speedMultiplier = config.coins.speedSolveMultiplier;
+    speedLabel = "Speed Solve";
+  }
+  if (!Number.isFinite(speedMultiplier) || speedMultiplier <= 0) {
+    speedMultiplier = 1;
+  }
+  var speedActive = !!speedLabel && speedMultiplier > 1;
+  var total = base * challengeMultiplier * bigMoneyMultiplier * speedMultiplier;
   if (!Number.isFinite(total)) {
     total = base;
   }
@@ -2183,6 +2250,9 @@ function getCoinAwardBreakdown() {
     challengeMultiplier: challengeMultiplier,
     bigMoneyMultiplier: bigMoneyMultiplier,
     bigMoneyActive: bigMoneyActive,
+    speedMultiplier: speedMultiplier,
+    speedLabel: speedLabel,
+    speedActive: speedActive,
   };
 }
 
@@ -2224,6 +2294,9 @@ function renderCoinBurst(breakdown) {
   var challengeText = formatMultiplierTenths(breakdown.challengeMultiplier);
   var bigMoneyText = formatMultiplier(breakdown.bigMoneyMultiplier);
   var bigMoneyActive = !!breakdown.bigMoneyActive;
+  var speedText = formatMultiplier(breakdown.speedMultiplier);
+  var speedLabel = breakdown.speedLabel || "";
+  var speedActive = !!breakdown.speedActive;
 
   var grid = document.createElement("div");
   grid.className = "coin-burst__grid";
@@ -2267,7 +2340,11 @@ function renderCoinBurst(breakdown) {
   } else {
     addSlot("", "", "multiplier", true);
   }
-  addSlot("", "", "extra", true);
+  if (speedActive) {
+    addSlot(speedText, speedLabel, "multiplier");
+  } else {
+    addSlot("", "", "multiplier", true);
+  }
   addSlot("", "", "extra", true);
   addSlot(totalValue, "Total", "total");
 
@@ -2297,6 +2374,9 @@ function flashCoinAward(amount) {
     challengeMultiplier: 1,
     bigMoneyMultiplier: 1,
     bigMoneyActive: false,
+    speedMultiplier: 1,
+    speedLabel: "",
+    speedActive: false,
   });
 }
 

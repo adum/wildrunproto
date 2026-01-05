@@ -80,7 +80,14 @@ var DEFAULT_CONFIG = {
     bossFrequency: 5,
     challengeLevelStart: 1,
     challengeLevelRamp: 1,
-    coins: { base: 5, perDifficulty: 1, bossBonus: 5 },
+    coins: {
+      base: 5,
+      perDifficulty: 1,
+      bossBonus: 5,
+      levelBossBonusMultiplier: 2,
+      speedPlayMultiplier: 1.5,
+      speedSolveMultiplier: 2,
+    },
     map: {
       height: 7,
       maxWidth: 5,
