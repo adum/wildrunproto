@@ -204,6 +204,21 @@ function setFrostPlay(active) {
   }
 }
 
+function setSpotlightPlay(active) {
+  state.challengeSpotlight = active;
+  state.spotlightPos = null;
+  state.spotlightVel = null;
+  state.spotlightLastTs = 0;
+  state.spotlightBoundsKey = "";
+  updateChallengeControls();
+  app.spotlight.updateSpotlightLevelUI();
+  if (active) {
+    app.spotlight.startSpotlightAnimation();
+  } else {
+    app.spotlight.stopSpotlightAnimation();
+  }
+}
+
 function updateChallengeControls() {
   if (elements.challengeGrayBtn) {
     if (state.challengeGray) {
@@ -277,6 +292,15 @@ function updateChallengeControls() {
       elements.challengeFrostBtn.disabled = false;
     }
   }
+  if (elements.challengeSpotlightBtn) {
+    if (state.challengeSpotlight) {
+      elements.challengeSpotlightBtn.classList.add("active");
+      elements.challengeSpotlightBtn.disabled = true;
+    } else {
+      elements.challengeSpotlightBtn.classList.remove("active");
+      elements.challengeSpotlightBtn.disabled = false;
+    }
+  }
 }
 
 function resetChallenges() {
@@ -311,6 +335,12 @@ function resetChallenges() {
   state.frostPathSize = 0;
   state.frostPathKey = "";
   app.frost.stopFrostAnimation();
+  state.challengeSpotlight = false;
+  state.spotlightPos = null;
+  state.spotlightVel = null;
+  state.spotlightLastTs = 0;
+  state.spotlightBoundsKey = "";
+  app.spotlight.stopSpotlightAnimation();
   if (refs.ghostAnimId) {
     cancelAnimationFrame(refs.ghostAnimId);
     refs.ghostAnimId = null;
@@ -334,6 +364,7 @@ app.challenges.setInfectionPlay = setInfectionPlay;
 app.challenges.setSpeedPlay = setSpeedPlay;
 app.challenges.setFirePlay = setFirePlay;
 app.challenges.setFrostPlay = setFrostPlay;
+app.challenges.setSpotlightPlay = setSpotlightPlay;
 app.challenges.updateChallengeControls = updateChallengeControls;
 app.challenges.resetChallenges = resetChallenges;
 app.challenges.updateInfectionLevelUI = updateInfectionLevelUI;

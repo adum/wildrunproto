@@ -137,6 +137,11 @@ function initBoard(boardSize) {
   refs.frostCanvas.style.position = "absolute";
   refs.frostCanvas.style.pointerEvents = "none";
   app.elements.mount.appendChild(refs.frostCanvas);
+  refs.spotlightCanvas = document.createElement("canvas");
+  refs.spotlightCanvas.id = "ghostban-spotlight";
+  refs.spotlightCanvas.style.position = "absolute";
+  refs.spotlightCanvas.style.pointerEvents = "none";
+  app.elements.mount.appendChild(refs.spotlightCanvas);
   refs.fxCanvas = document.createElement("canvas");
   refs.fxCanvas.id = "ghostban-fx";
   refs.fxCanvas.style.position = "absolute";
@@ -290,6 +295,7 @@ function updateBoard() {
   app.timers.updateEnigmaUI();
   app.fire.startFireAnimation();
   app.frost.startFrostAnimation();
+  app.spotlight.startSpotlightAnimation();
   var revealActive =
     state.ghostRevealUntil > 0 && state.ghostRevealUntil > performance.now();
   if (state.challengeGhost && (state.ghostFlashes.length > 0 || revealActive)) {

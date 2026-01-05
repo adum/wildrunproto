@@ -74,7 +74,7 @@ body {
 
 .board-control {
   position: absolute;
-  z-index: 10;
+  z-index: 13;
 }
 
 #mysteryTimerBtn {
@@ -205,6 +205,10 @@ body {
 
 #ghostban-frost {
   z-index: 6;
+}
+
+#ghostban-spotlight {
+  z-index: 11;
 }
 
 #ghostban-fx {
@@ -567,6 +571,7 @@ select {
 .speed-row,
 .fire-row,
 .frost-row,
+.spotlight-row,
 .passive-row,
 .hint-row {
   display: grid;
@@ -632,6 +637,7 @@ select {
 .speed-level,
 .fire-level,
 .frost-level,
+.spotlight-level,
 .passive-level,
 .hint-level {
   display: flex;
@@ -652,6 +658,7 @@ select {
 .speed-level label,
 .fire-level label,
 .frost-level label,
+.spotlight-level label,
 .passive-level label,
 .hint-level label {
   display: inline-flex;
@@ -668,6 +675,7 @@ select {
 .speed-level input[type="range"],
 .fire-level input[type="range"],
 .frost-level input[type="range"],
+.spotlight-level input[type="range"],
 .passive-level input[type="range"],
 .hint-level input[type="range"] {
   width: auto;
@@ -688,6 +696,7 @@ select {
 .speed-level__value,
 .fire-level__value,
 .frost-level__value,
+.spotlight-level__value,
 .passive-level__value,
 .hint-level__value {
   min-width: 16px;

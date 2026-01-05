@@ -3,6 +3,7 @@ import "./config.js";
 import "./ghost.js";
 import "./fire.js";
 import "./frost.js";
+import "./spotlight.js";
 import "./effects.js";
 import "./passives.js";
 import "./overlays.js";
@@ -191,6 +192,15 @@ if (elements.challengeFrostBtn) {
     app.ui.logMessage("Challenge enabled: Frost snake.");
   });
 }
+if (elements.challengeSpotlightBtn) {
+  elements.challengeSpotlightBtn.addEventListener("click", function () {
+    if (state.challengeSpotlight) {
+      return;
+    }
+    app.challenges.setSpotlightPlay(true);
+    app.ui.logMessage("Challenge enabled: Spotlight.");
+  });
+}
 if (elements.passiveTimeExtendBtn) {
   elements.passiveTimeExtendBtn.addEventListener("click", function () {
     if (state.passiveTimeExtend) {
@@ -277,6 +287,14 @@ if (elements.frostLevelInput) {
       return;
     }
     app.frost.setFrostLevel(event.target.value);
+  });
+}
+if (elements.spotlightLevelInput) {
+  elements.spotlightLevelInput.addEventListener("input", function (event) {
+    if (!event || !event.target) {
+      return;
+    }
+    app.spotlight.setSpotlightLevel(event.target.value);
   });
 }
 if (elements.timeExtendLevelInput) {
@@ -368,6 +386,7 @@ window.addEventListener("resize", function () {
   app.overlays.renderEnigmaOverlay();
   app.fire.startFireAnimation();
   app.frost.startFrostAnimation();
+  app.spotlight.startSpotlightAnimation();
   if (app.effects && app.effects.syncFxCanvas) {
     app.effects.syncFxCanvas();
   }

@@ -9,6 +9,7 @@ var DEFAULT_CONFIG = {
     speed: { min: 1, max: 10 },
     fire: { min: 1, max: 10 },
     frost: { min: 1, max: 10 },
+    spotlight: { min: 1, max: 10 },
     timeExtend: { min: 1, max: 10 },
     secondChance: { min: 1, max: 10 },
     freeUpgrades: { min: 1, max: 10 },
@@ -46,6 +47,14 @@ var DEFAULT_CONFIG = {
     speed: 5,
     baseLength: 4,
     lengthPerLevel: 2,
+  },
+  spotlight: {
+    baseRadius: 2.8,
+    radiusDecrementPerLevel: 0.2,
+    minRadius: 1,
+    baseSpeed: 2.5,
+    speedIncrementPerLevel: 0.4,
+    darkness: 0.86,
   },
   hints: {
     multipleChoice: {
@@ -109,7 +118,16 @@ var DEFAULT_CONFIG = {
       ],
     },
     challengeCombos: {
-      gray: ["ghost", "mystery", "enigma", "infection", "speed", "fire", "frost"],
+      gray: [
+        "ghost",
+        "mystery",
+        "enigma",
+        "infection",
+        "speed",
+        "fire",
+        "frost",
+        "spotlight",
+      ],
       ghost: [
         "gray",
         "mystery",
@@ -118,13 +136,24 @@ var DEFAULT_CONFIG = {
         "speed",
         "fire",
         "frost",
+        "spotlight",
       ],
-      mystery: ["gray", "ghost", "infection", "speed", "fire", "frost"],
-      enigma: ["gray", "ghost", "infection", "speed", "fire", "frost"],
-      infection: ["gray", "ghost", "mystery", "enigma", "speed"],
-      speed: ["gray", "ghost", "mystery", "enigma", "infection", "fire", "frost"],
+      mystery: ["gray", "ghost", "infection", "speed", "fire", "frost", "spotlight"],
+      enigma: ["gray", "ghost", "infection", "speed", "fire", "frost", "spotlight"],
+      infection: ["gray", "ghost", "mystery", "enigma", "speed", "spotlight"],
+      speed: [
+        "gray",
+        "ghost",
+        "mystery",
+        "enigma",
+        "infection",
+        "fire",
+        "frost",
+        "spotlight",
+      ],
       fire: ["gray", "ghost", "mystery", "enigma", "speed"],
       frost: ["gray", "ghost", "mystery", "enigma", "speed"],
+      spotlight: ["gray", "ghost", "mystery", "enigma", "infection", "speed"],
     },
     shop: {
       frequency: 3,
@@ -193,6 +222,7 @@ var DEFAULT_CONFIG = {
       "speed",
       "fire",
       "frost",
+      "spotlight",
     ],
   },
 };
@@ -309,6 +339,7 @@ function applyConfigToUI() {
   applyLevelRange(elements.speedLevelInput, "speed");
   applyLevelRange(elements.fireLevelInput, "fire");
   applyLevelRange(elements.frostLevelInput, "frost");
+  applyLevelRange(elements.spotlightLevelInput, "spotlight");
   applyLevelRange(elements.timeExtendLevelInput, "timeExtend");
   applyLevelRange(elements.secondChanceLevelInput, "secondChance");
   applyLevelRange(elements.freeUpgradesLevelInput, "freeUpgrades");
@@ -381,6 +412,15 @@ function applyConfigToUI() {
     app.frost.setFrostLevel(frostValue);
   } else if (app.frost && app.frost.updateFrostLevelUI) {
     app.frost.updateFrostLevelUI();
+  }
+
+  if (app.spotlight && app.spotlight.setSpotlightLevel) {
+    var spotlightValue = elements.spotlightLevelInput
+      ? elements.spotlightLevelInput.value
+      : state.spotlightLevel;
+    app.spotlight.setSpotlightLevel(spotlightValue);
+  } else if (app.spotlight && app.spotlight.updateSpotlightLevelUI) {
+    app.spotlight.updateSpotlightLevelUI();
   }
 
   if (app.passives && app.passives.setTimeExtendLevel) {

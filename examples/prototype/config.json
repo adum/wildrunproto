@@ -7,6 +7,7 @@
     "speed": { "min": 1, "max": 10 },
     "fire": { "min": 1, "max": 10 },
     "frost": { "min": 1, "max": 10 },
+    "spotlight": { "min": 1, "max": 10 },
     "timeExtend": { "min": 1, "max": 10 },
     "secondChance": { "min": 1, "max": 10 },
     "freeUpgrades": { "min": 1, "max": 10 },
@@ -44,6 +45,14 @@
     "speed": 5,
     "baseLength": 4,
     "lengthPerLevel": 2
+  },
+  "spotlight": {
+    "baseRadius": 2.8,
+    "radiusDecrementPerLevel": 0.2,
+    "minRadius": 1,
+    "baseSpeed": 2.5,
+    "speedIncrementPerLevel": 0.4,
+    "darkness": 0.86
   },
   "hints": {
     "multipleChoice": {
@@ -107,14 +116,58 @@
       ]
     },
     "challengeCombos": {
-      "gray": ["ghost", "mystery", "enigma", "infection", "speed", "fire", "frost"],
-      "ghost": ["gray", "mystery", "enigma", "infection", "speed", "fire", "frost"],
-      "mystery": ["gray", "ghost", "infection", "speed", "fire", "frost"],
-      "enigma": ["gray", "ghost", "infection", "speed", "fire", "frost"],
-      "infection": ["gray", "ghost", "mystery", "enigma", "speed"],
-      "speed": ["gray", "ghost", "mystery", "enigma", "infection", "fire", "frost"],
+      "gray": [
+        "ghost",
+        "mystery",
+        "enigma",
+        "infection",
+        "speed",
+        "fire",
+        "frost",
+        "spotlight"
+      ],
+      "ghost": [
+        "gray",
+        "mystery",
+        "enigma",
+        "infection",
+        "speed",
+        "fire",
+        "frost",
+        "spotlight"
+      ],
+      "mystery": [
+        "gray",
+        "ghost",
+        "infection",
+        "speed",
+        "fire",
+        "frost",
+        "spotlight"
+      ],
+      "enigma": [
+        "gray",
+        "ghost",
+        "infection",
+        "speed",
+        "fire",
+        "frost",
+        "spotlight"
+      ],
+      "infection": ["gray", "ghost", "mystery", "enigma", "speed", "spotlight"],
+      "speed": [
+        "gray",
+        "ghost",
+        "mystery",
+        "enigma",
+        "infection",
+        "fire",
+        "frost",
+        "spotlight"
+      ],
       "fire": ["gray", "ghost", "mystery", "enigma", "speed"],
-      "frost": ["gray", "ghost", "mystery", "enigma", "speed"]
+      "frost": ["gray", "ghost", "mystery", "enigma", "speed"],
+      "spotlight": ["gray", "ghost", "mystery", "enigma", "infection", "speed"]
     },
     "shop": {
       "frequency": 3,
@@ -182,7 +235,8 @@
       "infection",
       "speed",
       "fire",
-      "frost"
+      "frost",
+      "spotlight"
     ]
   }
 }

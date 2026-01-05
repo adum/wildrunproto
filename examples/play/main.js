@@ -3,6 +3,7 @@ import "../prototype/config.js";
 import "../prototype/ghost.js";
 import "../prototype/fire.js";
 import "../prototype/frost.js";
+import "../prototype/spotlight.js";
 import "../prototype/effects.js";
 import "../prototype/passives.js";
 import "../prototype/overlays.js";
@@ -243,6 +244,16 @@ var CHALLENGE_DEFS = {
     },
     enable: function () {
       app.challenges.setFrostPlay(true);
+    },
+  },
+  spotlight: {
+    label: "Spotlight",
+    tooltip: "A moving spotlight reveals the board.",
+    setLevel: function (level) {
+      app.spotlight.setSpotlightLevel(level);
+    },
+    enable: function () {
+      app.challenges.setSpotlightPlay(true);
     },
   },
 };
@@ -1215,6 +1226,9 @@ function getChallengeLevelKey(challengeId) {
   }
   if (challengeId === "frost") {
     return "frost";
+  }
+  if (challengeId === "spotlight") {
+    return "spotlight";
   }
   return null;
 }
