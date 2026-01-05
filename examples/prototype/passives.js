@@ -96,10 +96,25 @@ function updateBigMoneyLevelUI() {
   }
 }
 
+function updateShopaholicLevelUI() {
+  if (elements.shopaholicLevelInput) {
+    elements.shopaholicLevelInput.value = String(state.shopaholicLevel);
+  }
+  if (elements.shopaholicLevelValue) {
+    elements.shopaholicLevelValue.textContent = String(state.shopaholicLevel);
+  }
+}
+
 function setBigMoneyLevel(level) {
   var nextLevel = clampLevel("bigMoney", level, 1, 5);
   state.bigMoneyLevel = nextLevel;
   updateBigMoneyLevelUI();
+}
+
+function setShopaholicLevel(level) {
+  var nextLevel = clampLevel("shopaholic", level, 1, 5);
+  state.shopaholicLevel = nextLevel;
+  updateShopaholicLevelUI();
 }
 
 function getTimeExtendMultiplier() {
@@ -157,6 +172,14 @@ function getBigMoneyMultiplier() {
     return 1;
   }
   return multiplier;
+}
+
+function getShopaholicBonus() {
+  if (!state.passiveShopaholic) {
+    return 0;
+  }
+  var safeLevel = clampLevel("shopaholic", state.shopaholicLevel, 1, 5);
+  return Math.max(0, Math.round(safeLevel));
 }
 
 function updateSecondChanceTimerDisplay(seconds) {
@@ -228,6 +251,15 @@ function updatePassiveControls() {
       elements.passiveBigMoneyBtn.disabled = false;
     }
   }
+  if (elements.passiveShopaholicBtn) {
+    if (state.passiveShopaholic) {
+      elements.passiveShopaholicBtn.classList.add("active");
+      elements.passiveShopaholicBtn.disabled = true;
+    } else {
+      elements.passiveShopaholicBtn.classList.remove("active");
+      elements.passiveShopaholicBtn.disabled = false;
+    }
+  }
 }
 
 function setTimeExtendActive(active) {
@@ -253,6 +285,12 @@ function setBigMoneyActive(active) {
   state.passiveBigMoney = active;
   updatePassiveControls();
   updateBigMoneyLevelUI();
+}
+
+function setShopaholicActive(active) {
+  state.passiveShopaholic = active;
+  updatePassiveControls();
+  updateShopaholicLevelUI();
 }
 
 function clearSecondChanceTimer() {
@@ -415,6 +453,7 @@ function resetPassives() {
   state.passiveSecondChance = false;
   state.passiveFreeUpgrades = false;
   state.passiveBigMoney = false;
+  state.passiveShopaholic = false;
   state.secondChanceUsed = false;
   clearSecondChanceTimer();
   updatePassiveControls();
@@ -422,6 +461,7 @@ function resetPassives() {
   updateSecondChanceLevelUI();
   updateFreeUpgradesLevelUI();
   updateBigMoneyLevelUI();
+  updateShopaholicLevelUI();
   updateSecondChanceUI();
   updateCaptureIndicators();
 }
@@ -448,3 +488,7 @@ app.passives.updateBigMoneyLevelUI = updateBigMoneyLevelUI;
 app.passives.setBigMoneyLevel = setBigMoneyLevel;
 app.passives.setBigMoneyActive = setBigMoneyActive;
 app.passives.getBigMoneyMultiplier = getBigMoneyMultiplier;
+app.passives.updateShopaholicLevelUI = updateShopaholicLevelUI;
+app.passives.setShopaholicLevel = setShopaholicLevel;
+app.passives.setShopaholicActive = setShopaholicActive;
+app.passives.getShopaholicBonus = getShopaholicBonus;

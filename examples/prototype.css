@@ -913,8 +913,8 @@ select {
 }
 
 .play-overlay--shop .play-overlay__panel {
-  min-width: 320px;
-  max-width: 360px;
+  min-width: 420px;
+  max-width: 520px;
   align-items: stretch;
   justify-items: stretch;
   text-align: left;
@@ -1019,7 +1019,8 @@ select {
 
 .shop-list {
   display: grid;
-  gap: 8px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px 12px;
 }
 
 .shop-item {
@@ -1206,6 +1207,17 @@ select {
   }
 
   .panel-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 720px) {
+  .play-overlay--shop .play-overlay__panel {
+    min-width: 300px;
+    max-width: 420px;
+  }
+
+  .shop-list {
     grid-template-columns: 1fr;
   }
 }

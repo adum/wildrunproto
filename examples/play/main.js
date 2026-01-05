@@ -99,6 +99,10 @@ var PASSIVE_DEFS = {
     label: "Big Money",
     tooltip: "Boosts coin rewards (L1=1.2x, +0.05x per level).",
   },
+  shopaholic: {
+    label: "Shopaholic",
+    tooltip: "Adds one extra shop item per level.",
+  },
   friendlyCapture: {
     label: "Friendly Capture",
     tooltip: "Lights up if any correct line sacrifices a player stone.",
@@ -330,7 +334,7 @@ function getPlayConfig() {
     : hintPool.slice();
   var shopPassivePool = Array.isArray(shop.passivePool)
     ? shop.passivePool.slice()
-    : ["timeExtend", "secondChance", "freeUpgrades", "bigMoney"];
+    : ["timeExtend", "secondChance", "freeUpgrades", "bigMoney", "shopaholic"];
   return {
     startDifficulty: config.startDifficulty || "30kyu",
     difficultyStep: toNumber(config.difficultyStep, 1),
@@ -783,6 +787,12 @@ function buildShopInventory(config) {
     game.shop = { hints: [], passives: [] };
     return;
   }
+  var shopBonus =
+    app.passives && app.passives.getShopaholicBonus
+      ? app.passives.getShopaholicBonus()
+      : 0;
+  var extraHints = Math.ceil(shopBonus / 2);
+  var extraPassives = Math.max(0, shopBonus - extraHints);
   var hintPrices = shopConfig.prices ? shopConfig.prices.hints : {};
   var passivePrices = shopConfig.prices ? shopConfig.prices.passives : {};
   var ownedPassives = new Set(
@@ -805,14 +815,16 @@ function buildShopInventory(config) {
     }
     return getShopPrice(passivePrices, id) !== null;
   });
-  var hints = pickRandom(hintCandidates, shopConfig.hintCount).map(function (id) {
+  var hintTargetCount = Math.max(0, shopConfig.hintCount + extraHints);
+  var passiveTargetCount = Math.max(0, shopConfig.passiveCount + extraPassives);
+  var hints = pickRandom(hintCandidates, hintTargetCount).map(function (id) {
     return {
       id: id,
       price: getShopPrice(hintPrices, id),
       purchased: false,
     };
   });
-  var passives = pickRandom(passiveCandidates, shopConfig.passiveCount).map(function (id) {
+  var passives = pickRandom(passiveCandidates, passiveTargetCount).map(function (id) {
     return {
       id: id,
       price: getShopPrice(passivePrices, id),
@@ -1131,6 +1143,9 @@ function applyPassives() {
     } else if (passive.id === "bigMoney") {
       app.passives.setBigMoneyLevel(passive.level);
       app.passives.setBigMoneyActive(true);
+    } else if (passive.id === "shopaholic") {
+      app.passives.setShopaholicLevel(passive.level);
+      app.passives.setShopaholicActive(true);
     }
   });
 }

@@ -13,6 +13,7 @@ var DEFAULT_CONFIG = {
     secondChance: { min: 1, max: 10 },
     freeUpgrades: { min: 1, max: 10 },
     bigMoney: { min: 1, max: 5 },
+    shopaholic: { min: 1, max: 5 },
     hintMultipleChoice: { min: 1, max: 3 },
     hintRow: { min: 1, max: 3 },
     hintCol: { min: 1, max: 3 },
@@ -102,6 +103,7 @@ var DEFAULT_CONFIG = {
         "secondChance",
         "freeUpgrades",
         "bigMoney",
+        "shopaholic",
         "friendlyCapture",
         "enemyCapture",
       ],
@@ -138,7 +140,13 @@ var DEFAULT_CONFIG = {
         "diagReveal",
         "eliminateRandom",
       ],
-      passivePool: ["timeExtend", "secondChance", "freeUpgrades", "bigMoney"],
+      passivePool: [
+        "timeExtend",
+        "secondChance",
+        "freeUpgrades",
+        "bigMoney",
+        "shopaholic",
+      ],
       prices: {
         hints: {
           firstMove: 6,
@@ -154,6 +162,7 @@ var DEFAULT_CONFIG = {
           secondChance: 14,
           freeUpgrades: 10,
           bigMoney: 12,
+          shopaholic: 12,
         },
       },
     },
@@ -171,6 +180,7 @@ var DEFAULT_CONFIG = {
       "secondChance",
       "freeUpgrades",
       "bigMoney",
+      "shopaholic",
       "friendlyCapture",
       "enemyCapture",
     ],
@@ -303,6 +313,7 @@ function applyConfigToUI() {
   applyLevelRange(elements.secondChanceLevelInput, "secondChance");
   applyLevelRange(elements.freeUpgradesLevelInput, "freeUpgrades");
   applyLevelRange(elements.bigMoneyLevelInput, "bigMoney");
+  applyLevelRange(elements.shopaholicLevelInput, "shopaholic");
   applyLevelRange(elements.hintTwoLevelInput, "hintMultipleChoice");
   applyLevelRange(elements.hintRowLevelInput, "hintRow");
   applyLevelRange(elements.hintColLevelInput, "hintCol");
@@ -406,6 +417,15 @@ function applyConfigToUI() {
     app.passives.setBigMoneyLevel(bigMoneyValue);
   } else if (app.passives && app.passives.updateBigMoneyLevelUI) {
     app.passives.updateBigMoneyLevelUI();
+  }
+
+  if (app.passives && app.passives.setShopaholicLevel) {
+    var shopaholicValue = elements.shopaholicLevelInput
+      ? elements.shopaholicLevelInput.value
+      : state.shopaholicLevel;
+    app.passives.setShopaholicLevel(shopaholicValue);
+  } else if (app.passives && app.passives.updateShopaholicLevelUI) {
+    app.passives.updateShopaholicLevelUI();
   }
 
   if (app.hints && app.hints.setRowRevealLevel) {
