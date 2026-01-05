@@ -247,6 +247,15 @@ if (elements.passiveBigMoneyBtn) {
     app.ui.logMessage("Passive enabled: Big money.");
   });
 }
+if (elements.passiveShopaholicBtn) {
+  elements.passiveShopaholicBtn.addEventListener("click", function () {
+    if (state.passiveShopaholic) {
+      return;
+    }
+    app.passives.setShopaholicActive(true);
+    app.ui.logMessage("Passive enabled: Shopaholic.");
+  });
+}
 
 if (elements.mysteryLevelInput) {
   elements.mysteryLevelInput.addEventListener("input", function (event) {
@@ -345,6 +354,14 @@ if (elements.bigMoneyLevelInput) {
       return;
     }
     app.passives.setBigMoneyLevel(event.target.value);
+  });
+}
+if (elements.shopaholicLevelInput) {
+  elements.shopaholicLevelInput.addEventListener("input", function (event) {
+    if (!event || !event.target) {
+      return;
+    }
+    app.passives.setShopaholicLevel(event.target.value);
   });
 }
 
