@@ -18,7 +18,7 @@
 - Passives: `examples/prototype/passives.js` handles time-extend, second-chance, free-upgrades, big-money, shopaholic, and capture indicators.
 - Overlays & FX:
   - `examples/prototype/overlays.js` draws gray stones, enigma rings, infection rings, and hint bands.
-  - `examples/prototype/ghost.js`, `examples/prototype/fire.js`, `examples/prototype/frost.js`, `examples/prototype/spotlight.js` render animated challenges.
+  - `examples/prototype/ghost.js`, `examples/prototype/fire.js`, `examples/prototype/frost.js`, `examples/prototype/flip.js`, `examples/prototype/spotlight.js` render animated challenges.
   - `examples/prototype/effects.js` handles particle/shatter FX.
 - Styling for both prototype + play is mostly in `examples/prototype.css`; map-specific styles live in `examples/map.css`.
 

@@ -207,6 +207,10 @@ body {
   z-index: 6;
 }
 
+#ghostban-flip {
+  z-index: 6;
+}
+
 #ghostban-spotlight {
   z-index: 11;
 }
@@ -571,6 +575,7 @@ select {
 .speed-row,
 .fire-row,
 .frost-row,
+.flip-row,
 .spotlight-row,
 .passive-row,
 .hint-row {
@@ -637,6 +642,7 @@ select {
 .speed-level,
 .fire-level,
 .frost-level,
+.flip-level,
 .spotlight-level,
 .passive-level,
 .hint-level {
@@ -658,6 +664,7 @@ select {
 .speed-level label,
 .fire-level label,
 .frost-level label,
+.flip-level label,
 .spotlight-level label,
 .passive-level label,
 .hint-level label {
@@ -675,6 +682,7 @@ select {
 .speed-level input[type="range"],
 .fire-level input[type="range"],
 .frost-level input[type="range"],
+.flip-level input[type="range"],
 .spotlight-level input[type="range"],
 .passive-level input[type="range"],
 .hint-level input[type="range"] {
@@ -696,6 +704,7 @@ select {
 .speed-level__value,
 .fire-level__value,
 .frost-level__value,
+.flip-level__value,
 .spotlight-level__value,
 .passive-level__value,
 .hint-level__value {

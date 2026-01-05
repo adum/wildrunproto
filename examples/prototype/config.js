@@ -9,6 +9,7 @@ var DEFAULT_CONFIG = {
     speed: { min: 1, max: 10 },
     fire: { min: 1, max: 10 },
     frost: { min: 1, max: 10 },
+    flip: { min: 1, max: 10 },
     spotlight: { min: 1, max: 10 },
     timeExtend: { min: 1, max: 10 },
     secondChance: { min: 1, max: 10 },
@@ -133,6 +134,7 @@ var DEFAULT_CONFIG = {
         "speed",
         "fire",
         "frost",
+        "flip",
         "spotlight",
       ],
       ghost: [
@@ -143,10 +145,29 @@ var DEFAULT_CONFIG = {
         "speed",
         "fire",
         "frost",
+        "flip",
         "spotlight",
       ],
-      mystery: ["gray", "ghost", "infection", "speed", "fire", "frost", "spotlight"],
-      enigma: ["gray", "ghost", "infection", "speed", "fire", "frost", "spotlight"],
+      mystery: [
+        "gray",
+        "ghost",
+        "infection",
+        "speed",
+        "fire",
+        "frost",
+        "flip",
+        "spotlight",
+      ],
+      enigma: [
+        "gray",
+        "ghost",
+        "infection",
+        "speed",
+        "fire",
+        "frost",
+        "flip",
+        "spotlight",
+      ],
       infection: ["gray", "ghost", "mystery", "enigma", "speed", "spotlight"],
       speed: [
         "gray",
@@ -156,10 +177,12 @@ var DEFAULT_CONFIG = {
         "infection",
         "fire",
         "frost",
+        "flip",
         "spotlight",
       ],
       fire: ["gray", "ghost", "mystery", "enigma", "speed"],
       frost: ["gray", "ghost", "mystery", "enigma", "speed"],
+      flip: ["gray", "ghost", "mystery", "enigma", "speed"],
       spotlight: ["gray", "ghost", "mystery", "enigma", "infection", "speed"],
     },
     shop: {
@@ -229,6 +252,7 @@ var DEFAULT_CONFIG = {
       "speed",
       "fire",
       "frost",
+      "flip",
       "spotlight",
     ],
   },
@@ -346,6 +370,7 @@ function applyConfigToUI() {
   applyLevelRange(elements.speedLevelInput, "speed");
   applyLevelRange(elements.fireLevelInput, "fire");
   applyLevelRange(elements.frostLevelInput, "frost");
+  applyLevelRange(elements.flipLevelInput, "flip");
   applyLevelRange(elements.spotlightLevelInput, "spotlight");
   applyLevelRange(elements.timeExtendLevelInput, "timeExtend");
   applyLevelRange(elements.secondChanceLevelInput, "secondChance");
@@ -419,6 +444,15 @@ function applyConfigToUI() {
     app.frost.setFrostLevel(frostValue);
   } else if (app.frost && app.frost.updateFrostLevelUI) {
     app.frost.updateFrostLevelUI();
+  }
+
+  if (app.flip && app.flip.setFlipLevel) {
+    var flipValue = elements.flipLevelInput
+      ? elements.flipLevelInput.value
+      : state.flipLevel;
+    app.flip.setFlipLevel(flipValue);
+  } else if (app.flip && app.flip.updateFlipLevelUI) {
+    app.flip.updateFlipLevelUI();
   }
 
   if (app.spotlight && app.spotlight.setSpotlightLevel) {

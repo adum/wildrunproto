@@ -3,6 +3,7 @@ import "../prototype/config.js";
 import "../prototype/ghost.js";
 import "../prototype/fire.js";
 import "../prototype/frost.js";
+import "../prototype/flip.js";
 import "../prototype/spotlight.js";
 import "../prototype/effects.js";
 import "../prototype/passives.js";
@@ -244,6 +245,16 @@ var CHALLENGE_DEFS = {
     },
     enable: function () {
       app.challenges.setFrostPlay(true);
+    },
+  },
+  flip: {
+    label: "Flip Snake",
+    tooltip: "Flips stone colors as it sweeps the board.",
+    setLevel: function (level) {
+      app.flip.setFlipLevel(level);
+    },
+    enable: function () {
+      app.challenges.setFlipPlay(true);
     },
   },
   spotlight: {
@@ -1259,6 +1270,9 @@ function getChallengeLevelKey(challengeId) {
   }
   if (challengeId === "frost") {
     return "frost";
+  }
+  if (challengeId === "flip") {
+    return "flip";
   }
   if (challengeId === "spotlight") {
     return "spotlight";

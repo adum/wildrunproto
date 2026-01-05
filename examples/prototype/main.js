@@ -3,6 +3,7 @@ import "./config.js";
 import "./ghost.js";
 import "./fire.js";
 import "./frost.js";
+import "./flip.js";
 import "./spotlight.js";
 import "./effects.js";
 import "./passives.js";
@@ -192,6 +193,15 @@ if (elements.challengeFrostBtn) {
     app.ui.logMessage("Challenge enabled: Frost snake.");
   });
 }
+if (elements.challengeFlipBtn) {
+  elements.challengeFlipBtn.addEventListener("click", function () {
+    if (state.challengeFlip) {
+      return;
+    }
+    app.challenges.setFlipPlay(true);
+    app.ui.logMessage("Challenge enabled: Flip snake.");
+  });
+}
 if (elements.challengeSpotlightBtn) {
   elements.challengeSpotlightBtn.addEventListener("click", function () {
     if (state.challengeSpotlight) {
@@ -287,6 +297,14 @@ if (elements.frostLevelInput) {
       return;
     }
     app.frost.setFrostLevel(event.target.value);
+  });
+}
+if (elements.flipLevelInput) {
+  elements.flipLevelInput.addEventListener("input", function (event) {
+    if (!event || !event.target) {
+      return;
+    }
+    app.flip.setFlipLevel(event.target.value);
   });
 }
 if (elements.spotlightLevelInput) {
@@ -386,6 +404,7 @@ window.addEventListener("resize", function () {
   app.overlays.renderEnigmaOverlay();
   app.fire.startFireAnimation();
   app.frost.startFrostAnimation();
+  app.flip.startFlipAnimation();
   app.spotlight.startSpotlightAnimation();
   if (app.effects && app.effects.syncFxCanvas) {
     app.effects.syncFxCanvas();

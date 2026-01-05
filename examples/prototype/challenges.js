@@ -204,6 +204,21 @@ function setFrostPlay(active) {
   }
 }
 
+function setFlipPlay(active) {
+  state.challengeFlip = active;
+  state.flipStartAt = active ? performance.now() : 0;
+  state.flipPath = [];
+  state.flipPathSize = 0;
+  state.flipPathKey = "";
+  updateChallengeControls();
+  app.flip.updateFlipLevelUI();
+  if (active) {
+    app.flip.startFlipAnimation();
+  } else {
+    app.flip.stopFlipAnimation();
+  }
+}
+
 function setSpotlightPlay(active) {
   state.challengeSpotlight = active;
   state.spotlightPos = null;
@@ -292,6 +307,15 @@ function updateChallengeControls() {
       elements.challengeFrostBtn.disabled = false;
     }
   }
+  if (elements.challengeFlipBtn) {
+    if (state.challengeFlip) {
+      elements.challengeFlipBtn.classList.add("active");
+      elements.challengeFlipBtn.disabled = true;
+    } else {
+      elements.challengeFlipBtn.classList.remove("active");
+      elements.challengeFlipBtn.disabled = false;
+    }
+  }
   if (elements.challengeSpotlightBtn) {
     if (state.challengeSpotlight) {
       elements.challengeSpotlightBtn.classList.add("active");
@@ -335,6 +359,12 @@ function resetChallenges() {
   state.frostPathSize = 0;
   state.frostPathKey = "";
   app.frost.stopFrostAnimation();
+  state.challengeFlip = false;
+  state.flipStartAt = 0;
+  state.flipPath = [];
+  state.flipPathSize = 0;
+  state.flipPathKey = "";
+  app.flip.stopFlipAnimation();
   state.challengeSpotlight = false;
   state.spotlightPos = null;
   state.spotlightVel = null;
@@ -364,6 +394,7 @@ app.challenges.setInfectionPlay = setInfectionPlay;
 app.challenges.setSpeedPlay = setSpeedPlay;
 app.challenges.setFirePlay = setFirePlay;
 app.challenges.setFrostPlay = setFrostPlay;
+app.challenges.setFlipPlay = setFlipPlay;
 app.challenges.setSpotlightPlay = setSpotlightPlay;
 app.challenges.updateChallengeControls = updateChallengeControls;
 app.challenges.resetChallenges = resetChallenges;
