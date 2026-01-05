@@ -63,7 +63,11 @@ function getSpotlightRadius(level) {
   return Math.max(0, radius);
 }
 
-function getSpotlightDarkness() {
+function getSpotlightDarkness(level) {
+  var safeLevel = clampLevel("spotlight", level, 1, 10);
+  if (safeLevel >= 2) {
+    return 1;
+  }
   var config = getSpotlightConfig();
   var alpha = getNumber(config.darkness, 0.86);
   if (!Number.isFinite(alpha)) {
@@ -181,10 +185,10 @@ function ensureSpotlightState(bounds, radiusUnits) {
     ":" +
     radiusUnits.toFixed(3);
   if (!state.spotlightPos || !state.spotlightVel || state.spotlightBoundsKey !== key) {
-    var minI = bounds.minI + radiusUnits;
-    var maxI = bounds.maxI - radiusUnits;
-    var minJ = bounds.minJ + radiusUnits;
-    var maxJ = bounds.maxJ - radiusUnits;
+    var minI = bounds.minI;
+    var maxI = bounds.maxI;
+    var minJ = bounds.minJ;
+    var maxJ = bounds.maxJ;
     var centerI =
       Number.isFinite(minI) && Number.isFinite(maxI) ? (minI + maxI) / 2 : 0;
     var centerJ =
@@ -225,10 +229,10 @@ function drawSpotlight(timestamp) {
   var radiusUnits = getSpotlightRadius(state.spotlightLevel);
   ensureSpotlightState(bounds, radiusUnits);
 
-  var minI = bounds.minI + radiusUnits;
-  var maxI = bounds.maxI - radiusUnits;
-  var minJ = bounds.minJ + radiusUnits;
-  var maxJ = bounds.maxJ - radiusUnits;
+  var minI = bounds.minI;
+  var maxI = bounds.maxI;
+  var minJ = bounds.minJ;
+  var maxJ = bounds.maxJ;
 
   var pos = state.spotlightPos;
   var vel = state.spotlightVel;
@@ -265,7 +269,8 @@ function drawSpotlight(timestamp) {
 
   ctx.setTransform(1, 0, 0, 1, 0, 0);
   ctx.clearRect(0, 0, refs.spotlightCanvas.width, refs.spotlightCanvas.height);
-  ctx.fillStyle = "rgba(0, 0, 0, " + getSpotlightDarkness() + ")";
+  ctx.fillStyle =
+    "rgba(0, 0, 0, " + getSpotlightDarkness(state.spotlightLevel) + ")";
   ctx.fillRect(0, 0, refs.spotlightCanvas.width, refs.spotlightCanvas.height);
 
   ctx.save();
