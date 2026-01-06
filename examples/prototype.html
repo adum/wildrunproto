@@ -60,7 +60,7 @@
                       id="hintTwo"
                       class="button"
                       type="button"
-                      title="Marks multiple options with one correct move."
+                      title="Options: L1 4, L2 3, L3 2."
                     >
                       Multiple Choice
                     </button>
@@ -93,7 +93,7 @@
                       id="hintRow"
                       class="button"
                       type="button"
-                      title="Reveals a row containing a correct move."
+                      title="Band width: L1 3 rows, L2 2, L3 1."
                     >
                       Row Reveal
                     </button>
@@ -118,7 +118,7 @@
                       id="hintCol"
                       class="button"
                       type="button"
-                      title="Reveals a column containing a correct move."
+                      title="Band width: L1 3 cols, L2 2, L3 1."
                     >
                       Column Reveal
                     </button>
@@ -143,7 +143,7 @@
                       id="hintDiag"
                       class="button"
                       type="button"
-                      title="Reveals a diagonal containing a correct move."
+                      title="Band width: L1 3 diags, L2 2, L3 1."
                     >
                       Diagonal Reveal
                     </button>
@@ -168,7 +168,7 @@
                       id="elimRandom"
                       class="button"
                       type="button"
-                      title="Blocks a random wrong-path move."
+                      title="Decoys: L1 +2, L2 +1, L3 +0 (min 1 if no wrong moves)."
                     >
                       Eliminate Random Move
                     </button>
@@ -208,7 +208,7 @@
                     id="challengeGray"
                     class="button button--challenge"
                     type="button"
-                    title="New stones are shown as gray."
+                    title="New stones gray (no levels)."
                   >
                     Gray Play
                   </button>
@@ -217,7 +217,7 @@
                       id="challengeGhost"
                       class="button button--challenge"
                       type="button"
-                      title="New stones flash, then become invisible."
+                      title="Flash 5s -1s/level (min 0.5s); reveal 2s -1s/level."
                     >
                       Ghost Play
                     </button>
@@ -242,7 +242,7 @@
                       id="challengeMystery"
                       class="button button--challenge"
                       type="button"
-                      title="Hide stones; reveal them to start a timer."
+                      title="Hidden stones L1 1, +1/level; timer 30s -5s/level (min 5s)."
                     >
                       Mystery Timer
                     </button>
@@ -267,7 +267,7 @@
                       id="challengeEnigma"
                       class="button button--challenge"
                       type="button"
-                      title="Marks stones or adjacent empties with rings; reveal to start a timer."
+                      title="Rings L1 1, +1/level; timer 30s -5s/level (min 5s)."
                     >
                       Enigma Timer
                     </button>
@@ -292,7 +292,7 @@
                       id="challengeInfection"
                       class="button button--challenge"
                       type="button"
-                      title="Adds hollow rings next to newly played stones."
+                      title="Rings: L1 player1, L2 player1/opp1, L3 player2/opp1, L4 player2/opp2."
                     >
                       Infection
                     </button>
@@ -319,7 +319,7 @@
                       id="challengeSpeed"
                       class="button button--challenge"
                       type="button"
-                      title="Limits time for each move after your first."
+                      title="Per-move timer L1 30s, -5s/level (min 2s)."
                     >
                       Speed Play
                     </button>
@@ -344,7 +344,7 @@
                       id="challengeFire"
                       class="button button--challenge"
                       type="button"
-                      title="Animated fire snake sweeps the board."
+                      title="Snake length L1 4, +2/level."
                     >
                       Fire Snake
                     </button>
@@ -369,7 +369,7 @@
                       id="challengeFrost"
                       class="button button--challenge"
                       type="button"
-                      title="Animated frost snake sweeps the board."
+                      title="Snake length L1 4, +2/level."
                     >
                       Frost Snake
                     </button>
@@ -394,7 +394,7 @@
                       id="challengeFlip"
                       class="button button--challenge"
                       type="button"
-                      title="Flips stone colors as the snake sweeps over them."
+                      title="Flips stones; length L1 4, +2/level."
                     >
                       Flip Snake
                     </button>
@@ -419,7 +419,7 @@
                       id="challengeSpotlight"
                       class="button button--challenge"
                       type="button"
-                      title="Spotlight reveals a moving area of the board."
+                      title="Radius 2.8 -0.2/level (min 1); speed +0.4/level; dark L1 dim, L2+ black."
                     >
                       Spotlight
                     </button>
@@ -452,7 +452,7 @@
                       id="passiveTimeExtend"
                       class="button"
                       type="button"
-                      title="Slows countdown timers by 10% per level when enabled before they start."
+                      title="Timers slower: L1 10%, +10%/level (before start)."
                     >
                       Time Extend
                     </button>
@@ -479,7 +479,7 @@
                       id="passiveSecondChance"
                       class="button"
                       type="button"
-                      title="Gives one timed chance per puzzle to correct a mistake."
+                      title="Retry window: L1 2s, +1s/level."
                     >
                       Second Chance
                     </button>
@@ -501,13 +501,13 @@
                       >
                     </div>
                   </div>
-                <div class="passive-row">
-                  <button
-                    id="passiveFreeUpgrades"
-                    class="button"
-                    type="button"
-                    title="Chance to upgrade a newly acquired hint by one level."
-                  >
+                  <div class="passive-row">
+                    <button
+                      id="passiveFreeUpgrades"
+                      class="button"
+                      type="button"
+                      title="Upgrade chance: L1 30%, +10%/level."
+                    >
                     Free Upgrades
                   </button>
                   <div class="passive-level">
@@ -528,12 +528,12 @@
                     >
                   </div>
                 </div>
-                <div class="passive-row">
+                  <div class="passive-row">
                   <button
                     id="passiveBigMoney"
                     class="button"
                     type="button"
-                    title="Boosts coin rewards (L1=1.2x, +0.05x per level)."
+                    title="Coins: L1 1.2x, +0.05x/level."
                   >
                     Big Money
                   </button>
@@ -553,12 +553,12 @@
                     >
                   </div>
                 </div>
-                <div class="passive-row">
+                  <div class="passive-row">
                   <button
                     id="passiveShopaholic"
                     class="button"
                     type="button"
-                    title="Adds one extra shop item per level."
+                    title="Shop items: L1 +1, +1/level."
                   >
                     Shopaholic
                   </button>
@@ -581,7 +581,7 @@
                   <div class="passive-row passive-row--indicator">
                     <div
                       class="passive-label"
-                      title="Lights up if any correct line sacrifices a player stone."
+                      title="Indicator: any correct line sacrifices a player stone."
                     >
                       Friendly Capture
                     </div>
@@ -594,7 +594,7 @@
                   <div class="passive-row passive-row--indicator">
                     <div
                       class="passive-label"
-                      title="Lights up if any correct line captures an enemy stone."
+                      title="Indicator: any correct line captures an enemy stone."
                     >
                       Enemy Capture
                     </div>
@@ -607,7 +607,7 @@
                   <div class="passive-row passive-row--indicator">
                     <div
                       class="passive-label"
-                      title="Lights up if any correct line captures at least five stones total."
+                      title="Indicator: any correct line captures 5+ stones."
                     >
                       Major Capture
                     </div>

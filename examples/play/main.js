@@ -87,37 +87,37 @@ app.handlers.onTimerExpired = function () {
 var PASSIVE_DEFS = {
   timeExtend: {
     label: "Time Extend",
-    tooltip: "Slows countdown timers by 10% per level.",
+    tooltip: "Timers slower: L1 10%, +10%/level (before start).",
   },
   secondChance: {
     label: "Second Chance",
-    tooltip: "One timed retry per puzzle on a mistake.",
+    tooltip: "Retry window: L1 2s, +1s/level.",
   },
   freeUpgrades: {
     label: "Free Upgrades",
-    tooltip: "Chance to level up new hints for free.",
+    tooltip: "Upgrade chance: L1 30%, +10%/level.",
   },
   bigMoney: {
     label: "Big Money",
-    tooltip: "Boosts coin rewards (L1=1.2x, +0.05x per level).",
+    tooltip: "Coins: L1 1.2x, +0.05x/level.",
   },
   shopaholic: {
     label: "Shopaholic",
-    tooltip: "Adds one extra shop item per level.",
+    tooltip: "Shop items: L1 +1, +1/level.",
   },
   friendlyCapture: {
     label: "Friendly Capture",
-    tooltip: "Lights up if any correct line sacrifices a player stone.",
+    tooltip: "Indicator: any correct line sacrifices a player stone.",
     indicatorKey: "friendlyCaptureDetected",
   },
   enemyCapture: {
     label: "Enemy Capture",
-    tooltip: "Lights up if any correct line captures an enemy stone.",
+    tooltip: "Indicator: any correct line captures an enemy stone.",
     indicatorKey: "enemyCaptureDetected",
   },
   majorCapture: {
     label: "Major Capture",
-    tooltip: "Lights up if any correct line captures at least five stones total.",
+    tooltip: "Indicator: any correct line captures 5+ stones.",
     indicatorKey: "majorCaptureDetected",
   },
 };
@@ -132,7 +132,7 @@ var HINT_DEFS = {
   },
   multipleChoice: {
     label: "Multiple Choice",
-    tooltip: "Marks multiple options with one correct move.",
+    tooltip: "Options: L1 4, L2 3, L3 2.",
     action: function () {
       app.hints.hintTwoMoves();
     },
@@ -146,28 +146,28 @@ var HINT_DEFS = {
   },
   rowReveal: {
     label: "Row Reveal",
-    tooltip: "Reveals a row containing a correct move.",
+    tooltip: "Band width: L1 3 rows, L2 2, L3 1.",
     action: function () {
       app.hints.hintRowReveal();
     },
   },
   colReveal: {
     label: "Column Reveal",
-    tooltip: "Reveals a column containing a correct move.",
+    tooltip: "Band width: L1 3 cols, L2 2, L3 1.",
     action: function () {
       app.hints.hintColumnReveal();
     },
   },
   diagReveal: {
     label: "Diagonal Reveal",
-    tooltip: "Reveals a diagonal containing a correct move.",
+    tooltip: "Band width: L1 3 diags, L2 2, L3 1.",
     action: function () {
       app.hints.hintDiagonalReveal();
     },
   },
   eliminateRandom: {
     label: "Eliminate Random Move",
-    tooltip: "Blocks a random wrong-path move.",
+    tooltip: "Decoys: L1 +2, L2 +1, L3 +0 (min 1 if no wrong moves).",
     action: function () {
       app.board.eliminateRandomMove();
     },
@@ -177,14 +177,14 @@ var HINT_DEFS = {
 var CHALLENGE_DEFS = {
   gray: {
     label: "Gray Play",
-    tooltip: "New stones are shown as gray.",
+    tooltip: "New stones gray (no levels).",
     enable: function () {
       app.challenges.setGrayPlay(true);
     },
   },
   ghost: {
     label: "Ghost Play",
-    tooltip: "New stones flash, then become invisible.",
+    tooltip: "Flash 5s -1s/level (min 0.5s); reveal 2s -1s/level.",
     setLevel: function (level) {
       app.ghost.setGhostLevel(level);
     },
@@ -194,7 +194,7 @@ var CHALLENGE_DEFS = {
   },
   mystery: {
     label: "Mystery Timer",
-    tooltip: "Hide stones; reveal them to start a timer.",
+    tooltip: "Hidden stones L1 1, +1/level; timer 30s -5s/level (min 5s).",
     setLevel: function (level) {
       app.timers.setMysteryLevel(level);
     },
@@ -204,7 +204,7 @@ var CHALLENGE_DEFS = {
   },
   enigma: {
     label: "Enigma Timer",
-    tooltip: "Marks stones or adjacent empties with rings.",
+    tooltip: "Rings L1 1, +1/level; timer 30s -5s/level (min 5s).",
     setLevel: function (level) {
       app.timers.setEnigmaLevel(level);
     },
@@ -214,7 +214,7 @@ var CHALLENGE_DEFS = {
   },
   infection: {
     label: "Infection",
-    tooltip: "Adds hollow rings next to newly played stones.",
+    tooltip: "Rings: L1 player1, L2 player1/opp1, L3 player2/opp1, L4 player2/opp2.",
     setLevel: function (level) {
       app.challenges.setInfectionLevel(level);
     },
@@ -224,7 +224,7 @@ var CHALLENGE_DEFS = {
   },
   speed: {
     label: "Speed Play",
-    tooltip: "Limits time for each move after your first.",
+    tooltip: "Per-move timer L1 30s, -5s/level (min 2s).",
     setLevel: function (level) {
       app.timers.setSpeedLevel(level);
     },
@@ -234,7 +234,7 @@ var CHALLENGE_DEFS = {
   },
   fire: {
     label: "Fire Snake",
-    tooltip: "Animated fire snake sweeps the board.",
+    tooltip: "Snake length L1 4, +2/level.",
     setLevel: function (level) {
       app.fire.setFireLevel(level);
     },
@@ -244,7 +244,7 @@ var CHALLENGE_DEFS = {
   },
   frost: {
     label: "Frost Snake",
-    tooltip: "Animated frost snake sweeps the board.",
+    tooltip: "Snake length L1 4, +2/level.",
     setLevel: function (level) {
       app.frost.setFrostLevel(level);
     },
@@ -254,7 +254,7 @@ var CHALLENGE_DEFS = {
   },
   flip: {
     label: "Flip Snake",
-    tooltip: "Flips stone colors as it sweeps the board.",
+    tooltip: "Flips stones; length L1 4, +2/level.",
     setLevel: function (level) {
       app.flip.setFlipLevel(level);
     },
@@ -264,7 +264,7 @@ var CHALLENGE_DEFS = {
   },
   spotlight: {
     label: "Spotlight",
-    tooltip: "A moving spotlight reveals the board.",
+    tooltip: "Radius 2.8 -0.2/level (min 1); speed +0.4/level; dark L1 dim, L2+ black.",
     setLevel: function (level) {
       app.spotlight.setSpotlightLevel(level);
     },
