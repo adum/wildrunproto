@@ -115,6 +115,11 @@ var PASSIVE_DEFS = {
     tooltip: "Lights up if any correct line captures an enemy stone.",
     indicatorKey: "enemyCaptureDetected",
   },
+  majorCapture: {
+    label: "Major Capture",
+    tooltip: "Lights up if any correct line captures at least five stones total.",
+    indicatorKey: "majorCaptureDetected",
+  },
 };
 
 var HINT_DEFS = {

@@ -123,6 +123,7 @@ var DEFAULT_CONFIG = {
         "shopaholic",
         "friendlyCapture",
         "enemyCapture",
+        "majorCapture",
       ],
     },
     challengeCombos: {
@@ -242,6 +243,7 @@ var DEFAULT_CONFIG = {
       "shopaholic",
       "friendlyCapture",
       "enemyCapture",
+      "majorCapture",
     ],
     challengePool: [
       "gray",

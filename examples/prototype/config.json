@@ -120,7 +120,8 @@
         "bigMoney",
         "shopaholic",
         "friendlyCapture",
-        "enemyCapture"
+        "enemyCapture",
+        "majorCapture"
       ]
     },
     "challengeCombos": {
@@ -239,7 +240,8 @@
       "bigMoney",
       "shopaholic",
       "friendlyCapture",
-      "enemyCapture"
+      "enemyCapture",
+      "majorCapture"
     ],
     "challengePool": [
       "gray",

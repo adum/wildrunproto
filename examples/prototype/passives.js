@@ -338,14 +338,19 @@ function startSecondChance(onExpire) {
 function updateCaptureIndicators() {
   var hasFriendlyEl = !!elements.friendlyCaptureIndicator;
   var hasEnemyEl = !!elements.enemyCaptureIndicator;
+  var hasMajorEl = !!elements.majorCaptureIndicator;
   if (!state.rootNode) {
     state.friendlyCaptureDetected = false;
     state.enemyCaptureDetected = false;
+    state.majorCaptureDetected = false;
     if (hasFriendlyEl) {
       elements.friendlyCaptureIndicator.classList.remove("is-active");
     }
     if (hasEnemyEl) {
       elements.enemyCaptureIndicator.classList.remove("is-active");
+    }
+    if (hasMajorEl) {
+      elements.majorCaptureIndicator.classList.remove("is-active");
     }
     return;
   }
@@ -356,6 +361,7 @@ function updateCaptureIndicators() {
   var cache = new Map();
   var friendlyFound = false;
   var enemyFound = false;
+  var majorFound = false;
 
   function getMat(node) {
     if (!node) {
@@ -372,10 +378,11 @@ function updateCaptureIndicators() {
     return mat;
   }
 
-  function inspectCapture(parentMat, mat) {
+  function countCaptures(parentMat, mat) {
     if (!parentMat || !mat) {
-      return;
+      return 0;
     }
+    var count = 0;
     for (var i = 0; i < parentMat.length; i += 1) {
       var row = parentMat[i];
       var nextRow = mat[i];
@@ -389,33 +396,49 @@ function updateCaptureIndicators() {
         if (!enemyFound && row[j] === enemyColor && nextRow[j] !== enemyColor) {
           enemyFound = true;
         }
-        if (friendlyFound && enemyFound) {
-          return;
+        if (row[j] === playerColor && nextRow[j] !== playerColor) {
+          count += 1;
+        } else if (row[j] === enemyColor && nextRow[j] !== enemyColor) {
+          count += 1;
         }
       }
     }
+    return count;
   }
 
-  function walk(node) {
-    if (!node || (friendlyFound && enemyFound)) {
+  function walk(node, capturedTotal) {
+    if (!node) {
       return;
     }
-    if (node.parent && GB.inRightPath(node)) {
-      var parentMat = getMat(node.parent);
-      var mat = getMat(node);
-      inspectCapture(parentMat, mat);
-      if (friendlyFound && enemyFound) {
+    if (majorFound && friendlyFound && enemyFound) {
+      return;
+    }
+    if (!node.children || node.children.length === 0) {
+      if (capturedTotal >= 5) {
+        majorFound = true;
+      }
+      return;
+    }
+    var rightChildFound = false;
+    node.children.forEach(function (child) {
+      if (!GB.inRightPath(child)) {
         return;
       }
-    }
-    if (node.children && node.children.length > 0) {
-      node.children.forEach(walk);
+      rightChildFound = true;
+      var parentMat = getMat(node);
+      var mat = getMat(child);
+      var captured = countCaptures(parentMat, mat);
+      walk(child, capturedTotal + captured);
+    });
+    if (!rightChildFound && capturedTotal >= 5) {
+      majorFound = true;
     }
   }
 
-  walk(state.rootNode);
+  walk(state.rootNode, 0);
   state.friendlyCaptureDetected = friendlyFound;
   state.enemyCaptureDetected = enemyFound;
+  state.majorCaptureDetected = majorFound;
   if (hasFriendlyEl) {
     if (friendlyFound) {
       elements.friendlyCaptureIndicator.classList.add("is-active");
@@ -443,6 +466,21 @@ function updateCaptureIndicators() {
       elements.enemyCaptureIndicator.setAttribute(
         "aria-label",
         "No enemy capture detected"
+      );
+    }
+  }
+  if (hasMajorEl) {
+    if (majorFound) {
+      elements.majorCaptureIndicator.classList.add("is-active");
+      elements.majorCaptureIndicator.setAttribute(
+        "aria-label",
+        "Major capture detected"
+      );
+    } else {
+      elements.majorCaptureIndicator.classList.remove("is-active");
+      elements.majorCaptureIndicator.setAttribute(
+        "aria-label",
+        "No major capture detected"
       );
     }
   }
