@@ -9,6 +9,7 @@
     "frost": { "min": 1, "max": 10 },
     "flip": { "min": 1, "max": 10 },
     "spotlight": { "min": 1, "max": 10 },
+    "spyglass": { "min": 1, "max": 10 },
     "timeExtend": { "min": 1, "max": 10 },
     "secondChance": { "min": 1, "max": 10 },
     "freeUpgrades": { "min": 1, "max": 10 },
@@ -54,6 +55,12 @@
     "minRadius": 1,
     "baseSpeed": 2.5,
     "speedIncrementPerLevel": 0.4,
+    "darkness": 0.86
+  },
+  "spyglass": {
+    "baseRadius": 2.8,
+    "radiusDecrementPerLevel": 0.2,
+    "minRadius": 1,
     "darkness": 0.86
   },
   "hints": {
@@ -136,7 +143,8 @@
         "fire",
         "frost",
         "flip",
-        "spotlight"
+        "spotlight",
+        "spyglass"
       ],
       "ghost": [
         "gray",
@@ -147,7 +155,8 @@
         "fire",
         "frost",
         "flip",
-        "spotlight"
+        "spotlight",
+        "spyglass"
       ],
       "mystery": [
         "gray",
@@ -157,7 +166,8 @@
         "fire",
         "frost",
         "flip",
-        "spotlight"
+        "spotlight",
+        "spyglass"
       ],
       "enigma": [
         "gray",
@@ -167,9 +177,18 @@
         "fire",
         "frost",
         "flip",
-        "spotlight"
+        "spotlight",
+        "spyglass"
       ],
-      "infection": ["gray", "ghost", "mystery", "enigma", "speed", "spotlight"],
+      "infection": [
+        "gray",
+        "ghost",
+        "mystery",
+        "enigma",
+        "speed",
+        "spotlight",
+        "spyglass"
+      ],
       "speed": [
         "gray",
         "ghost",
@@ -179,12 +198,14 @@
         "fire",
         "frost",
         "flip",
-        "spotlight"
+        "spotlight",
+        "spyglass"
       ],
       "fire": ["gray", "ghost", "mystery", "enigma", "speed"],
       "frost": ["gray", "ghost", "mystery", "enigma", "speed"],
       "flip": ["gray", "ghost", "mystery", "enigma", "speed"],
-      "spotlight": ["gray", "ghost", "mystery", "enigma", "infection", "speed"]
+      "spotlight": ["gray", "ghost", "mystery", "enigma", "infection", "speed"],
+      "spyglass": ["gray", "ghost", "mystery", "enigma", "infection", "speed"]
     },
     "shop": {
       "frequency": 3,
@@ -258,7 +279,8 @@
       "fire",
       "frost",
       "flip",
-      "spotlight"
+      "spotlight",
+      "spyglass"
     ]
   }
 }

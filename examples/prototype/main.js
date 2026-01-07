@@ -5,6 +5,7 @@ import "./fire.js";
 import "./frost.js";
 import "./flip.js";
 import "./spotlight.js";
+import "./spyglass.js";
 import "./effects.js";
 import "./passives.js";
 import "./overlays.js";
@@ -222,6 +223,15 @@ if (elements.challengeSpotlightBtn) {
     app.ui.logMessage("Challenge enabled: Spotlight.");
   });
 }
+if (elements.challengeSpyglassBtn) {
+  elements.challengeSpyglassBtn.addEventListener("click", function () {
+    if (state.challengeSpyglass) {
+      return;
+    }
+    app.challenges.setSpyglassPlay(true);
+    app.ui.logMessage("Challenge enabled: Spy Glass.");
+  });
+}
 if (elements.passiveTimeExtendBtn) {
   elements.passiveTimeExtendBtn.addEventListener("click", function () {
     if (state.passiveTimeExtend) {
@@ -335,6 +345,14 @@ if (elements.spotlightLevelInput) {
     app.spotlight.setSpotlightLevel(event.target.value);
   });
 }
+if (elements.spyglassLevelInput) {
+  elements.spyglassLevelInput.addEventListener("input", function (event) {
+    if (!event || !event.target) {
+      return;
+    }
+    app.spyglass.setSpyglassLevel(event.target.value);
+  });
+}
 if (elements.timeExtendLevelInput) {
   elements.timeExtendLevelInput.addEventListener("input", function (event) {
     if (!event || !event.target) {
@@ -435,6 +453,7 @@ window.addEventListener("resize", function () {
   app.frost.startFrostAnimation();
   app.flip.startFlipAnimation();
   app.spotlight.startSpotlightAnimation();
+  app.spyglass.startSpyglassAnimation();
   if (app.effects && app.effects.syncFxCanvas) {
     app.effects.syncFxCanvas();
   }

@@ -234,6 +234,19 @@ function setSpotlightPlay(active) {
   }
 }
 
+function setSpyglassPlay(active) {
+  state.challengeSpyglass = active;
+  state.spyglassPos = null;
+  state.spyglassPointer = null;
+  updateChallengeControls();
+  app.spyglass.updateSpyglassLevelUI();
+  if (active) {
+    app.spyglass.startSpyglassAnimation();
+  } else {
+    app.spyglass.stopSpyglassAnimation();
+  }
+}
+
 function updateChallengeControls() {
   if (elements.challengeGrayBtn) {
     if (state.challengeGray) {
@@ -325,6 +338,15 @@ function updateChallengeControls() {
       elements.challengeSpotlightBtn.disabled = false;
     }
   }
+  if (elements.challengeSpyglassBtn) {
+    if (state.challengeSpyglass) {
+      elements.challengeSpyglassBtn.classList.add("active");
+      elements.challengeSpyglassBtn.disabled = true;
+    } else {
+      elements.challengeSpyglassBtn.classList.remove("active");
+      elements.challengeSpyglassBtn.disabled = false;
+    }
+  }
 }
 
 function resetChallenges() {
@@ -371,6 +393,10 @@ function resetChallenges() {
   state.spotlightLastTs = 0;
   state.spotlightBoundsKey = "";
   app.spotlight.stopSpotlightAnimation();
+  state.challengeSpyglass = false;
+  state.spyglassPos = null;
+  state.spyglassPointer = null;
+  app.spyglass.stopSpyglassAnimation();
   if (refs.ghostAnimId) {
     cancelAnimationFrame(refs.ghostAnimId);
     refs.ghostAnimId = null;
@@ -396,6 +422,7 @@ app.challenges.setFirePlay = setFirePlay;
 app.challenges.setFrostPlay = setFrostPlay;
 app.challenges.setFlipPlay = setFlipPlay;
 app.challenges.setSpotlightPlay = setSpotlightPlay;
+app.challenges.setSpyglassPlay = setSpyglassPlay;
 app.challenges.updateChallengeControls = updateChallengeControls;
 app.challenges.resetChallenges = resetChallenges;
 app.challenges.updateInfectionLevelUI = updateInfectionLevelUI;

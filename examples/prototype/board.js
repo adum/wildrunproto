@@ -147,6 +147,11 @@ function initBoard(boardSize) {
   refs.spotlightCanvas.style.position = "absolute";
   refs.spotlightCanvas.style.pointerEvents = "none";
   app.elements.mount.appendChild(refs.spotlightCanvas);
+  refs.spyglassCanvas = document.createElement("canvas");
+  refs.spyglassCanvas.id = "ghostban-spyglass";
+  refs.spyglassCanvas.style.position = "absolute";
+  refs.spyglassCanvas.style.pointerEvents = "none";
+  app.elements.mount.appendChild(refs.spyglassCanvas);
   refs.fxCanvas = document.createElement("canvas");
   refs.fxCanvas.id = "ghostban-fx";
   refs.fxCanvas.style.position = "absolute";
@@ -313,6 +318,7 @@ function updateBoard() {
   app.frost.startFrostAnimation();
   app.flip.startFlipAnimation();
   app.spotlight.startSpotlightAnimation();
+  app.spyglass.startSpyglassAnimation();
   var revealActive =
     state.ghostRevealUntil > 0 && state.ghostRevealUntil > performance.now();
   if (state.challengeGhost && (state.ghostFlashes.length > 0 || revealActive)) {

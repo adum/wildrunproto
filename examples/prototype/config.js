@@ -11,6 +11,7 @@ var DEFAULT_CONFIG = {
     frost: { min: 1, max: 10 },
     flip: { min: 1, max: 10 },
     spotlight: { min: 1, max: 10 },
+    spyglass: { min: 1, max: 10 },
     timeExtend: { min: 1, max: 10 },
     secondChance: { min: 1, max: 10 },
     freeUpgrades: { min: 1, max: 10 },
@@ -56,6 +57,12 @@ var DEFAULT_CONFIG = {
     minRadius: 1,
     baseSpeed: 2.5,
     speedIncrementPerLevel: 0.4,
+    darkness: 0.86,
+  },
+  spyglass: {
+    baseRadius: 2.8,
+    radiusDecrementPerLevel: 0.2,
+    minRadius: 1,
     darkness: 0.86,
   },
   hints: {
@@ -139,6 +146,7 @@ var DEFAULT_CONFIG = {
         "frost",
         "flip",
         "spotlight",
+        "spyglass",
       ],
       ghost: [
         "gray",
@@ -150,6 +158,7 @@ var DEFAULT_CONFIG = {
         "frost",
         "flip",
         "spotlight",
+        "spyglass",
       ],
       mystery: [
         "gray",
@@ -160,6 +169,7 @@ var DEFAULT_CONFIG = {
         "frost",
         "flip",
         "spotlight",
+        "spyglass",
       ],
       enigma: [
         "gray",
@@ -170,8 +180,17 @@ var DEFAULT_CONFIG = {
         "frost",
         "flip",
         "spotlight",
+        "spyglass",
       ],
-      infection: ["gray", "ghost", "mystery", "enigma", "speed", "spotlight"],
+      infection: [
+        "gray",
+        "ghost",
+        "mystery",
+        "enigma",
+        "speed",
+        "spotlight",
+        "spyglass",
+      ],
       speed: [
         "gray",
         "ghost",
@@ -182,11 +201,13 @@ var DEFAULT_CONFIG = {
         "frost",
         "flip",
         "spotlight",
+        "spyglass",
       ],
       fire: ["gray", "ghost", "mystery", "enigma", "speed"],
       frost: ["gray", "ghost", "mystery", "enigma", "speed"],
       flip: ["gray", "ghost", "mystery", "enigma", "speed"],
       spotlight: ["gray", "ghost", "mystery", "enigma", "infection", "speed"],
+      spyglass: ["gray", "ghost", "mystery", "enigma", "infection", "speed"],
     },
     shop: {
       frequency: 3,
@@ -261,6 +282,7 @@ var DEFAULT_CONFIG = {
       "frost",
       "flip",
       "spotlight",
+      "spyglass",
     ],
   },
 };
@@ -379,6 +401,7 @@ function applyConfigToUI() {
   applyLevelRange(elements.frostLevelInput, "frost");
   applyLevelRange(elements.flipLevelInput, "flip");
   applyLevelRange(elements.spotlightLevelInput, "spotlight");
+  applyLevelRange(elements.spyglassLevelInput, "spyglass");
   applyLevelRange(elements.timeExtendLevelInput, "timeExtend");
   applyLevelRange(elements.secondChanceLevelInput, "secondChance");
   applyLevelRange(elements.freeUpgradesLevelInput, "freeUpgrades");
@@ -470,6 +493,15 @@ function applyConfigToUI() {
     app.spotlight.setSpotlightLevel(spotlightValue);
   } else if (app.spotlight && app.spotlight.updateSpotlightLevelUI) {
     app.spotlight.updateSpotlightLevelUI();
+  }
+
+  if (app.spyglass && app.spyglass.setSpyglassLevel) {
+    var spyglassValue = elements.spyglassLevelInput
+      ? elements.spyglassLevelInput.value
+      : state.spyglassLevel;
+    app.spyglass.setSpyglassLevel(spyglassValue);
+  } else if (app.spyglass && app.spyglass.updateSpyglassLevelUI) {
+    app.spyglass.updateSpyglassLevelUI();
   }
 
   if (app.passives && app.passives.setTimeExtendLevel) {

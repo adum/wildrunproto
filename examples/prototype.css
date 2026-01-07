@@ -233,6 +233,10 @@ body {
   z-index: 11;
 }
 
+#ghostban-spyglass {
+  z-index: 11;
+}
+
 #ghostban-fx {
   z-index: 12;
 }
@@ -595,6 +599,7 @@ select {
 .frost-row,
 .flip-row,
 .spotlight-row,
+.spyglass-row,
 .passive-row,
 .hint-row {
   display: grid;
@@ -662,6 +667,7 @@ select {
 .frost-level,
 .flip-level,
 .spotlight-level,
+.spyglass-level,
 .passive-level,
 .hint-level {
   display: flex;
@@ -684,6 +690,7 @@ select {
 .frost-level label,
 .flip-level label,
 .spotlight-level label,
+.spyglass-level label,
 .passive-level label,
 .hint-level label {
   display: inline-flex;
@@ -702,6 +709,7 @@ select {
 .frost-level input[type="range"],
 .flip-level input[type="range"],
 .spotlight-level input[type="range"],
+.spyglass-level input[type="range"],
 .passive-level input[type="range"],
 .hint-level input[type="range"] {
   width: auto;
@@ -724,6 +732,7 @@ select {
 .frost-level__value,
 .flip-level__value,
 .spotlight-level__value,
+.spyglass-level__value,
 .passive-level__value,
 .hint-level__value {
   min-width: 16px;

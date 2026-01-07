@@ -5,6 +5,7 @@ import "../prototype/fire.js";
 import "../prototype/frost.js";
 import "../prototype/flip.js";
 import "../prototype/spotlight.js";
+import "../prototype/spyglass.js";
 import "../prototype/effects.js";
 import "../prototype/passives.js";
 import "../prototype/overlays.js";
@@ -277,6 +278,16 @@ var CHALLENGE_DEFS = {
     },
     enable: function () {
       app.challenges.setSpotlightPlay(true);
+    },
+  },
+  spyglass: {
+    label: "Spy Glass",
+    tooltip: "Mouse spotlight: radius 2.8 -0.2/level (min 1); dark L1 dim, L2+ black.",
+    setLevel: function (level) {
+      app.spyglass.setSpyglassLevel(level);
+    },
+    enable: function () {
+      app.challenges.setSpyglassPlay(true);
     },
   },
 };
@@ -1294,6 +1305,9 @@ function getChallengeLevelKey(challengeId) {
   }
   if (challengeId === "spotlight") {
     return "spotlight";
+  }
+  if (challengeId === "spyglass") {
+    return "spyglass";
   }
   return null;
 }
