@@ -210,6 +210,16 @@ function initBoard(boardSize) {
   refs.secondChanceTimerEl.style.display = "none";
   app.elements.mount.appendChild(refs.secondChanceTimerEl);
 
+  refs.multishotCounterEl = document.createElement("div");
+  refs.multishotCounterEl.id = "multishotCounter";
+  refs.multishotCounterEl.className = "board-control";
+  refs.multishotCounterEl.setAttribute("aria-live", "polite");
+  refs.multishotCounterEl.style.display = "none";
+  app.elements.mount.appendChild(refs.multishotCounterEl);
+  if (app.hints && app.hints.updateMultishotIndicator) {
+    app.hints.updateMultishotIndicator();
+  }
+
   refs.rowHintEl = document.createElement("div");
   refs.rowHintEl.className = "row-hint";
   refs.rowHintEl.setAttribute("aria-hidden", "true");
@@ -294,6 +304,7 @@ function updateBoard() {
   app.hints.positionRowHint();
   app.hints.positionColumnHint();
   app.hints.positionDiagonalHint();
+  app.hints.positionMultishotIndicator();
   app.overlays.renderGrayStones(state.currentMat);
   app.timers.updateMysteryUI();
   app.overlays.renderEnigmaOverlay();
@@ -552,6 +563,168 @@ function eliminateRandomMove() {
   updateBoard();
 }
 
+function applyMoveAt(i, j) {
+  var coord = GB.SGF_LETTERS[i] + GB.SGF_LETTERS[j];
+  updateChildMoves();
+
+  var chosen = state.childMoveMap.get(coord);
+  var isBlocked = state.blockedMoves.has(coord);
+  var isCorrect = chosen && GB.inRightPath(chosen.node);
+  var isWrong = isBlocked || !chosen || (chosen && !isCorrect);
+
+  if (state.secondChanceActive) {
+    if (isCorrect) {
+      if (app.passives && app.passives.clearSecondChanceTimer) {
+        app.passives.clearSecondChanceTimer();
+      }
+      ui.logMessage("Second chance used: " + utils.sgfToA1(coord));
+    } else {
+      if (app.passives && app.passives.clearSecondChanceTimer) {
+        app.passives.clearSecondChanceTimer();
+      }
+      state.lives -= 1;
+      state.combo = 0;
+      ui.updateHud();
+      if (isBlocked) {
+        ui.logMessage(
+          "Second chance failed: eliminated move " + utils.sgfToA1(coord)
+        );
+      } else if (!chosen) {
+        ui.logMessage(
+          "Second chance failed: wrong move (not in tree) " +
+            utils.sgfToA1(coord)
+        );
+      } else {
+        ui.logMessage("Second chance failed: wrong move " + utils.sgfToA1(coord));
+      }
+      evaluatePosition();
+      return false;
+    }
+  } else if (isWrong && app.passives && app.passives.startSecondChance) {
+    var duration = app.passives.startSecondChance(function () {
+      state.lives -= 1;
+      state.combo = 0;
+      ui.updateHud();
+      ui.logMessage("Second chance expired: lost a life.");
+      evaluatePosition();
+    });
+    if (duration) {
+      ui.setStatus("Second chance! Play the correct move.");
+      ui.logMessage("Second chance active (" + duration + "s).");
+      return false;
+    }
+  }
+
+  if (isBlocked) {
+    state.lives -= 1;
+    state.combo = 0;
+    ui.updateHud();
+    ui.logMessage("Eliminated move selected: " + utils.sgfToA1(coord));
+    evaluatePosition();
+    return false;
+  }
+
+  if (!chosen) {
+    state.lives -= 1;
+    state.combo = 0;
+    ui.updateHud();
+    ui.logMessage("Wrong move (not in tree): " + utils.sgfToA1(coord));
+    evaluatePosition();
+    return false;
+  }
+
+  var turn = utils.getTurn(state.currentNode, state.playerColor);
+  app.challenges.recordGrayStone(i, j);
+  app.ghost.recordGhostStone(i, j, turn);
+  if (turn === state.playerColor) {
+    recordSpeedSolveMove();
+    app.challenges.recordInfection(i, j, true);
+    state.speedMoveCount += 1;
+  }
+  if (isCorrect) {
+    state.combo += 1;
+    ui.logMessage("Correct move: " + utils.sgfToA1(coord));
+  } else {
+    state.lives -= 1;
+    state.combo = 0;
+    ui.logMessage("Wrong move: " + utils.sgfToA1(coord));
+  }
+
+  ui.updateHud();
+  app.hints.setCurrentNode(chosen.node);
+  autoPlayOpponent();
+  updateBoard();
+  evaluatePosition();
+  return true;
+}
+
+function handleMultishotPick(coord, i, j) {
+  if (!state.multishotActive) {
+    return;
+  }
+  if (!state.multishotSelectionSet) {
+    state.multishotSelectionSet = new Set();
+  }
+  if (state.multishotSelectionSet.has(coord)) {
+    return;
+  }
+  state.multishotSelectionSet.add(coord);
+  if (!Array.isArray(state.multishotSelections)) {
+    state.multishotSelections = [];
+  }
+  state.multishotSelections.push(coord);
+  state.multishotRemaining = Math.max(0, state.multishotRemaining - 1);
+  if (app.hints && app.hints.updateMultishotIndicator) {
+    app.hints.updateMultishotIndicator();
+  }
+  if (state.multishotRemaining > 0) {
+    ui.logMessage(
+      "Multishot pick: " +
+        utils.sgfToA1(coord) +
+        " (" +
+        state.multishotRemaining +
+        " left)"
+    );
+    updateBoard();
+    return;
+  }
+
+  var picks = state.multishotSelections.slice();
+  var chosenCoord = null;
+  for (var p = 0; p < picks.length; p += 1) {
+    var pick = picks[p];
+    var move = state.childMoveMap.get(pick);
+    if (!move) {
+      continue;
+    }
+    if (state.blockedMoves.has(pick)) {
+      continue;
+    }
+    if (GB.inRightPath(move.node)) {
+      chosenCoord = pick;
+      break;
+    }
+  }
+  var resolved = chosenCoord || picks[picks.length - 1];
+  if (app.hints && app.hints.clearMultishot) {
+    app.hints.clearMultishot();
+  } else {
+    state.multishotActive = false;
+    state.multishotRemaining = 0;
+    state.multishotSelections = [];
+    state.multishotSelectionSet = new Set();
+  }
+  var idx = utils.sgfToIndex(resolved);
+  if (!idx) {
+    updateBoard();
+    return;
+  }
+  var moved = applyMoveAt(idx.i, idx.j);
+  if (!moved) {
+    updateBoard();
+  }
+}
+
 function handleMoveSelection(i, j) {
   if (state.lives <= 0) {
     return;
@@ -593,95 +766,13 @@ function handleMoveSelection(i, j) {
   }
 
   var coord = GB.SGF_LETTERS[i] + GB.SGF_LETTERS[j];
-  updateChildMoves();
-
-  var chosen = state.childMoveMap.get(coord);
-  var isBlocked = state.blockedMoves.has(coord);
-  var isCorrect = chosen && GB.inRightPath(chosen.node);
-  var isWrong = isBlocked || !chosen || (chosen && !isCorrect);
-
-  if (state.secondChanceActive) {
-    if (isCorrect) {
-      if (app.passives && app.passives.clearSecondChanceTimer) {
-        app.passives.clearSecondChanceTimer();
-      }
-      ui.logMessage("Second chance used: " + utils.sgfToA1(coord));
-    } else {
-      if (app.passives && app.passives.clearSecondChanceTimer) {
-        app.passives.clearSecondChanceTimer();
-      }
-      state.lives -= 1;
-      state.combo = 0;
-      ui.updateHud();
-      if (isBlocked) {
-        ui.logMessage(
-          "Second chance failed: eliminated move " + utils.sgfToA1(coord)
-        );
-      } else if (!chosen) {
-        ui.logMessage(
-          "Second chance failed: wrong move (not in tree) " +
-            utils.sgfToA1(coord)
-        );
-      } else {
-        ui.logMessage("Second chance failed: wrong move " + utils.sgfToA1(coord));
-      }
-      evaluatePosition();
-      return;
-    }
-  } else if (isWrong && app.passives && app.passives.startSecondChance) {
-    var duration = app.passives.startSecondChance(function () {
-      state.lives -= 1;
-      state.combo = 0;
-      ui.updateHud();
-      ui.logMessage("Second chance expired: lost a life.");
-      evaluatePosition();
-    });
-    if (duration) {
-      ui.setStatus("Second chance! Play the correct move.");
-      ui.logMessage("Second chance active (" + duration + "s).");
-      return;
-    }
-  }
-
-  if (isBlocked) {
-    state.lives -= 1;
-    state.combo = 0;
-    ui.updateHud();
-    ui.logMessage("Eliminated move selected: " + utils.sgfToA1(coord));
-    evaluatePosition();
+  if (state.multishotActive) {
+    updateChildMoves();
+    handleMultishotPick(coord, i, j);
     return;
   }
 
-  if (!chosen) {
-    state.lives -= 1;
-    state.combo = 0;
-    ui.updateHud();
-    ui.logMessage("Wrong move (not in tree): " + utils.sgfToA1(coord));
-    evaluatePosition();
-    return;
-  }
-
-  app.challenges.recordGrayStone(i, j);
-  app.ghost.recordGhostStone(i, j, turn);
-  if (turn === state.playerColor) {
-    recordSpeedSolveMove();
-    app.challenges.recordInfection(i, j, true);
-    state.speedMoveCount += 1;
-  }
-  if (isCorrect) {
-    state.combo += 1;
-    ui.logMessage("Correct move: " + utils.sgfToA1(coord));
-  } else {
-    state.lives -= 1;
-    state.combo = 0;
-    ui.logMessage("Wrong move: " + utils.sgfToA1(coord));
-  }
-
-  ui.updateHud();
-  app.hints.setCurrentNode(chosen.node);
-  autoPlayOpponent();
-  updateBoard();
-  evaluatePosition();
+  applyMoveAt(i, j);
 }
 
 app.board.initBoard = initBoard;

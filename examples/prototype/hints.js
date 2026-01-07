@@ -63,6 +63,11 @@ function getBandWidth(levelKey, configKey, level, fallbackWidth) {
   return Math.max(1, Math.round(width));
 }
 
+function getMultishotCount(level) {
+  var safeLevel = clampLevel("hintMultishot", level, 1, 3);
+  return Math.max(2, safeLevel + 1);
+}
+
 function resetRowHint() {
   state.hintRow = null;
   if (!refs.rowHintEl) {
@@ -324,6 +329,228 @@ function setMultipleChoiceLevel(level) {
   updateMultipleChoiceLevelUI();
 }
 
+function updateMultishotLevelUI() {
+  if (elements.hintMultishotLevelInput) {
+    elements.hintMultishotLevelInput.value = String(state.hintMultishotLevel);
+  }
+  if (elements.hintMultishotLevelValue) {
+    elements.hintMultishotLevelValue.textContent = String(state.hintMultishotLevel);
+  }
+}
+
+function setMultishotLevel(level) {
+  var nextLevel = clampLevel("hintMultishot", level, 1, 3);
+  state.hintMultishotLevel = nextLevel;
+  updateMultishotLevelUI();
+}
+
+function updateMultishotIndicator() {
+  if (!refs.multishotCounterEl) {
+    return;
+  }
+  if (!state.multishotActive || state.multishotRemaining <= 0) {
+    refs.multishotCounterEl.style.display = "none";
+    refs.multishotCounterEl.textContent = "";
+    refs.multishotCounterEl.removeAttribute("aria-label");
+    return;
+  }
+  refs.multishotCounterEl.style.display = "block";
+  refs.multishotCounterEl.textContent = String(state.multishotRemaining);
+  refs.multishotCounterEl.setAttribute(
+    "aria-label",
+    state.multishotRemaining + " multishot moves remaining"
+  );
+  positionMultishotIndicator();
+}
+
+function positionMultishotIndicator() {
+  if (!refs.multishotCounterEl || !refs.board || !elements.mount) {
+    return;
+  }
+  if (!state.multishotActive || state.multishotRemaining <= 0) {
+    return;
+  }
+
+  var canvas = refs.board.canvas || refs.board.cursorCanvas || refs.board.board;
+  if (!canvas || !canvas.getBoundingClientRect) {
+    return;
+  }
+  var rect = canvas.getBoundingClientRect();
+  if (!rect.width || !rect.height) {
+    return;
+  }
+  var mountRect = elements.mount.getBoundingClientRect();
+  if (!mountRect.width || !mountRect.height) {
+    return;
+  }
+
+  var scaleX = canvas.width / rect.width;
+  var scaleY = canvas.height / rect.height;
+  var spacing = refs.board.calcSpaceAndPadding
+    ? refs.board.calcSpaceAndPadding(canvas)
+    : { space: 0, scaledPadding: 0 };
+  var space = spacing.space;
+  var scaledPadding = spacing.scaledPadding;
+  if (!Number.isFinite(space) || space <= 0 || !Number.isFinite(scaledPadding)) {
+    return;
+  }
+
+  var size = refs.board.options.boardSize || 19;
+  var themeOptions = refs.board.options.themeOptions || {};
+  var theme = refs.board.options.theme;
+  var ratio =
+    (themeOptions[theme] && themeOptions[theme].stoneRatio) ||
+    (themeOptions.default && themeOptions.default.stoneRatio) ||
+    0.45;
+  var radius = space * ratio;
+  var margin = Math.max(2, Math.round(space * 0.08));
+
+  var x0 = scaledPadding - radius;
+  var y0 = scaledPadding - radius;
+  var x1 = scaledPadding + space * (size - 1) + radius;
+  var y1 = scaledPadding + space * (size - 1) + radius;
+  var p0 = refs.board.transMat.transformPoint(new DOMPoint(x0, y0));
+  var p1 = refs.board.transMat.transformPoint(new DOMPoint(x1, y0));
+  var p2 = refs.board.transMat.transformPoint(new DOMPoint(x1, y1));
+  var p3 = refs.board.transMat.transformPoint(new DOMPoint(x0, y1));
+  var minX = Math.min(p0.x, p1.x, p2.x, p3.x);
+  var maxX = Math.max(p0.x, p1.x, p2.x, p3.x);
+  var minY = Math.min(p0.y, p1.y, p2.y, p3.y);
+  var maxY = Math.max(p0.y, p1.y, p2.y, p3.y);
+  var offsetX = rect.left - mountRect.left;
+  var offsetY = rect.top - mountRect.top;
+
+  var gridLeft = minX / scaleX + offsetX;
+  var gridRight = maxX / scaleX + offsetX;
+  var gridTop = minY / scaleY + offsetY;
+  var gridBottom = maxY / scaleY + offsetY;
+
+  var counterRect = refs.multishotCounterEl.getBoundingClientRect();
+  var counterWidth =
+    counterRect.width || refs.multishotCounterEl.offsetWidth || 32;
+  var counterHeight =
+    counterRect.height || refs.multishotCounterEl.offsetHeight || 28;
+
+  var maxLeft = Math.max(0, mountRect.width - counterWidth);
+  var maxTop = Math.max(0, mountRect.height - counterHeight);
+  var centerLeft = Math.max(
+    0,
+    Math.min((gridLeft + gridRight - counterWidth) / 2, maxLeft)
+  );
+  var centerTop = Math.max(
+    0,
+    Math.min((gridTop + gridBottom - counterHeight) / 2, maxTop)
+  );
+
+  var candidates = [];
+  function pushCandidate(left, top) {
+    var clampedLeft = Math.max(0, Math.min(left, maxLeft));
+    var clampedTop = Math.max(0, Math.min(top, maxTop));
+    candidates.push({ left: clampedLeft, top: clampedTop });
+  }
+
+  if (gridTop >= counterHeight) {
+    pushCandidate(centerLeft, gridTop - counterHeight - margin);
+  }
+  if (mountRect.height - gridBottom >= counterHeight) {
+    pushCandidate(centerLeft, gridBottom + margin);
+  }
+  if (gridLeft >= counterWidth) {
+    pushCandidate(gridLeft - counterWidth - margin, centerTop);
+  }
+  if (mountRect.width - gridRight >= counterWidth) {
+    pushCandidate(gridRight + margin, centerTop);
+  }
+
+  pushCandidate(gridLeft + margin, gridTop + margin);
+  pushCandidate(gridRight - counterWidth - margin, gridTop + margin);
+  pushCandidate(gridLeft + margin, gridBottom - counterHeight - margin);
+  pushCandidate(
+    gridRight - counterWidth - margin,
+    gridBottom - counterHeight - margin
+  );
+
+  var stoneCenters = [];
+  var radiusX = 0;
+  var radiusY = 0;
+  if (state.currentMat && state.currentMat.length) {
+    var base = refs.board.transMat.transformPoint(new DOMPoint(0, 0));
+    var radiusXPoint = refs.board.transMat.transformPoint(
+      new DOMPoint(radius, 0)
+    );
+    var radiusYPoint = refs.board.transMat.transformPoint(
+      new DOMPoint(0, radius)
+    );
+    radiusX = Math.abs(radiusXPoint.x - base.x) / scaleX;
+    radiusY = Math.abs(radiusYPoint.y - base.y) / scaleY;
+
+    for (var i = 0; i < state.currentMat.length; i += 1) {
+      for (var j = 0; j < state.currentMat[i].length; j += 1) {
+        if (state.currentMat[i][j] === GB.Ki.Empty) {
+          continue;
+        }
+        var cx = scaledPadding + i * space;
+        var cy = scaledPadding + j * space;
+        var pos = refs.board.transMat.transformPoint(new DOMPoint(cx, cy));
+        stoneCenters.push({
+          x: pos.x / scaleX + offsetX,
+          y: pos.y / scaleY + offsetY,
+        });
+      }
+    }
+  }
+
+  function countStoneHits(candidate) {
+    if (!stoneCenters.length) {
+      return 0;
+    }
+    var left = candidate.left - radiusX;
+    var right = candidate.left + counterWidth + radiusX;
+    var top = candidate.top - radiusY;
+    var bottom = candidate.top + counterHeight + radiusY;
+    var hits = 0;
+    for (var k = 0; k < stoneCenters.length; k += 1) {
+      var stone = stoneCenters[k];
+      if (stone.x > left && stone.x < right && stone.y > top && stone.y < bottom) {
+        hits += 1;
+      }
+    }
+    return hits;
+  }
+
+  if (candidates.length === 0) {
+    candidates.push({ left: margin, top: margin });
+  }
+
+  var pick = candidates[0];
+  var bestHits = countStoneHits(pick);
+  if (bestHits !== 0) {
+    for (var idx = 0; idx < candidates.length; idx += 1) {
+      var hits = countStoneHits(candidates[idx]);
+      if (hits === 0) {
+        pick = candidates[idx];
+        bestHits = 0;
+        break;
+      }
+      if (hits < bestHits) {
+        pick = candidates[idx];
+        bestHits = hits;
+      }
+    }
+  }
+
+  refs.multishotCounterEl.style.left = Math.round(pick.left) + "px";
+  refs.multishotCounterEl.style.top = Math.round(pick.top) + "px";
+}
+
+function clearMultishot() {
+  state.multishotActive = false;
+  state.multishotRemaining = 0;
+  state.multishotSelections = [];
+  state.multishotSelectionSet = new Set();
+  updateMultishotIndicator();
+}
+
 function updateRowRevealLevelUI() {
   if (elements.hintRowLevelInput) {
     elements.hintRowLevelInput.value = String(state.hintRowLevel);
@@ -375,6 +602,7 @@ function clearHints() {
   state.hintNeighborStones = [];
   state.hintMode = "none";
   state.extraAllowedMoves = new Set();
+  clearMultishot();
   resetRowHint();
   resetColumnHint();
   resetDiagonalHint();
@@ -387,6 +615,7 @@ function clearTemporaryState() {
   state.hintNeighborStones = [];
   state.hintMode = "none";
   state.extraAllowedMoves = new Set();
+  clearMultishot();
   resetRowHint();
   resetColumnHint();
   resetDiagonalHint();
@@ -442,6 +671,16 @@ function applyHintMarkup(markup, mat) {
     }
     appendMarkup(markup, idx.i, idx.j, GB.Markup.Highlight);
   });
+
+  if (state.multishotSelections && state.multishotSelections.length > 0) {
+    state.multishotSelections.forEach(function (coord) {
+      var idx = utils.sgfToIndex(coord);
+      if (!idx || mat[idx.i][idx.j] !== GB.Ki.Empty) {
+        return;
+      }
+      appendMarkup(markup, idx.i, idx.j, GB.Markup.NeutralNode);
+    });
+  }
 
   state.blockedMoves.forEach(function (coord) {
     var idx = utils.sgfToIndex(coord);
@@ -564,6 +803,29 @@ function hintTwoMoves() {
     );
   }
 
+  app.board.updateBoard();
+}
+
+function hintMultishot() {
+  if (state.lives <= 0) {
+    ui.setStatus("Out of lives. Reset to continue.", "error");
+    return;
+  }
+
+  state.hintMoves = { correct: [], wrong: [] };
+  state.hintNeighborStones = [];
+  state.hintMode = "none";
+  state.multishotActive = true;
+  state.multishotSelections = [];
+  state.multishotSelectionSet = new Set();
+  state.multishotRemaining = getMultishotCount(state.hintMultishotLevel);
+  resetRowHint();
+  resetColumnHint();
+  resetDiagonalHint();
+  updateMultishotIndicator();
+  ui.logMessage(
+    "Multishot ready: " + state.multishotRemaining + " moves."
+  );
   app.board.updateBoard();
 }
 
@@ -925,6 +1187,11 @@ app.hints.updateElimRandomLevelUI = updateElimRandomLevelUI;
 app.hints.setElimRandomLevel = setElimRandomLevel;
 app.hints.updateMultipleChoiceLevelUI = updateMultipleChoiceLevelUI;
 app.hints.setMultipleChoiceLevel = setMultipleChoiceLevel;
+app.hints.updateMultishotLevelUI = updateMultishotLevelUI;
+app.hints.setMultishotLevel = setMultishotLevel;
+app.hints.updateMultishotIndicator = updateMultishotIndicator;
+app.hints.positionMultishotIndicator = positionMultishotIndicator;
+app.hints.clearMultishot = clearMultishot;
 app.hints.updateRowRevealLevelUI = updateRowRevealLevelUI;
 app.hints.setRowRevealLevel = setRowRevealLevel;
 app.hints.updateColumnRevealLevelUI = updateColumnRevealLevelUI;
@@ -937,6 +1204,7 @@ app.hints.setCurrentNode = setCurrentNode;
 app.hints.applyHintMarkup = applyHintMarkup;
 app.hints.hintFirstMove = hintFirstMove;
 app.hints.hintTwoMoves = hintTwoMoves;
+app.hints.hintMultishot = hintMultishot;
 app.hints.hintWaveNeighbor = hintWaveNeighbor;
 app.hints.hintRowReveal = hintRowReveal;
 app.hints.hintColumnReveal = hintColumnReveal;

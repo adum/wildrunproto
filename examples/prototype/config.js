@@ -17,6 +17,7 @@ var DEFAULT_CONFIG = {
     bigMoney: { min: 1, max: 5 },
     shopaholic: { min: 1, max: 5 },
     hintMultipleChoice: { min: 1, max: 3 },
+    hintMultishot: { min: 1, max: 3 },
     hintRow: { min: 1, max: 3 },
     hintCol: { min: 1, max: 3 },
     hintDiag: { min: 1, max: 3 },
@@ -109,6 +110,7 @@ var DEFAULT_CONFIG = {
       hintPool: [
         "firstMove",
         "multipleChoice",
+        "multishot",
         "neighbor",
         "rowReveal",
         "colReveal",
@@ -194,6 +196,7 @@ var DEFAULT_CONFIG = {
       hintPool: [
         "firstMove",
         "multipleChoice",
+        "multishot",
         "neighbor",
         "rowReveal",
         "colReveal",
@@ -211,6 +214,7 @@ var DEFAULT_CONFIG = {
         hints: {
           firstMove: 6,
           multipleChoice: 8,
+          multishot: 8,
           neighbor: 5,
           rowReveal: 7,
           colReveal: 7,
@@ -229,6 +233,7 @@ var DEFAULT_CONFIG = {
     hintPool: [
       "firstMove",
       "multipleChoice",
+      "multishot",
       "neighbor",
       "rowReveal",
       "colReveal",
@@ -380,6 +385,7 @@ function applyConfigToUI() {
   applyLevelRange(elements.bigMoneyLevelInput, "bigMoney");
   applyLevelRange(elements.shopaholicLevelInput, "shopaholic");
   applyLevelRange(elements.hintTwoLevelInput, "hintMultipleChoice");
+  applyLevelRange(elements.hintMultishotLevelInput, "hintMultishot");
   applyLevelRange(elements.hintRowLevelInput, "hintRow");
   applyLevelRange(elements.hintColLevelInput, "hintCol");
   applyLevelRange(elements.hintDiagLevelInput, "hintDiag");
@@ -534,6 +540,12 @@ function applyConfigToUI() {
       ? elements.hintTwoLevelInput.value
       : state.hintTwoLevel;
     app.hints.setMultipleChoiceLevel(multipleValue);
+  }
+  if (app.hints && app.hints.setMultishotLevel) {
+    var multishotValue = elements.hintMultishotLevelInput
+      ? elements.hintMultishotLevelInput.value
+      : state.hintMultishotLevel;
+    app.hints.setMultishotLevel(multishotValue);
   }
   if (app.hints && app.hints.setElimRandomLevel) {
     var elimValue = elements.elimRandomLevelInput

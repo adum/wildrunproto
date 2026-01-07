@@ -137,6 +137,13 @@ var HINT_DEFS = {
       app.hints.hintTwoMoves();
     },
   },
+  multishot: {
+    label: "Multishot",
+    tooltip: "Picks: L1 2, L2 3, L3 4.",
+    action: function () {
+      app.hints.hintMultishot();
+    },
+  },
   neighbor: {
     label: "Wave to Your Neighbor",
     tooltip: "Highlights a stone adjacent to a correct move.",
@@ -480,6 +487,9 @@ function getHintLevelKey(hintId) {
   if (hintId === "multipleChoice") {
     return "hintMultipleChoice";
   }
+  if (hintId === "multishot") {
+    return "hintMultishot";
+  }
   if (hintId === "rowReveal") {
     return "hintRow";
   }
@@ -518,6 +528,8 @@ function applyHintLevel(hintId, level) {
   var safe = Math.max(1, Math.round(level || 1));
   if (hintId === "multipleChoice" && app.hints.setMultipleChoiceLevel) {
     app.hints.setMultipleChoiceLevel(safe);
+  } else if (hintId === "multishot" && app.hints.setMultishotLevel) {
+    app.hints.setMultishotLevel(safe);
   } else if (hintId === "rowReveal" && app.hints.setRowRevealLevel) {
     app.hints.setRowRevealLevel(safe);
   } else if (hintId === "colReveal" && app.hints.setColumnRevealLevel) {
@@ -688,6 +700,7 @@ function ensureBoard(size) {
 
 function resetHintLevels() {
   app.hints.setMultipleChoiceLevel(1);
+  app.hints.setMultishotLevel(1);
   app.hints.setRowRevealLevel(1);
   app.hints.setColumnRevealLevel(1);
   app.hints.setDiagonalRevealLevel(1);

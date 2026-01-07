@@ -57,6 +57,9 @@ if (elements.hintOneBtn) {
 if (elements.hintTwoBtn) {
   elements.hintTwoBtn.addEventListener("click", app.hints.hintTwoMoves);
 }
+if (elements.hintMultishotBtn) {
+  elements.hintMultishotBtn.addEventListener("click", app.hints.hintMultishot);
+}
 if (elements.hintNeighborBtn) {
   elements.hintNeighborBtn.addEventListener("click", app.hints.hintWaveNeighbor);
 }
@@ -83,6 +86,14 @@ if (elements.hintTwoLevelInput) {
       return;
     }
     app.hints.setMultipleChoiceLevel(event.target.value);
+  });
+}
+if (elements.hintMultishotLevelInput) {
+  elements.hintMultishotLevelInput.addEventListener("input", function (event) {
+    if (!event || !event.target) {
+      return;
+    }
+    app.hints.setMultishotLevel(event.target.value);
   });
 }
 if (elements.hintRowLevelInput) {
@@ -417,6 +428,7 @@ window.addEventListener("resize", function () {
   if (state.hintDiag) {
     app.hints.positionDiagonalHint();
   }
+  app.hints.positionMultishotIndicator();
   app.overlays.renderGrayStones(state.currentMat);
   app.overlays.renderEnigmaOverlay();
   app.fire.startFireAnimation();
