@@ -573,6 +573,7 @@ function applyMoveAt(i, j) {
   var coord = GB.SGF_LETTERS[i] + GB.SGF_LETTERS[j];
   updateChildMoves();
 
+  var turn = utils.getTurn(state.currentNode, state.playerColor);
   var chosen = state.childMoveMap.get(coord);
   var isBlocked = state.blockedMoves.has(coord);
   var isCorrect = chosen && GB.inRightPath(chosen.node);
@@ -602,6 +603,9 @@ function applyMoveAt(i, j) {
         );
       } else {
         ui.logMessage("Second chance failed: wrong move " + utils.sgfToA1(coord));
+      }
+      if (!chosen && app.effects && app.effects.triggerBadMoveShatter) {
+        app.effects.triggerBadMoveShatter(i, j, turn);
       }
       evaluatePosition();
       return false;
@@ -635,11 +639,13 @@ function applyMoveAt(i, j) {
     state.combo = 0;
     ui.updateHud();
     ui.logMessage("Wrong move (not in tree): " + utils.sgfToA1(coord));
+    if (app.effects && app.effects.triggerBadMoveShatter) {
+      app.effects.triggerBadMoveShatter(i, j, turn);
+    }
     evaluatePosition();
     return false;
   }
 
-  var turn = utils.getTurn(state.currentNode, state.playerColor);
   app.challenges.recordGrayStone(i, j);
   app.ghost.recordGhostStone(i, j, turn);
   if (turn === state.playerColor) {

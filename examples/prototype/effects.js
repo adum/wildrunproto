@@ -4,6 +4,7 @@ var refs = app.refs;
 var state = {
   particles: [],
   rings: [],
+  badMoves: [],
   lastTime: 0,
   running: false,
 };
@@ -50,8 +51,58 @@ function stopFxAnimation() {
   }
   state.particles = [];
   state.rings = [];
+  state.badMoves = [];
   state.running = false;
   clearFxCanvas();
+}
+
+function getBoardStyle() {
+  if (!refs.board) {
+    return null;
+  }
+  var canvas = refs.board.canvas || refs.board.cursorCanvas || refs.board.board;
+  if (!canvas || !refs.board.calcSpaceAndPadding) {
+    return null;
+  }
+  var spacing = refs.board.calcSpaceAndPadding(canvas);
+  var themeOptions = refs.board.options.themeOptions || {};
+  var theme = refs.board.options.theme;
+  var themeConfig = themeOptions[theme] || {};
+  var defaultConfig = themeOptions.default || {};
+  return {
+    space: spacing.space,
+    scaledPadding: spacing.scaledPadding,
+    ratio: themeConfig.stoneRatio || defaultConfig.stoneRatio || 0.45,
+    black: themeConfig.flatBlackColor || defaultConfig.flatBlackColor || "#000",
+    white: themeConfig.flatWhiteColor || defaultConfig.flatWhiteColor || "#fff",
+    line: themeConfig.boardLineColor || defaultConfig.boardLineColor || "#5a4c3b",
+    transMat: refs.board.transMat,
+  };
+}
+
+function toCanvasPoint(i, j, radius) {
+  var style = getBoardStyle();
+  if (!style) {
+    return null;
+  }
+  var x = style.scaledPadding + i * style.space;
+  var y = style.scaledPadding + j * style.space;
+  var point = new DOMPoint(x, y);
+  var radiusPoint = new DOMPoint(x + radius, y);
+  var mat = style.transMat;
+  if (mat && typeof mat.transformPoint === "function") {
+    point = mat.transformPoint(point);
+    radiusPoint = mat.transformPoint(radiusPoint);
+  }
+  var radiusPx = Math.abs(radiusPoint.x - point.x);
+  return {
+    x: point.x,
+    y: point.y,
+    radius: radiusPx,
+    black: style.black,
+    white: style.white,
+    line: style.line,
+  };
 }
 
 function getElementCenter(el) {
@@ -161,10 +212,42 @@ function buildParticles(text, center, style) {
   return particles;
 }
 
-function drawParticles(ctx, particles) {
+function drawBadMoves(ctx, badMoves) {
+  if (!badMoves || badMoves.length === 0) {
+    return;
+  }
+  ctx.save();
+  ctx.shadowBlur = 0;
+  badMoves.forEach(function (move) {
+    var age = move.age || 0;
+    var hold = move.hold || 0;
+    var duration = move.duration || 1;
+    var alpha = 1;
+    var fill = move.baseColor;
+    var stroke = move.lineColor;
+    if (age >= hold) {
+      var t = Math.min(1, (age - hold) / Math.max(1, duration - hold));
+      alpha = Math.max(0, 1 - t);
+      fill = "rgba(210, 60, 50, 0.95)";
+      stroke = "rgba(120, 40, 30, 0.85)";
+    }
+    ctx.globalAlpha = alpha;
+    ctx.fillStyle = fill;
+    ctx.strokeStyle = stroke;
+    ctx.lineWidth = Math.max(1, move.radius * 0.08);
+    ctx.beginPath();
+    ctx.arc(move.x, move.y, move.radius, 0, Math.PI * 2, true);
+    ctx.fill();
+    ctx.stroke();
+  });
+  ctx.restore();
+}
+
+function drawParticles(ctx, particles, badMoves) {
   ctx.setTransform(1, 0, 0, 1, 0, 0);
   ctx.clearRect(0, 0, refs.fxCanvas.width, refs.fxCanvas.height);
   ctx.globalCompositeOperation = "source-over";
+  drawBadMoves(ctx, badMoves);
   state.rings.forEach(function (ring) {
     var t = ring.age / ring.life;
     var alpha = Math.max(0, 1 - t);
@@ -194,6 +277,37 @@ function drawParticles(ctx, particles) {
   ctx.globalAlpha = 1;
   ctx.shadowBlur = 0;
   ctx.globalCompositeOperation = "source-over";
+}
+
+function spawnBadMoveShards(move) {
+  var count = Math.max(12, Math.min(24, Math.round(move.radius * 0.8)));
+  var shardColor = "rgba(210, 60, 50, 0.95)";
+  for (var i = 0; i < count; i += 1) {
+    var angle = Math.random() * Math.PI * 2;
+    var speed = 140 + Math.random() * 140;
+    var life = 200 + Math.random() * 140;
+    var size = Math.max(2, move.radius * (0.12 + Math.random() * 0.12));
+    state.particles.push({
+      x: move.x + Math.cos(angle) * move.radius * 0.2,
+      y: move.y + Math.sin(angle) * move.radius * 0.2,
+      vx: Math.cos(angle) * speed,
+      vy: Math.sin(angle) * speed - 60 * Math.random(),
+      life: life,
+      age: 0,
+      size: size,
+      color: shardColor,
+    });
+  }
+  state.rings.push({
+    x: move.x,
+    y: move.y,
+    radius: move.radius * 0.4,
+    grow: move.radius * 1.3,
+    width: Math.max(2, move.radius * 0.2),
+    age: 0,
+    life: 200,
+    color: "rgba(190, 50, 40, 0.55)",
+  });
 }
 
 function tickFx(timestamp) {
@@ -228,13 +342,30 @@ function tickFx(timestamp) {
       nextRings.push(ring);
     }
   });
+  var nextBadMoves = [];
+  state.badMoves.forEach(function (move) {
+    move.age = timestamp - move.start;
+    if (move.age >= move.duration) {
+      return;
+    }
+    if (move.age >= move.hold && !move.shattered) {
+      move.shattered = true;
+      spawnBadMoveShards(move);
+    }
+    nextBadMoves.push(move);
+  });
   state.particles = next;
   state.rings = nextRings;
+  state.badMoves = nextBadMoves;
   var ctx = refs.fxCanvas.getContext("2d");
   if (ctx) {
-    drawParticles(ctx, state.particles);
+    drawParticles(ctx, state.particles, state.badMoves);
   }
-  if (state.particles.length > 0 || state.rings.length > 0) {
+  if (
+    state.particles.length > 0 ||
+    state.rings.length > 0 ||
+    state.badMoves.length > 0
+  ) {
     refs.fxAnimId = requestAnimationFrame(tickFx);
   } else {
     refs.fxAnimId = null;
@@ -290,7 +421,40 @@ function triggerTimerShatter(sourceEl) {
   }
 }
 
+function triggerBadMoveShatter(i, j, ki) {
+  if (!refs.fxCanvas || !refs.board) {
+    return;
+  }
+  syncFxCanvas();
+  var style = getBoardStyle();
+  if (!style || style.space <= 0) {
+    return;
+  }
+  var radius = style.space * style.ratio;
+  var point = toCanvasPoint(i, j, radius);
+  if (!point) {
+    return;
+  }
+  var baseColor = ki === app.GB.Ki.White ? point.white : point.black;
+  state.badMoves.push({
+    x: point.x,
+    y: point.y,
+    radius: point.radius,
+    baseColor: baseColor,
+    lineColor: point.line,
+    start: performance.now(),
+    hold: 180,
+    duration: 500,
+    age: 0,
+    shattered: false,
+  });
+  if (!refs.fxAnimId) {
+    refs.fxAnimId = requestAnimationFrame(tickFx);
+  }
+}
+
 app.effects.syncFxCanvas = syncFxCanvas;
 app.effects.clearFxCanvas = clearFxCanvas;
 app.effects.stopFxAnimation = stopFxAnimation;
 app.effects.triggerTimerShatter = triggerTimerShatter;
+app.effects.triggerBadMoveShatter = triggerBadMoveShatter;
