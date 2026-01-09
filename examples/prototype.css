@@ -977,6 +977,41 @@ select {
   min-width: 160px;
 }
 
+.play-overlay__cta--secondary {
+  min-width: 160px;
+  background: rgba(120, 110, 100, 0.12);
+  border-color: rgba(90, 70, 50, 0.35);
+  color: var(--muted);
+}
+
+.play-overlay__cta--secondary:hover {
+  box-shadow: 0 6px 14px rgba(70, 50, 30, 0.12);
+  transform: translateY(-1px);
+}
+
+.start-passives {
+  width: min(320px, 80vw);
+  display: grid;
+  gap: 8px;
+  text-align: left;
+  justify-items: stretch;
+}
+
+.start-passives.is-hidden {
+  display: none;
+}
+
+.start-passives__label {
+  font-size: 12px;
+  color: var(--muted);
+  letter-spacing: 0.02em;
+}
+
+.start-passives__list {
+  display: grid;
+  gap: 6px;
+}
+
 .play-overlay--shop .play-overlay__panel {
   min-width: 420px;
   max-width: 520px;

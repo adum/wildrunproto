@@ -24,6 +24,9 @@ var refs = app.refs;
 
 var startOverlay = document.getElementById("startOverlay");
 var startGameBtn = document.getElementById("startGameBtn");
+var startPassiveSection = document.getElementById("startPassiveSection");
+var startPassiveList = document.getElementById("startPassiveList");
+var resetStateBtn = document.getElementById("resetStateBtn");
 var advanceOverlay = document.getElementById("advanceOverlay");
 var advanceLabel = document.getElementById("advanceLabel");
 var advanceBtn = document.getElementById("advanceBtn");
@@ -293,6 +296,7 @@ var CHALLENGE_DEFS = {
 };
 
 var problemIndex = buildProblemIndex(problems);
+var PASSIVE_STORAGE_KEY = "wildrun.passives";
 
 var game = {
   started: false,
@@ -312,6 +316,7 @@ var game = {
   isBoss: false,
   map: null,
 };
+game.passives = loadStoredPassives();
 
 app.handlers.onPuzzleSolved = function () {
   if (!game.started || !game.levelActive) {
@@ -473,6 +478,79 @@ function clampNumber(value, min, max) {
     return max;
   }
   return num;
+}
+
+function getStorage() {
+  try {
+    return window.localStorage || null;
+  } catch (error) {
+    return null;
+  }
+}
+
+function normalizePassives(list) {
+  if (!Array.isArray(list)) {
+    return [];
+  }
+  var ordered = [];
+  var lookup = {};
+  list.forEach(function (item) {
+    if (!item || !item.id) {
+      return;
+    }
+    var id = String(item.id);
+    var def = PASSIVE_DEFS[id];
+    if (!def) {
+      return;
+    }
+    var bounds = getPassiveLevelBounds(id);
+    var level = clampNumber(item.level, bounds.min, bounds.max);
+    if (!lookup[id]) {
+      lookup[id] = { id: id, level: level };
+      ordered.push(id);
+      return;
+    }
+    if (level > lookup[id].level) {
+      lookup[id].level = level;
+    }
+  });
+  return ordered.map(function (id) {
+    return lookup[id];
+  });
+}
+
+function loadStoredPassives() {
+  var storage = getStorage();
+  if (!storage) {
+    return [];
+  }
+  var raw = storage.getItem(PASSIVE_STORAGE_KEY);
+  if (!raw) {
+    return [];
+  }
+  try {
+    return normalizePassives(JSON.parse(raw));
+  } catch (error) {
+    return [];
+  }
+}
+
+function persistPassives() {
+  var normalized = normalizePassives(game.passives);
+  game.passives = normalized;
+  var storage = getStorage();
+  if (!storage) {
+    return;
+  }
+  if (!normalized.length) {
+    storage.removeItem(PASSIVE_STORAGE_KEY);
+    return;
+  }
+  try {
+    storage.setItem(PASSIVE_STORAGE_KEY, JSON.stringify(normalized));
+  } catch (error) {
+    // Ignore storage failures (quota/private mode).
+  }
 }
 
 function shuffle(list) {
@@ -718,12 +796,12 @@ function resetHintLevels() {
   app.hints.setElimRandomLevel(1);
 }
 
-function renderPassives() {
-  if (!passiveList) {
+function renderPassiveChips(listEl, passives, showIndicators) {
+  if (!listEl) {
     return;
   }
-  passiveList.textContent = "";
-  game.passives.forEach(function (passive) {
+  listEl.textContent = "";
+  (passives || []).forEach(function (passive) {
     var def = PASSIVE_DEFS[passive.id];
     if (!def) {
       return;
@@ -734,7 +812,7 @@ function renderPassives() {
     item.dataset.passiveId = passive.id;
     var label = document.createElement("span");
     label.textContent = def.label;
-    if (def.indicatorKey) {
+    if (showIndicators && def.indicatorKey) {
       var indicator = document.createElement("span");
       indicator.className = "play-chip__indicator";
       if (state[def.indicatorKey]) {
@@ -752,8 +830,25 @@ function renderPassives() {
         item.appendChild(level);
       }
     }
-    passiveList.appendChild(item);
+    listEl.appendChild(item);
   });
+}
+
+function renderPassives() {
+  renderPassiveChips(passiveList, game.passives, true);
+}
+
+function renderStartPassives() {
+  if (!startPassiveSection || !startPassiveList) {
+    return;
+  }
+  if (!game.passives || game.passives.length === 0) {
+    startPassiveList.textContent = "";
+    startPassiveSection.classList.add("is-hidden");
+    return;
+  }
+  startPassiveSection.classList.remove("is-hidden");
+  renderPassiveChips(startPassiveList, game.passives, false);
 }
 
 function renderHints() {
@@ -995,7 +1090,9 @@ function renderShopList(listEl, items, defs, type) {
         renderHints();
         item.purchased = true;
       } else if (type === "passive") {
-        game.passives.push({ id: item.id, level: 1 });
+        ensurePassiveLevel(item.id, 1);
+        persistPassives();
+        renderStartPassives();
         applyPassives();
         renderPassives();
         item.purchased = true;
@@ -1157,6 +1254,26 @@ function addAdminHint() {
   renderHints();
 }
 
+function ensurePassiveLevel(id, level) {
+  if (!id || !PASSIVE_DEFS[id]) {
+    return null;
+  }
+  var bounds = getPassiveLevelBounds(id);
+  var safeLevel = clampNumber(level, bounds.min, bounds.max);
+  var existing = game.passives.find(function (passive) {
+    return passive.id === id;
+  });
+  if (existing) {
+    if (safeLevel > existing.level) {
+      existing.level = safeLevel;
+    }
+    return existing;
+  }
+  var entry = { id: id, level: safeLevel };
+  game.passives.push(entry);
+  return entry;
+}
+
 function addAdminPassive() {
   if (!adminPassiveSelect) {
     return;
@@ -1172,14 +1289,9 @@ function addAdminPassive() {
     bounds.min,
     bounds.max
   );
-  var existing = game.passives.find(function (passive) {
-    return passive.id === id;
-  });
-  if (existing) {
-    existing.level = level;
-  } else {
-    game.passives.push({ id: id, level: level });
-  }
+  ensurePassiveLevel(id, level);
+  persistPassives();
+  renderStartPassives();
   if (app.passives && app.passives.updateCaptureIndicators) {
     app.passives.updateCaptureIndicators();
   }
@@ -1270,11 +1382,22 @@ function pruneUsedHints() {
 }
 
 function setupPassives(config) {
-  var passiveIds = pickRandom(config.passivePool, config.passivesPerRun);
-  game.passives = passiveIds.map(function (id) {
-    return { id: id, level: 1 };
+  var pool = config.passivePool.filter(function (id) {
+    return PASSIVE_DEFS[id];
   });
+  if (!pool.length) {
+    pool = Object.keys(PASSIVE_DEFS);
+  }
+  game.passives = normalizePassives(game.passives);
+  if (!game.passives.length) {
+    var passiveIds = pickRandom(pool, Math.max(1, config.passivesPerRun));
+    passiveIds.forEach(function (id) {
+      ensurePassiveLevel(id, 1);
+    });
+  }
+  persistPassives();
   renderPassives();
+  renderStartPassives();
   applyPassives();
 }
 
@@ -1738,7 +1861,9 @@ function buildTreasureUpgradeOption(config) {
         if (passivePool.length && Math.random() < 0.5) {
           var passiveId =
             passivePool[Math.floor(Math.random() * passivePool.length)];
-          game.passives.push({ id: passiveId, level: 1 });
+          ensurePassiveLevel(passiveId, 1);
+          persistPassives();
+          renderStartPassives();
           applyPassives();
           renderPassives();
           logEvent("Treasure claimed: passive.", { passive: passiveId, level: 1 });
@@ -1760,12 +1885,15 @@ function buildTreasureUpgradeOption(config) {
         });
         return;
       }
-      var bounds = getPassiveLevelBounds(choice.target.id);
-      choice.target.level = clampNumber(
-        choice.target.level + 1,
-        bounds.min,
-        bounds.max
+      var updated = ensurePassiveLevel(
+        choice.target.id,
+        choice.target.level + 1
       );
+      if (updated) {
+        choice.target.level = updated.level;
+      }
+      persistPassives();
+      renderStartPassives();
       applyPassives();
       renderPassives();
       flashUpgradedItem("passive", choice.target.id);
@@ -1923,6 +2051,7 @@ function showStartOverlay() {
   if (startOverlay) {
     startOverlay.classList.remove("is-hidden");
   }
+  renderStartPassives();
   hideMapOverlay();
   hideTreasureOverlay();
   hideShopOverlay();
@@ -1971,17 +2100,16 @@ function endGame() {
   game.currentNode = null;
   game.map = null;
   game.hints = [];
-  game.passives = [];
   game.challenges = [];
   game.shop = { hints: [], passives: [] };
   game.isBoss = false;
   state.coins = 0;
-  renderHints();
-  renderPassives();
-  renderChallenges();
   app.passives.resetPassives();
   app.challenges.resetChallenges();
   app.hints.clearHints();
+  renderHints();
+  renderPassives();
+  renderChallenges();
   app.ui.setStatus("Game over. Start a new run.", "error");
   app.ui.updateHud();
   hideRetryOverlay();
@@ -2034,6 +2162,28 @@ if (startGameBtn) {
       event.stopPropagation();
     }
     startGame();
+  });
+}
+
+if (resetStateBtn) {
+  resetStateBtn.addEventListener("click", function (event) {
+    if (event) {
+      event.stopPropagation();
+    }
+    var confirmMessage =
+      "Reset state? This clears all saved passives. " +
+      "Starting a new game will grant one random passive again.";
+    if (!window.confirm(confirmMessage)) {
+      return;
+    }
+    game.passives = [];
+    persistPassives();
+    if (app.passives && app.passives.resetPassives) {
+      app.passives.resetPassives();
+    }
+    renderPassives();
+    renderStartPassives();
+    logEvent("Passives reset.");
   });
 }
 
@@ -2234,6 +2384,8 @@ if (playMapCanvas) {
 
 initAdminPanel();
 app.ui.updateHud();
+renderPassives();
+renderStartPassives();
 
 function getCoinAwardBreakdown() {
   var config = getPlayConfig();
