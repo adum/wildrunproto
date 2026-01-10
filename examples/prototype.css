@@ -34,6 +34,19 @@ body {
     linear-gradient(130deg, var(--wash-1), var(--wash-2));
 }
 
+body.play-mode {
+  background: linear-gradient(
+      120deg,
+      rgba(255, 248, 236, 0.78),
+      rgba(238, 226, 210, 0.65)
+    ),
+    url("./img/pagoda.png");
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-attachment: fixed;
+}
+
 .page {
   min-height: 100vh;
   display: block;
