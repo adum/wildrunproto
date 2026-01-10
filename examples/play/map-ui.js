@@ -3,6 +3,7 @@ const ICON_SOURCES = {
   boss: './img/boss_problem0.svg',
   levelBoss: './img/levelboss_problem0.svg',
   shop: './img/shop0.svg',
+  passiveShop: './img/shop-passive.svg',
   treasure: './img/treasure2.svg',
   start: './img/info-circle.svg'
 };
@@ -30,7 +31,11 @@ const TYPE_DEFS = {
   },
   shop: {
     label: 'Shop',
-    description: 'Spend coins on hints or passives.'
+    description: 'Spend coins on hints.'
+  },
+  passiveShop: {
+    label: 'Passive Shop',
+    description: 'Buy passives and upgrades.'
   },
   treasure: {
     label: 'Treasure',
@@ -58,11 +63,13 @@ function getVoidChance(weights, allowVoid) {
   if (!allowVoid) {
     return 0;
   }
+  var passiveShopWeight = weights.passiveShop || 0;
   var total =
     weights.problem +
     weights.boss +
     weights.empty +
     weights.shop +
+    passiveShopWeight +
     weights.treasure +
     weights.void;
   if (!total) {
@@ -155,11 +162,13 @@ function buildRowRanges(counts) {
 }
 
 function pickType(weights) {
+  var passiveShopWeight = weights.passiveShop || 0;
   var weighted = [
     { key: 'problem', weight: weights.problem },
     { key: 'boss', weight: weights.boss },
     { key: 'empty', weight: weights.empty },
     { key: 'shop', weight: weights.shop },
+    { key: 'passiveShop', weight: passiveShopWeight },
     { key: 'treasure', weight: weights.treasure }
   ];
   var total = weighted.reduce(function (sum, entry) {
@@ -744,12 +753,15 @@ function createPlayMap(options) {
     if (type === 'levelBoss') {
       return '#f7e2e2';
     }
-    if (type === 'shop') {
-      return '#e8f3f1';
-    }
-    if (type === 'treasure') {
-      return '#fff1cf';
-    }
+  if (type === 'shop') {
+    return '#e8f3f1';
+  }
+  if (type === 'passiveShop') {
+    return '#eef2f6';
+  }
+  if (type === 'treasure') {
+    return '#fff1cf';
+  }
     return '#fef8ef';
   }
 

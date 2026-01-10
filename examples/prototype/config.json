@@ -105,6 +105,7 @@
         "boss": 1,
         "empty": 2,
         "shop": 1,
+        "passiveShop": 1,
         "treasure": 1,
         "void": 1
       }
@@ -211,7 +212,7 @@
       "frequency": 3,
       "startAfterLevel": 1,
       "hintCount": 2,
-      "passiveCount": 1,
+      "passiveCount": 0,
       "hintPool": [
         "firstMove",
         "multipleChoice",
@@ -247,6 +248,27 @@
           "bigMoney": 12,
           "shopaholic": 12
         }
+      }
+    },
+    "passiveShop": {
+      "passiveCount": 2,
+      "upgradeCount": 1,
+      "passivePool": [
+        "timeExtend",
+        "secondChance",
+        "freeUpgrades",
+        "bigMoney",
+        "shopaholic"
+      ],
+      "prices": {
+        "passives": {
+          "timeExtend": 12,
+          "secondChance": 14,
+          "freeUpgrades": 10,
+          "bigMoney": 12,
+          "shopaholic": 12
+        },
+        "upgrades": {}
       }
     },
     "hintPool": [

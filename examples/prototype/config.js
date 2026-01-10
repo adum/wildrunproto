@@ -107,6 +107,7 @@ var DEFAULT_CONFIG = {
         boss: 1,
         empty: 2,
         shop: 1,
+        passiveShop: 1,
         treasure: 1,
         void: 1,
       },
@@ -213,7 +214,7 @@ var DEFAULT_CONFIG = {
       frequency: 3,
       startAfterLevel: 1,
       hintCount: 2,
-      passiveCount: 1,
+      passiveCount: 0,
       hintPool: [
         "firstMove",
         "multipleChoice",
@@ -249,6 +250,27 @@ var DEFAULT_CONFIG = {
           bigMoney: 12,
           shopaholic: 12,
         },
+      },
+    },
+    passiveShop: {
+      passiveCount: 2,
+      upgradeCount: 1,
+      passivePool: [
+        "timeExtend",
+        "secondChance",
+        "freeUpgrades",
+        "bigMoney",
+        "shopaholic",
+      ],
+      prices: {
+        passives: {
+          timeExtend: 12,
+          secondChance: 14,
+          freeUpgrades: 10,
+          bigMoney: 12,
+          shopaholic: 12,
+        },
+        upgrades: {},
       },
     },
     hintPool: [

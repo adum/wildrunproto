@@ -1168,6 +1168,10 @@ select {
   gap: 6px;
 }
 
+.shop-section.is-hidden {
+  display: none;
+}
+
 .shop-section__label {
   font-size: 11px;
   letter-spacing: 0.08em;

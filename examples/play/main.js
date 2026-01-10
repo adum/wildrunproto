@@ -37,8 +37,13 @@ var shopOverlay = document.getElementById("shopOverlay");
 var shopTitle = document.getElementById("shopTitle");
 var shopSubtitle = document.getElementById("shopSubtitle");
 var shopContinueBtn = document.getElementById("shopContinueBtn");
+var shopCoinsIcon = document.getElementById("shopCoinsIcon");
 var shopCoinsValue = document.getElementById("shopCoinsValue");
+var shopHintSection = document.getElementById("shopHintSection");
+var shopHintLabel = document.getElementById("shopHintLabel");
 var shopHintList = document.getElementById("shopHintList");
+var shopPassiveSection = document.getElementById("shopPassiveSection");
+var shopPassiveLabel = document.getElementById("shopPassiveLabel");
 var shopPassiveList = document.getElementById("shopPassiveList");
 var coinBurst = document.getElementById("coinBurst");
 var adminToggle = document.getElementById("adminToggle");
@@ -387,6 +392,11 @@ function getPlayConfig() {
   var shopPassivePool = Array.isArray(shop.passivePool)
     ? shop.passivePool.slice()
     : ["timeExtend", "secondChance", "freeUpgrades", "bigMoney", "shopaholic"];
+  var passiveShop = config.passiveShop || {};
+  var passiveShopPrices = passiveShop.prices || {};
+  var passiveShopPassivePool = Array.isArray(passiveShop.passivePool)
+    ? passiveShop.passivePool.slice()
+    : shopPassivePool.slice();
   return {
     startDifficulty: config.startDifficulty || "30kyu",
     difficultyStep: toNumber(config.difficultyStep, 1),
@@ -415,6 +425,7 @@ function getPlayConfig() {
         boss: Math.max(0, toNumber(mapWeights.boss, 1)),
         empty: Math.max(0, toNumber(mapWeights.empty, 2)),
         shop: Math.max(0, toNumber(mapWeights.shop, 1)),
+        passiveShop: Math.max(0, toNumber(mapWeights.passiveShop, 1)),
         treasure: Math.max(0, toNumber(mapWeights.treasure, 1)),
         void: Math.max(0, toNumber(mapWeights.void, 1)),
       },
@@ -434,6 +445,15 @@ function getPlayConfig() {
       prices: {
         hints: shopPrices.hints || {},
         passives: shopPrices.passives || {},
+      },
+    },
+    passiveShop: {
+      passiveCount: Math.max(0, toNumber(passiveShop.passiveCount, 2)),
+      upgradeCount: Math.max(0, toNumber(passiveShop.upgradeCount, 1)),
+      passivePool: passiveShopPassivePool,
+      prices: {
+        passives: passiveShopPrices.passives || shopPrices.passives || {},
+        upgrades: passiveShopPrices.upgrades || {},
       },
     },
     hintPool: hintPool,
@@ -459,6 +479,14 @@ function getShopPrice(priceMap, id) {
     return null;
   }
   return Math.max(0, Math.round(value));
+}
+
+function getPassiveUpgradePrice(passivePrices, upgradePrices, id) {
+  var upgrade = getShopPrice(upgradePrices, id);
+  if (upgrade !== null) {
+    return upgrade;
+  }
+  return getShopPrice(passivePrices, id);
 }
 
 function getLevelBoundsSafe(levelKey, fallbackMin, fallbackMax) {
@@ -1000,61 +1028,111 @@ function updateShopCoins() {
   if (!shopCoinsValue) {
     return;
   }
-  var rounded = Math.round(state.coins || 0);
+  var isPassiveShop = game.shop && game.shop.type === "passiveShop";
+  var rounded = Math.round(
+    (isPassiveShop ? state.bankedCoins : state.coins) || 0
+  );
   shopCoinsValue.textContent = String(rounded);
+  if (shopCoinsIcon) {
+    shopCoinsIcon.className = isPassiveShop ? "bank-icon" : "coin-icon";
+  }
 }
 
-function buildShopInventory(config) {
-  var shopConfig = config.shop;
+function buildShopInventory(config, shopType) {
+  var isPassiveShop = shopType === "passiveShop";
+  var resolvedType = isPassiveShop ? "passiveShop" : "shop";
+  var shopConfig = isPassiveShop ? config.passiveShop || config.shop : config.shop;
   if (!shopConfig) {
-    game.shop = { hints: [], passives: [] };
+    game.shop = { hints: [], passives: [], type: resolvedType };
     return;
   }
   var shopBonus =
     app.passives && app.passives.getShopaholicBonus
       ? app.passives.getShopaholicBonus()
       : 0;
-  var extraHints = Math.ceil(shopBonus / 2);
-  var extraPassives = Math.max(0, shopBonus - extraHints);
   var hintPrices = shopConfig.prices ? shopConfig.prices.hints : {};
   var passivePrices = shopConfig.prices ? shopConfig.prices.passives : {};
-  var ownedPassives = new Set(
-    game.passives.map(function (passive) {
-      return passive.id;
-    })
-  );
-  var hintCandidates = shopConfig.hintPool.filter(function (id) {
-    if (!HINT_DEFS[id]) {
-      return false;
-    }
-    return getShopPrice(hintPrices, id) !== null;
-  });
-  var passiveCandidates = shopConfig.passivePool.filter(function (id) {
-    if (!PASSIVE_DEFS[id]) {
-      return false;
-    }
-    if (ownedPassives.has(id)) {
-      return false;
-    }
-    return getShopPrice(passivePrices, id) !== null;
-  });
-  var hintTargetCount = Math.max(0, shopConfig.hintCount + extraHints);
-  var passiveTargetCount = Math.max(0, shopConfig.passiveCount + extraPassives);
-  var hints = pickRandom(hintCandidates, hintTargetCount).map(function (id) {
-    return {
-      id: id,
-      price: getShopPrice(hintPrices, id),
-      purchased: false,
-    };
-  });
-  var passives = pickRandom(passiveCandidates, passiveTargetCount).map(function (id) {
-    return {
-      id: id,
-      price: getShopPrice(passivePrices, id),
-      purchased: false,
-    };
-  });
-  game.shop = { hints: hints, passives: passives };
+  var upgradePrices = shopConfig.prices ? shopConfig.prices.upgrades : {};
+  var hints = [];
+  var passives = [];
+  if (!isPassiveShop) {
+    var hintCandidates = shopConfig.hintPool.filter(function (id) {
+      if (!HINT_DEFS[id]) {
+        return false;
+      }
+      return getShopPrice(hintPrices, id) !== null;
+    });
+    var hintTargetCount = Math.max(0, shopConfig.hintCount + Math.max(0, shopBonus));
+    hints = pickRandom(hintCandidates, hintTargetCount).map(function (id) {
+      return {
+        id: id,
+        price: getShopPrice(hintPrices, id),
+        purchased: false,
+      };
+    });
+  } else {
+    var ownedPassives = new Set(
+      game.passives.map(function (passive) {
+        return passive.id;
+      })
+    );
+    var passivePool = Array.isArray(shopConfig.passivePool)
+      ? shopConfig.passivePool
+      : [];
+    var passivePoolSet = new Set(passivePool);
+    var passiveCandidates = passivePool.filter(function (id) {
+      if (!PASSIVE_DEFS[id]) {
+        return false;
+      }
+      if (ownedPassives.has(id)) {
+        return false;
+      }
+      return getShopPrice(passivePrices, id) !== null;
+    });
+    var passiveTargetCount = Math.max(
+      0,
+      shopConfig.passiveCount + Math.max(0, shopBonus)
+    );
+    var newPassives = pickRandom(passiveCandidates, passiveTargetCount).map(
+      function (id) {
+        return {
+          id: id,
+          price: getShopPrice(passivePrices, id),
+          purchased: false,
+        };
+      }
+    );
+    var upgradeCandidates = game.passives
+      .map(function (passive) {
+        if (!passivePoolSet.has(passive.id)) {
+          return null;
+        }
+        var bounds = getPassiveLevelBounds(passive.id);
+        if (passive.level >= bounds.max) {
+          return null;
+        }
+        var price = getPassiveUpgradePrice(
+          passivePrices,
+          upgradePrices,
+          passive.id
+        );
+        if (price === null) {
+          return null;
+        }
+        return {
+          id: passive.id,
+          level: passive.level + 1,
+          price: price,
+          purchased: false,
+          upgrade: true,
+        };
+      })
+      .filter(Boolean);
+    var upgradeTargetCount = Math.max(0, shopConfig.upgradeCount);
+    var upgrades = pickRandom(upgradeCandidates, upgradeTargetCount);
+    passives = upgrades.concat(newPassives);
+  }
+  game.shop = { hints: hints, passives: passives, type: resolvedType };
 }
 
 function renderShopList(listEl, items, defs, type) {
@@ -1076,16 +1154,28 @@ function renderShopList(listEl, items, defs, type) {
     }
     var row = document.createElement("div");
     row.className = "shop-item";
-    row.title = def.tooltip || "";
+    if (type === "passive" && item.upgrade) {
+      var baseTooltip = def.tooltip ? def.tooltip + " " : "";
+      row.title = baseTooltip + "Upgrade to L" + (item.level || 1) + ".";
+    } else {
+      row.title = def.tooltip || "";
+    }
     var info = document.createElement("div");
     info.className = "shop-item__info";
     var name = document.createElement("div");
     name.className = "shop-item__name";
-    name.textContent = def.label;
+    var nameText = def.label;
+    if (type === "passive" && item.upgrade) {
+      nameText = "Upgrade: " + def.label;
+      if (item.level) {
+        nameText += " (L" + item.level + ")";
+      }
+    }
+    name.textContent = nameText;
     var priceRow = document.createElement("div");
     priceRow.className = "shop-item__price";
     var priceIcon = document.createElement("span");
-    priceIcon.className = "coin-icon";
+    priceIcon.className = type === "passive" ? "bank-icon" : "coin-icon";
     priceIcon.setAttribute("aria-hidden", "true");
     var priceValue = document.createElement("span");
     if (item.price <= 0) {
@@ -1102,7 +1192,9 @@ function renderShopList(listEl, items, defs, type) {
     button.type = "button";
     button.className = "button shop-buy";
     var isSoldOut = item.purchased;
-    var canAfford = item.price <= (state.coins || 0);
+    var currentBalance =
+      type === "passive" ? state.bankedCoins || 0 : state.coins || 0;
+    var canAfford = item.price <= currentBalance;
     if (isSoldOut) {
       row.classList.add("is-owned");
       button.textContent = "Sold out";
@@ -1121,24 +1213,43 @@ function renderShopList(listEl, items, defs, type) {
       if (isSoldOut) {
         return;
       }
-      var currentCoins = state.coins || 0;
-      if (item.price > currentCoins) {
+      var activeBalance =
+        type === "passive" ? state.bankedCoins || 0 : state.coins || 0;
+      if (item.price > activeBalance) {
         row.classList.remove("is-warn");
         void row.offsetWidth;
         row.classList.add("is-warn");
         return;
       }
-      state.coins = (state.coins || 0) - item.price;
+      if (type === "passive") {
+        state.bankedCoins = Math.max(
+          0,
+          Math.round(state.bankedCoins || 0) - item.price
+        );
+        persistBankedCoins();
+      } else {
+        state.coins = (state.coins || 0) - item.price;
+      }
       if (type === "hint") {
         game.hints.push(createHintItem(item.id));
         renderHints();
         item.purchased = true;
       } else if (type === "passive") {
-        ensurePassiveLevel(item.id, 1);
-        persistPassives();
-        renderStartPassives();
-        applyPassives();
-        renderPassives();
+        if (item.upgrade) {
+          var nextLevel = item.level || 1;
+          ensurePassiveLevel(item.id, nextLevel);
+          persistPassives();
+          renderStartPassives();
+          applyPassives();
+          renderPassives();
+          flashUpgradedItem("passive", item.id);
+        } else {
+          ensurePassiveLevel(item.id, 1);
+          persistPassives();
+          renderStartPassives();
+          applyPassives();
+          renderPassives();
+        }
         item.purchased = true;
       }
       app.ui.updateHud();
@@ -1151,8 +1262,32 @@ function renderShopList(listEl, items, defs, type) {
 
 function renderShop() {
   updateShopCoins();
-  renderShopList(shopHintList, game.shop.hints, HINT_DEFS, "hint");
+  var isPassiveShop = game.shop && game.shop.type === "passiveShop";
+  if (shopHintSection) {
+    shopHintSection.classList.toggle("is-hidden", isPassiveShop);
+  }
+  if (shopPassiveSection) {
+    shopPassiveSection.classList.toggle("is-hidden", !isPassiveShop);
+  }
+  if (shopHintLabel) {
+    shopHintLabel.textContent = "Hints";
+  }
+  if (shopPassiveLabel) {
+    shopPassiveLabel.textContent = isPassiveShop
+      ? "Passives & Upgrades"
+      : "Passives";
+  }
+  if (!isPassiveShop) {
+    renderShopList(shopHintList, game.shop.hints, HINT_DEFS, "hint");
+    if (shopPassiveList) {
+      shopPassiveList.textContent = "";
+    }
+    return;
+  }
   renderShopList(shopPassiveList, game.shop.passives, PASSIVE_DEFS, "passive");
+  if (shopHintList) {
+    shopHintList.textContent = "";
+  }
 }
 
 function getSortedDefIds(defs) {
@@ -1769,21 +1904,24 @@ function hideCongratsOverlay() {
   }
 }
 
-function showShopOverlay() {
+function showShopOverlay(shopType) {
   if (!shopOverlay || !shopContinueBtn) {
     showMapOverlay();
     return;
   }
   game.levelActive = false;
   var config = getPlayConfig();
+  var isPassiveShop = shopType === "passiveShop";
   if (shopTitle) {
-    shopTitle.textContent = "Shop";
+    shopTitle.textContent = isPassiveShop ? "Passive Shop" : "Shop";
   }
   if (shopSubtitle) {
-    shopSubtitle.textContent = "Pick an item, then return to the map.";
+    shopSubtitle.textContent = isPassiveShop
+      ? "Spend banked coins on passives or upgrades."
+      : "Pick an item, then return to the map.";
   }
   shopContinueBtn.textContent = "Back to Map";
-  buildShopInventory(config);
+  buildShopInventory(config, shopType);
   renderShop();
   shopOverlay.classList.remove("is-hidden");
   hideRetryOverlay();
@@ -2040,8 +2178,8 @@ function handleMapMove(node) {
   }
   game.currentNode = node;
   logEvent("Map move selected.", { type: node.type });
-  if (node.type === "shop") {
-    showShopOverlay();
+  if (node.type === "shop" || node.type === "passiveShop") {
+    showShopOverlay(node.type);
     return;
   }
   if (node.type === "treasure") {
