@@ -297,6 +297,7 @@ var CHALLENGE_DEFS = {
 
 var problemIndex = buildProblemIndex(problems);
 var PASSIVE_STORAGE_KEY = "wildrun.passives";
+var BANKED_STORAGE_KEY = "wildrun.bankedCoins";
 
 var game = {
   started: false,
@@ -317,6 +318,7 @@ var game = {
   map: null,
 };
 game.passives = loadStoredPassives();
+state.bankedCoins = loadBankedCoins();
 
 app.handlers.onPuzzleSolved = function () {
   if (!game.started || !game.levelActive) {
@@ -551,6 +553,48 @@ function persistPassives() {
   } catch (error) {
     // Ignore storage failures (quota/private mode).
   }
+}
+
+function loadBankedCoins() {
+  var storage = getStorage();
+  if (!storage) {
+    return 0;
+  }
+  var raw = storage.getItem(BANKED_STORAGE_KEY);
+  if (raw === null || raw === undefined || raw === "") {
+    return 0;
+  }
+  var value = Number(raw);
+  if (!Number.isFinite(value) || value < 0) {
+    return 0;
+  }
+  return Math.round(value);
+}
+
+function persistBankedCoins() {
+  var storage = getStorage();
+  if (!storage) {
+    return;
+  }
+  var banked = Math.max(0, Math.round(state.bankedCoins || 0));
+  if (banked <= 0) {
+    storage.removeItem(BANKED_STORAGE_KEY);
+    return;
+  }
+  try {
+    storage.setItem(BANKED_STORAGE_KEY, String(banked));
+  } catch (error) {
+    // Ignore storage failures (quota/private mode).
+  }
+}
+
+function addBankedCoins(amount) {
+  var gain = Math.round(toNumber(amount, 0));
+  if (!Number.isFinite(gain) || gain <= 0) {
+    return;
+  }
+  state.bankedCoins = Math.max(0, Math.round(state.bankedCoins || 0)) + gain;
+  persistBankedCoins();
 }
 
 function shuffle(list) {
@@ -1233,6 +1277,7 @@ function addAdminCoins() {
     return;
   }
   state.coins = (state.coins || 0) + amount;
+  addBankedCoins(amount);
   app.ui.updateHud();
   updateShopCoins();
   if (shopOverlay && !shopOverlay.classList.contains("is-hidden")) {
@@ -1914,6 +1959,7 @@ function buildTreasureOptions(config) {
     desc: "Pocket a stash of extra coins.",
     apply: function () {
       state.coins = (state.coins || 0) + coinAmount;
+      addBankedCoins(coinAmount);
       app.ui.updateHud();
       updateShopCoins();
       flashCoinAward(coinAmount);
@@ -2171,18 +2217,21 @@ if (resetStateBtn) {
       event.stopPropagation();
     }
     var confirmMessage =
-      "Reset state? This clears all saved passives. " +
+      "Reset state? This clears all saved passives and banked coins. " +
       "Starting a new game will grant one random passive again.";
     if (!window.confirm(confirmMessage)) {
       return;
     }
     game.passives = [];
     persistPassives();
+    state.bankedCoins = 0;
+    persistBankedCoins();
     if (app.passives && app.passives.resetPassives) {
       app.passives.resetPassives();
     }
     renderPassives();
     renderStartPassives();
+    app.ui.updateHud();
     logEvent("Passives reset.");
   });
 }
@@ -2585,6 +2634,7 @@ function awardCoins() {
     return;
   }
   state.coins = (state.coins || 0) + award;
+  addBankedCoins(award);
   app.ui.updateHud();
   updateShopCoins();
   if (shopOverlay && !shopOverlay.classList.contains("is-hidden")) {

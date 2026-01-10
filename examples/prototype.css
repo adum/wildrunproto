@@ -487,6 +487,45 @@ body.play-mode {
   box-shadow: 0 2px 4px rgba(90, 60, 25, 0.25);
 }
 
+.bank-icon {
+  width: 16px;
+  height: 14px;
+  border-radius: 3px;
+  position: relative;
+  background: linear-gradient(135deg, #f1e9dd, #cbbca7);
+  border: 1px solid rgba(90, 70, 50, 0.55);
+  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.6),
+    0 2px 4px rgba(60, 50, 40, 0.22);
+}
+
+.bank-icon::before {
+  content: "";
+  position: absolute;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  left: 4px;
+  top: 3px;
+  border: 1px solid rgba(90, 70, 50, 0.6);
+  background: radial-gradient(
+      circle at 35% 35%,
+      rgba(255, 255, 255, 0.85),
+      rgba(255, 255, 255, 0)
+    ),
+    linear-gradient(135deg, #f5efe6, #cbbca7);
+}
+
+.bank-icon::after {
+  content: "";
+  position: absolute;
+  width: 10px;
+  height: 2px;
+  left: 3px;
+  bottom: 2px;
+  border-radius: 2px;
+  background: rgba(90, 70, 50, 0.55);
+}
+
 .coins-value {
   font-weight: 700;
   color: var(--accent-ink);
