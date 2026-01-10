@@ -3,7 +3,7 @@ const ICON_SOURCES = {
   boss: './img/boss_problem0.svg',
   levelBoss: './img/levelboss_problem0.svg',
   shop: './img/shop0.svg',
-  treasure: './img/treasure0.svg',
+  treasure: './img/treasure2.svg',
   start: './img/info-circle.svg'
 };
 

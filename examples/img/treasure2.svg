@@ -1,0 +1,59 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 96" width="128" height="128" role="img" aria-label="Angular treasure chest icon">
+  <defs>
+    <linearGradient id="woodDark" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#8b4a1a"/>
+      <stop offset="100%" stop-color="#4a250f"/>
+    </linearGradient>
+    <linearGradient id="woodLight" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#c7792e"/>
+      <stop offset="100%" stop-color="#8b4a1a"/>
+    </linearGradient>
+    <linearGradient id="steel" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#e5e7eb"/>
+      <stop offset="100%" stop-color="#9ca3af"/>
+    </linearGradient>
+    <filter id="shadow">
+      <feDropShadow dx="0" dy="3" stdDeviation="3" flood-color="#000" flood-opacity="0.3"/>
+    </filter>
+  </defs>
+
+  <!-- ground shadow -->
+  <ellipse cx="48" cy="82" rx="30" ry="6" fill="#000" opacity="0.18"/>
+
+  <!-- back lid plane -->
+  <polygon points="20,40 48,22 76,40 76,46 20,46"
+           fill="#6a3613"/>
+
+  <!-- front lid (angled slab) -->
+  <polygon points="16,44 48,18 80,44 80,56 16,56"
+           fill="url(#woodLight)" stroke="#2b1408" stroke-width="4"
+           stroke-linejoin="round" filter="url(#shadow)"/>
+
+  <!-- lid bevel -->
+  <polyline points="22,46 48,26 74,46"
+            fill="none" stroke="#e2b07a" stroke-width="4"
+            stroke-linecap="round"/>
+
+  <!-- chest base -->
+  <polygon points="14,56 82,56 74,84 22,84"
+           fill="url(#woodDark)" stroke="#2b1408" stroke-width="4"
+           stroke-linejoin="round" filter="url(#shadow)"/>
+
+  <!-- vertical panel seams -->
+  <g stroke="#2b1408" stroke-width="4" opacity="0.6">
+    <path d="M34 56l-4 28"/>
+    <path d="M48 56v28"/>
+    <path d="M62 56l4 28"/>
+  </g>
+
+  <!-- steel reinforcements -->
+  <polygon points="14,62 82,62 78,70 18,70"
+           fill="url(#steel)" stroke="#6b7280" stroke-width="3"/>
+  <polygon points="22,78 74,78 72,84 24,84"
+           fill="url(#steel)" stroke="#6b7280" stroke-width="3"/>
+
+  <!-- angular latch -->
+  <polygon points="44,52 52,52 56,68 40,68"
+           fill="#facc15" stroke="#7a5200" stroke-width="3"/>
+  <circle cx="48" cy="60" r="3" fill="#7a5200"/>
+</svg>
