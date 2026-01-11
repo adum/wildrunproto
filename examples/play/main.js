@@ -1117,7 +1117,7 @@ function ensureBoard(size) {
   if (treasureOverlay && treasureOverlay.parentElement !== app.elements.mount) {
     app.elements.mount.appendChild(treasureOverlay);
   }
-  if (coinBurst && coinBurst.parentElement !== app.elements.mount) {
+  if (coinBurst && !app.elements.mount.contains(coinBurst)) {
     app.elements.mount.appendChild(coinBurst);
   }
 }
@@ -2808,8 +2808,7 @@ if (app.elements.mount) {
       (retryOverlay && !retryOverlay.classList.contains("is-hidden")) ||
       (levelCongratsOverlay &&
         !levelCongratsOverlay.classList.contains("is-hidden")) ||
-      (adminOverlay && !adminOverlay.classList.contains("is-hidden")) ||
-      (coinBurst && coinBurst.classList.contains("is-active"))
+      (adminOverlay && !adminOverlay.classList.contains("is-hidden"))
     ) {
       return;
     }
@@ -2843,16 +2842,16 @@ if (app.elements.mount) {
   });
 }
 
-if (coinBurst) {
-  coinBurst.addEventListener("click", function (event) {
-    if (coinBurst.classList.contains("is-active")) {
-      clearCoinBurst();
-      logEvent("Coin panel dismissed.");
-    }
-  });
-}
+document.addEventListener(
+  "pointerdown",
+  function () {
+    dismissCoinBurst();
+  },
+  true
+);
 
 document.addEventListener("keydown", function (event) {
+  dismissCoinBurst();
   if (event.target && event.target.tagName === "SELECT") {
     return;
   }
@@ -3063,6 +3062,15 @@ function clearCoinBurst() {
   while (coinBurst.firstChild) {
     coinBurst.removeChild(coinBurst.firstChild);
   }
+}
+
+function dismissCoinBurst() {
+  if (!coinBurst || !coinBurst.classList.contains("is-active")) {
+    return false;
+  }
+  clearCoinBurst();
+  logEvent("Coin panel dismissed.");
+  return true;
 }
 
 function flashCoinAward(amount) {
