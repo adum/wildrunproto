@@ -254,6 +254,9 @@ function revealMysteryAndStart() {
   state.mysteryRevealed = true;
   app.overlays.renderGrayStones(state.currentMat);
   updateMysteryUI();
+  if (app.board && app.board.updateBoard) {
+    app.board.updateBoard();
+  }
   startMysteryTimer();
   if (app.board && app.board.ensureSpeedSolveStart) {
     app.board.ensureSpeedSolveStart();
@@ -394,6 +397,9 @@ function revealEnigmaAndStart() {
   state.enigmaPoints = [];
   app.overlays.renderEnigmaOverlay();
   updateEnigmaUI();
+  if (app.board && app.board.updateBoard) {
+    app.board.updateBoard();
+  }
   startEnigmaTimer();
   if (app.board && app.board.ensureSpeedSolveStart) {
     app.board.ensureSpeedSolveStart();

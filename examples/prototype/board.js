@@ -296,7 +296,10 @@ function updateBoard() {
   refs.board.setTurn(utils.getTurn(state.currentNode, state.playerColor));
 
   var turn = utils.getTurn(state.currentNode, state.playerColor);
-  if (turn === state.playerColor) {
+  var revealBlocked =
+    (state.challengeMystery && !state.mysteryRevealed) ||
+    (state.challengeEnigma && !state.enigmaRevealed);
+  if (!revealBlocked && turn === state.playerColor) {
     refs.board.setCursor(
       turn === GB.Ki.Black ? GB.Cursor.BlackStone : GB.Cursor.WhiteStone
     );
