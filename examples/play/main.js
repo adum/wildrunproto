@@ -60,6 +60,7 @@ var adminPassiveAdd = document.getElementById("adminPassiveAdd");
 var adminChallengeSelect = document.getElementById("adminChallengeSelect");
 var adminChallengeLevel = document.getElementById("adminChallengeLevel");
 var adminChallengeSet = document.getElementById("adminChallengeSet");
+var difficultyCard = document.getElementById("difficultyCard");
 var difficultyLabel = document.getElementById("difficultyLabel");
 var passiveList = document.getElementById("passiveList");
 var hintList = document.getElementById("hintList");
@@ -79,6 +80,17 @@ var treasureOverlay = document.getElementById("treasureOverlay");
 var treasureList = document.getElementById("treasureList");
 
 var problems = Array.isArray(window.gpProblems) ? window.gpProblems : [];
+var DEFAULT_DIFFICULTY_RANGES = [
+  { start: "30kyu", end: "25kyu" },
+  { start: "25kyu", end: "20kyu" },
+  { start: "20kyu", end: "15kyu" },
+  { start: "15kyu", end: "10kyu" },
+  { start: "10kyu", end: "5kyu" },
+  { start: "5kyu", end: "1dan" },
+  { start: "1dan", end: "3dan" },
+  { start: "3dan", end: "5dan" },
+  { start: "5dan", end: "9dan" },
+];
 var playMap = null;
 
 function logEvent(message, data) {
@@ -310,6 +322,7 @@ var game = {
   bossCount: 0,
   mapIndex: 0,
   difficulty: null,
+  difficultyLabel: "",
   levelActive: false,
   currentProblem: null,
   currentNode: null,
@@ -330,9 +343,10 @@ app.handlers.onPuzzleSolved = function () {
     return;
   }
   game.levelActive = false;
+  setDifficultyVisible(false);
   awardCoins();
   logEvent("Puzzle solved.", {
-    difficulty: formatDifficulty(game.difficulty),
+    difficulty: game.difficultyLabel || formatDifficulty(game.difficulty),
     node: game.currentNode ? game.currentNode.type : null,
   });
   advanceAfterSolve();
@@ -351,8 +365,9 @@ app.handlers.onPuzzleFailed = function () {
     return;
   }
   game.levelActive = false;
+  setDifficultyVisible(false);
   logEvent("Puzzle failed.", {
-    difficulty: formatDifficulty(game.difficulty),
+    difficulty: game.difficultyLabel || formatDifficulty(game.difficulty),
     node: game.currentNode ? game.currentNode.type : null,
   });
   hideMapOverlay();
@@ -378,6 +393,10 @@ function getPlayConfig() {
   var challengePool = Array.isArray(config.challengePool)
     ? config.challengePool.slice()
     : Object.keys(CHALLENGE_DEFS);
+  var difficultyRanges =
+    Array.isArray(config.difficultyRanges) && config.difficultyRanges.length
+      ? config.difficultyRanges.slice()
+      : DEFAULT_DIFFICULTY_RANGES.slice();
   var treasureHintPool = Array.isArray(treasureConfig.hintPool)
     ? treasureConfig.hintPool.slice()
     : hintPool.slice();
@@ -400,6 +419,7 @@ function getPlayConfig() {
   return {
     startDifficulty: config.startDifficulty || "30kyu",
     difficultyStep: toNumber(config.difficultyStep, 1),
+    difficultyRanges: difficultyRanges,
     hintsPerLevel: Math.max(0, toNumber(config.hintsPerLevel, 2)),
     passivesPerRun: Math.max(0, toNumber(config.passivesPerRun, 1)),
     challengeLevelStart: toNumber(config.challengeLevelStart, 1),
@@ -750,6 +770,106 @@ function formatDifficulty(diff) {
   return diff.value + (diff.type === "dan" ? "dan" : "kyu");
 }
 
+var MAX_KYU_LEVEL = 30;
+var MAX_DAN_LEVEL = 9;
+var HARD_MIN_DAN_LEVEL = 5;
+var MAX_DIFFICULTY_RANK = MAX_KYU_LEVEL - 1 + MAX_DAN_LEVEL;
+var HARD_MIN_RANK = MAX_KYU_LEVEL - 1 + HARD_MIN_DAN_LEVEL;
+
+function difficultyToRank(diff) {
+  if (!diff) {
+    return null;
+  }
+  var value = Number(diff.value);
+  if (!Number.isFinite(value) || value <= 0) {
+    return null;
+  }
+  var rounded = Math.round(value);
+  if (diff.type === "dan") {
+    return MAX_KYU_LEVEL - 1 + rounded;
+  }
+  return MAX_KYU_LEVEL - rounded;
+}
+
+function clampDifficultyRank(rank) {
+  if (!Number.isFinite(rank)) {
+    return 0;
+  }
+  return Math.max(0, Math.min(MAX_DIFFICULTY_RANK, Math.round(rank)));
+}
+
+function rankToDifficulty(rank) {
+  var clamped = clampDifficultyRank(rank);
+  if (clamped <= MAX_KYU_LEVEL - 1) {
+    return { type: "kyu", value: MAX_KYU_LEVEL - clamped };
+  }
+  return { type: "dan", value: clamped - (MAX_KYU_LEVEL - 1) };
+}
+
+function normalizeDifficultyRange(range) {
+  if (!range || typeof range !== "object") {
+    return null;
+  }
+  var startValue = range.start || range.min || range.low || range.from;
+  var endValue = range.end || range.max || range.high || range.to;
+  if (!startValue || !endValue) {
+    return null;
+  }
+  var start = parseDifficulty(startValue);
+  var end = parseDifficulty(endValue);
+  if (!start || !end) {
+    return null;
+  }
+  var startRank = difficultyToRank(start);
+  var endRank = difficultyToRank(end);
+  if (startRank === null || endRank === null) {
+    return null;
+  }
+  var minRank = Math.min(startRank, endRank);
+  var maxRank = Math.max(startRank, endRank);
+  minRank = clampDifficultyRank(minRank);
+  maxRank = clampDifficultyRank(maxRank);
+  if (maxRank >= MAX_DIFFICULTY_RANK) {
+    maxRank = MAX_DIFFICULTY_RANK;
+    minRank = Math.max(minRank, HARD_MIN_RANK);
+  }
+  if (minRank > maxRank) {
+    minRank = maxRank;
+  }
+  return { minRank: minRank, maxRank: maxRank };
+}
+
+function getDifficultyRangeForLevel(config, mapLevel) {
+  var ranges = config && Array.isArray(config.difficultyRanges)
+    ? config.difficultyRanges
+    : [];
+  if (!ranges.length) {
+    ranges = DEFAULT_DIFFICULTY_RANGES;
+  }
+  var index = Math.max(0, (mapLevel || 1) - 1);
+  var entry = ranges[index] || ranges[ranges.length - 1];
+  var normalized = normalizeDifficultyRange(entry);
+  if (normalized) {
+    return normalized;
+  }
+  for (var i = ranges.length - 1; i >= 0; i -= 1) {
+    normalized = normalizeDifficultyRange(ranges[i]);
+    if (normalized) {
+      return normalized;
+    }
+  }
+  return normalizeDifficultyRange(DEFAULT_DIFFICULTY_RANGES[0]);
+}
+
+function formatDifficultyRange(range) {
+  if (!range) {
+    return "unknown";
+  }
+  var start = rankToDifficulty(range.minRank);
+  var end = rankToDifficulty(range.maxRank);
+  return formatDifficulty(start) + "-" + formatDifficulty(end);
+}
+
 function advanceDifficulty(diff, step) {
   if (!diff) {
     return null;
@@ -797,6 +917,19 @@ function buildProblemIndex(list) {
   return index;
 }
 
+function pickRandomProblem() {
+  if (!problems.length) {
+    return null;
+  }
+  var fallback = problems[Math.floor(Math.random() * problems.length)];
+  var parsed = parseDifficulty(fallback.difficulty);
+  return {
+    problem: fallback,
+    label: parsed ? formatDifficulty(parsed) : fallback.difficulty || "unknown",
+    difficulty: parsed,
+  };
+}
+
 function pickProblemForDifficulty(target) {
   var current = target;
   var attempts = 0;
@@ -807,20 +940,97 @@ function pickProblemForDifficulty(target) {
       return {
         problem: options[Math.floor(Math.random() * options.length)],
         label: label,
+        difficulty: current,
       };
     }
     current = stepDownDifficulty(current);
     attempts += 1;
   }
-  if (problems.length) {
-    var fallback = problems[Math.floor(Math.random() * problems.length)];
-    var parsed = parseDifficulty(fallback.difficulty);
-    return {
-      problem: fallback,
-      label: parsed ? formatDifficulty(parsed) : fallback.difficulty || "unknown",
-    };
+  return pickRandomProblem();
+}
+
+function pickProblemForRank(targetRank, minRank, maxRank) {
+  if (targetRank === null || targetRank === undefined) {
+    return pickRandomProblem();
   }
-  return null;
+  var low = clampDifficultyRank(minRank);
+  var high = clampDifficultyRank(maxRank);
+  if (low > high) {
+    var swap = low;
+    low = high;
+    high = swap;
+  }
+  var rank = clampDifficultyRank(targetRank);
+  if (rank < low) {
+    rank = low;
+  }
+  if (rank > high) {
+    rank = high;
+  }
+  for (var down = rank; down >= low; down -= 1) {
+    var downDiff = rankToDifficulty(down);
+    var downLabel = formatDifficulty(downDiff);
+    var downOptions = problemIndex[downLabel];
+    if (downOptions && downOptions.length) {
+      return {
+        problem: downOptions[Math.floor(Math.random() * downOptions.length)],
+        label: downLabel,
+        difficulty: downDiff,
+      };
+    }
+  }
+  for (var up = rank + 1; up <= high; up += 1) {
+    var upDiff = rankToDifficulty(up);
+    var upLabel = formatDifficulty(upDiff);
+    var upOptions = problemIndex[upLabel];
+    if (upOptions && upOptions.length) {
+      return {
+        problem: upOptions[Math.floor(Math.random() * upOptions.length)],
+        label: upLabel,
+        difficulty: upDiff,
+      };
+    }
+  }
+  return pickRandomProblem();
+}
+
+function getTargetRankForNode(node, mapHeight, range) {
+  if (!range) {
+    return null;
+  }
+  var minRank = range.minRank;
+  var maxRank = range.maxRank;
+  if (node && (node.type === "boss" || node.type === "levelBoss")) {
+    return maxRank;
+  }
+  if (minRank === maxRank) {
+    return minRank;
+  }
+  var height = Math.max(3, Math.round(mapHeight || 0));
+  var playable = Math.max(1, height - 2);
+  var row = node && Number.isFinite(node.r) ? node.r : 1;
+  var progress = (row - 1) / playable;
+  if (!Number.isFinite(progress)) {
+    progress = 0;
+  }
+  progress = Math.max(0, Math.min(1, progress));
+  return clampDifficultyRank(minRank + (maxRank - minRank) * progress);
+}
+
+function pickProblemForNode(node, config) {
+  var mapLevel = Math.max(1, game.mapIndex || 1);
+  var range = getDifficultyRangeForLevel(config, mapLevel);
+  if (!range) {
+    var fallbackStart =
+      parseDifficulty(config.startDifficulty) || { type: "kyu", value: 30 };
+    return pickProblemForDifficulty(fallbackStart);
+  }
+  var mapHeight =
+    game.map && Array.isArray(game.map.rows)
+      ? game.map.rows.length
+      : config.map.height;
+  var targetRank = getTargetRankForNode(node, mapHeight, range);
+  return pickProblemForRank(targetRank, range.minRank, range.maxRank);
 }
 
 function ensureBoard(size) {
@@ -1022,6 +1232,13 @@ function renderChallenges() {
     }
     challengeList.appendChild(item);
   });
+}
+
+function setDifficultyVisible(visible) {
+  if (!difficultyCard) {
+    return;
+  }
+  difficultyCard.classList.toggle("is-hidden", !visible);
 }
 
 function updateShopCoins() {
@@ -1703,12 +1920,11 @@ function loadProblem(problem, difficultyLabelText) {
   if (difficultyLabel) {
     difficultyLabel.textContent = difficultyLabelText;
   }
+  setDifficultyVisible(true);
 }
 
 function advanceAfterSolve() {
-  var config = getPlayConfig();
   game.levelNumber += 1;
-  game.difficulty = advanceDifficulty(game.difficulty, config.difficultyStep);
   game.currentProblem = null;
   game.isBoss = false;
   game.challenges = [];
@@ -1864,6 +2080,7 @@ function showMapOverlay() {
     return;
   }
   game.levelActive = false;
+  setDifficultyVisible(false);
   mapOverlay.classList.remove("is-hidden");
   if (mapLevelLabel) {
     mapLevelLabel.textContent = "Level " + Math.max(1, game.mapIndex || 1);
@@ -1894,6 +2111,7 @@ function showCongratsOverlay() {
     levelCongratsTitle.textContent =
       "Level " + Math.max(1, game.mapIndex || 1) + " Unlocked";
   }
+  setDifficultyVisible(false);
   levelCongratsOverlay.classList.remove("is-hidden");
   hideMapOverlay();
 }
@@ -1910,6 +2128,7 @@ function showShopOverlay(shopType) {
     return;
   }
   game.levelActive = false;
+  setDifficultyVisible(false);
   var config = getPlayConfig();
   var isPassiveShop = shopType === "passiveShop";
   if (shopTitle) {
@@ -1943,6 +2162,7 @@ function showTreasureOverlay() {
     return;
   }
   game.levelActive = false;
+  setDifficultyVisible(false);
   var options = buildTreasureOptions(getPlayConfig());
   renderTreasureOptions(options);
   treasureOverlay.classList.remove("is-hidden");
@@ -2141,13 +2361,16 @@ function startEncounterForNode(node) {
   if (!node) {
     return;
   }
-  var pick = pickProblemForDifficulty(game.difficulty);
+  var config = getPlayConfig();
+  var pick = pickProblemForNode(node, config);
   if (!pick) {
     showMapOverlay();
     return;
   }
   game.currentNode = node;
   game.currentProblem = pick.problem;
+  game.difficulty = pick.difficulty || null;
+  game.difficultyLabel = pick.label || "";
   game.levelActive = true;
   game.isBoss = node.type === "boss" || node.type === "levelBoss";
   game.challenges = Array.isArray(node.challenges)
@@ -2235,6 +2458,7 @@ function showStartOverlay() {
   if (startOverlay) {
     startOverlay.classList.remove("is-hidden");
   }
+  setDifficultyVisible(false);
   renderStartPassives();
   hideMapOverlay();
   hideTreasureOverlay();
@@ -2254,6 +2478,7 @@ function showRetryOverlay() {
     retryLabel.textContent = "Retry this level";
   }
   retryOverlay.classList.remove("is-hidden");
+  setDifficultyVisible(false);
   hideMapOverlay();
   hideTreasureOverlay();
   hideShopOverlay();
@@ -2280,6 +2505,7 @@ function endGame() {
   game.bossCount = 0;
   game.mapIndex = 0;
   game.difficulty = null;
+  game.difficultyLabel = "";
   game.currentProblem = null;
   game.currentNode = null;
   game.map = null;
@@ -2296,6 +2522,7 @@ function endGame() {
   renderChallenges();
   app.ui.setStatus("Game over. Start a new run.", "error");
   app.ui.updateHud();
+  setDifficultyVisible(false);
   hideRetryOverlay();
   hideMapOverlay();
   hideTreasureOverlay();
@@ -2319,14 +2546,13 @@ function startGame() {
   game.challenges = [];
   game.map = null;
   game.currentNode = null;
-  game.difficulty = parseDifficulty(config.startDifficulty) || {
-    type: "kyu",
-    value: 30,
-  };
+  game.difficulty = null;
+  game.difficultyLabel = "";
   state.lives = 3;
   state.coins = 0;
   game.maxLives = state.lives;
   app.ui.updateHud();
+  setDifficultyVisible(false);
   setupPassives(config);
   setupHints(config);
   hideStartOverlay();
@@ -2337,7 +2563,11 @@ function startGame() {
   hideAdminOverlay();
   clearCoinBurst();
   startNewMap();
-  logEvent("Game started.", { difficulty: formatDifficulty(game.difficulty) });
+  logEvent("Game started.", {
+    difficultyRange: formatDifficultyRange(
+      getDifficultyRangeForLevel(config, 1)
+    ),
+  });
 }
 
 if (startGameBtn) {
@@ -2472,6 +2702,7 @@ if (retryBtn) {
     }
     hideRetryOverlay();
     game.levelActive = true;
+    setDifficultyVisible(true);
     game.blockClicksUntil = Date.now() + 500;
     app.board.resetPuzzle();
     applyPassives();

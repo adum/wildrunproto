@@ -905,6 +905,10 @@ select {
   gap: 4px;
 }
 
+.difficulty-card.is-hidden {
+  display: none;
+}
+
 .difficulty-value {
   font-size: 20px;
   font-weight: 700;

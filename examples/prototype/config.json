@@ -82,6 +82,17 @@
   "play": {
     "startDifficulty": "30kyu",
     "difficultyStep": 1,
+    "difficultyRanges": [
+      { "start": "30kyu", "end": "25kyu" },
+      { "start": "25kyu", "end": "20kyu" },
+      { "start": "20kyu", "end": "15kyu" },
+      { "start": "15kyu", "end": "10kyu" },
+      { "start": "10kyu", "end": "5kyu" },
+      { "start": "5kyu", "end": "1dan" },
+      { "start": "1dan", "end": "3dan" },
+      { "start": "3dan", "end": "5dan" },
+      { "start": "5dan", "end": "9dan" }
+    ],
     "hintsPerLevel": 2,
     "passivesPerRun": 1,
     "bossFrequency": 5,
