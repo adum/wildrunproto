@@ -334,6 +334,7 @@ var game = {
   maxLives: 3,
   isBoss: false,
   map: null,
+  hintLevels: {},
 };
 game.passives = loadStoredPassives();
 state.bankedCoins = loadBankedCoins();
@@ -705,6 +706,57 @@ function clampHintLevel(hintId, level) {
   return clampNumber(level, 1, maxLevel);
 }
 
+function getHintTypeLevel(hintId) {
+  if (!hintId) {
+    return 1;
+  }
+  if (!game.hintLevels) {
+    game.hintLevels = {};
+  }
+  var level = game.hintLevels[hintId];
+  if (!Number.isFinite(level) || level <= 0) {
+    level = 1;
+    if (Array.isArray(game.hints)) {
+      var maxFound = 0;
+      game.hints.forEach(function (hint) {
+        if (hint && hint.id === hintId) {
+          var hintLevel = Number(hint.level);
+          if (Number.isFinite(hintLevel) && hintLevel > maxFound) {
+            maxFound = hintLevel;
+          }
+        }
+      });
+      if (maxFound > 0) {
+        level = maxFound;
+      }
+    }
+  }
+  return clampHintLevel(hintId, level);
+}
+
+function setHintTypeLevel(hintId, level) {
+  if (!hintId) {
+    return 1;
+  }
+  if (!game.hintLevels) {
+    game.hintLevels = {};
+  }
+  var current = getHintTypeLevel(hintId);
+  var safe = clampHintLevel(hintId, level);
+  if (safe < current) {
+    safe = current;
+  }
+  game.hintLevels[hintId] = safe;
+  if (Array.isArray(game.hints)) {
+    game.hints.forEach(function (hint) {
+      if (hint.id === hintId) {
+        hint.level = safe;
+      }
+    });
+  }
+  return safe;
+}
+
 function applyHintLevel(hintId, level) {
   var safe = Math.max(1, Math.round(level || 1));
   if (hintId === "multipleChoice" && app.hints.setMultipleChoiceLevel) {
@@ -722,9 +774,9 @@ function applyHintLevel(hintId, level) {
   }
 }
 
-function maybeUpgradeHintLevel(hintId, level) {
+function maybeUpgradeHintLevel(hintId) {
   var maxLevel = getHintMaxLevel(hintId);
-  var current = Math.min(maxLevel, Math.max(1, Math.round(level || 1)));
+  var current = getHintTypeLevel(hintId);
   if (current >= maxLevel) {
     return current;
   }
@@ -733,16 +785,17 @@ function maybeUpgradeHintLevel(hintId, level) {
       ? app.passives.getFreeUpgradesChance()
       : 0;
   if (chance > 0 && Math.random() < chance) {
-    return Math.min(maxLevel, current + 1);
+    return setHintTypeLevel(hintId, current + 1);
   }
   return current;
 }
 
 function createHintItem(id) {
+  var level = maybeUpgradeHintLevel(id);
   return {
     id: id,
     used: false,
-    level: maybeUpgradeHintLevel(id, 1),
+    level: level,
   };
 }
 
@@ -1138,41 +1191,60 @@ function renderHints() {
     return;
   }
   hintList.textContent = "";
+  if (!Array.isArray(game.hints) || !game.hints.length) {
+    return;
+  }
+  var grouped = [];
+  var groupedById = {};
   game.hints.forEach(function (hint) {
+    if (hint.used) {
+      return;
+    }
     var def = HINT_DEFS[hint.id];
     if (!def) {
       return;
     }
+    if (!groupedById[hint.id]) {
+      groupedById[hint.id] = { id: hint.id, def: def, count: 0 };
+      grouped.push(groupedById[hint.id]);
+    }
+    groupedById[hint.id].count += 1;
+  });
+  grouped.forEach(function (group) {
+    var hintId = group.id;
+    var def = group.def;
+    var count = group.count;
     var button = document.createElement("button");
     button.type = "button";
     button.className = "button play-hint";
     button.title = def.tooltip;
-    button.dataset.hintId = hint.id;
+    button.dataset.hintId = hintId;
     var label = document.createElement("span");
-    label.textContent = def.label;
+    label.textContent = def.label + (count > 1 ? " x" + count : "");
     button.appendChild(label);
-    if (getHintMaxLevel(hint.id) > 1) {
+    if (getHintMaxLevel(hintId) > 1) {
       var level = document.createElement("span");
       level.className = "play-chip__level";
-      level.textContent = "L" + (hint.level || 1);
+      level.textContent = "L" + getHintTypeLevel(hintId);
       button.appendChild(level);
-    }
-    if (hint.used) {
-      button.classList.add("is-used");
-      button.disabled = true;
     }
     button.addEventListener("click", function (event) {
       if (event) {
         event.stopPropagation();
       }
-      if (hint.used || !game.levelActive) {
+      if (!game.levelActive) {
         return;
       }
-      applyHintLevel(hint.id, hint.level || 1);
+      var hintItem = game.hints.find(function (item) {
+        return item.id === hintId && !item.used;
+      });
+      if (!hintItem) {
+        return;
+      }
+      applyHintLevel(hintId, getHintTypeLevel(hintId));
       def.action();
-      hint.used = true;
-      button.classList.add("is-used");
-      button.disabled = true;
+      hintItem.used = true;
+      renderHints();
     });
     hintList.appendChild(button);
   });
@@ -1647,7 +1719,8 @@ function addAdminHint() {
     return;
   }
   var level = clampHintLevel(id, adminHintLevel ? adminHintLevel.value : 1);
-  game.hints.push({ id: id, used: false, level: level });
+  setHintTypeLevel(id, level);
+  game.hints.push({ id: id, used: false, level: getHintTypeLevel(id) });
   renderHints();
 }
 
@@ -2208,14 +2281,20 @@ function buildTreasureHintOption(config) {
 }
 
 function pickUpgradableHint() {
-  var candidates = game.hints.filter(function (hint) {
-    return !hint.used && hint.level < getHintMaxLevel(hint.id);
-  });
-  if (!candidates.length) {
-    candidates = game.hints.filter(function (hint) {
-      return hint.level < getHintMaxLevel(hint.id);
-    });
+  if (!Array.isArray(game.hints) || !game.hints.length) {
+    return null;
   }
+  var seen = new Set();
+  var candidates = [];
+  game.hints.forEach(function (hint) {
+    if (!hint || seen.has(hint.id)) {
+      return;
+    }
+    seen.add(hint.id);
+    if (getHintTypeLevel(hint.id) < getHintMaxLevel(hint.id)) {
+      candidates.push({ id: hint.id });
+    }
+  });
   if (!candidates.length) {
     return null;
   }
@@ -2276,15 +2355,15 @@ function buildTreasureUpgradeOption(config) {
         return;
       }
       if (choice.type === "hint") {
-        choice.target.level = clampHintLevel(
+        var updatedLevel = setHintTypeLevel(
           choice.target.id,
-          choice.target.level + 1
+          getHintTypeLevel(choice.target.id) + 1
         );
         renderHints();
         flashUpgradedItem("hint", choice.target.id);
         logEvent("Treasure claimed: hint upgrade.", {
           hint: choice.target.id,
-          level: choice.target.level,
+          level: updatedLevel,
         });
         return;
       }
@@ -2510,6 +2589,7 @@ function endGame() {
   game.currentNode = null;
   game.map = null;
   game.hints = [];
+  game.hintLevels = {};
   game.challenges = [];
   game.shop = { hints: [], passives: [] };
   game.isBoss = false;
@@ -2548,6 +2628,7 @@ function startGame() {
   game.currentNode = null;
   game.difficulty = null;
   game.difficultyLabel = "";
+  game.hintLevels = {};
   state.lives = 3;
   state.coins = 0;
   game.maxLives = state.lives;
@@ -2917,11 +2998,14 @@ function renderCoinBurst(breakdown) {
   var grid = document.createElement("div");
   grid.className = "coin-burst__grid";
 
-  function addSlot(value, label, type, placeholder) {
+  function addSlot(value, label, type, placeholder, extraClass) {
     var slot = document.createElement("div");
     slot.className = "coin-burst__slot";
     if (type) {
       slot.classList.add("coin-burst__slot--" + type);
+    }
+    if (extraClass) {
+      slot.classList.add(extraClass);
     }
     if (placeholder) {
       slot.classList.add("is-placeholder");
@@ -2957,7 +3041,9 @@ function renderCoinBurst(breakdown) {
     addSlot("", "", "multiplier", true);
   }
   if (speedActive) {
-    addSlot(speedText, speedLabel, "multiplier");
+    var speedClass =
+      speedLabel === "Speed Solve" ? "coin-burst__slot--speed-solve" : "";
+    addSlot(speedText, speedLabel, "multiplier", false, speedClass);
   } else {
     addSlot("", "", "multiplier", true);
   }

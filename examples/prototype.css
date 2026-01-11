@@ -1290,6 +1290,10 @@ select {
   visibility: hidden;
 }
 
+.coin-burst__slot--speed-solve {
+  transform: translateX(6px);
+}
+
 .coin-burst__value {
   display: inline-flex;
   align-items: center;
