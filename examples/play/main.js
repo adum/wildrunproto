@@ -2429,7 +2429,7 @@ function buildTreasureHintOption(config) {
   var label = hintDef ? hintDef.label : "New Hint";
   return {
     title: label,
-    desc: "Gain a new hint at level " + hintItem.level + ".",
+    desc: "Gain a random hint.",
     apply: function () {
       game.hints.push(hintItem);
       renderHints();

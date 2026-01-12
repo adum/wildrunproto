@@ -126,7 +126,97 @@ function stopSpotlightAnimation() {
   clearSpotlightCanvas();
 }
 
+function getSpotlightProblemBounds(size) {
+  var root = state.rootNode;
+  if (!root) {
+    return null;
+  }
+  var rootId = root.model && root.model.id ? root.model.id : "";
+  var key = rootId + ":" + size;
+  if (state.spotlightProblemBoundsKey === key && state.spotlightProblemBounds) {
+    return state.spotlightProblemBounds;
+  }
+  var minI = Infinity;
+  var maxI = -Infinity;
+  var minJ = Infinity;
+  var maxJ = -Infinity;
+  var addCoord = function (coord) {
+    if (!coord || coord.length < 2) {
+      return;
+    }
+    var i = GB.SGF_LETTERS.indexOf(coord[0]);
+    var j = GB.SGF_LETTERS.indexOf(coord[1]);
+    if (i < 0 || j < 0) {
+      return;
+    }
+    if (Number.isFinite(size) && size > 0) {
+      if (i >= size || j >= size) {
+        return;
+      }
+    }
+    if (i < minI) {
+      minI = i;
+    }
+    if (i > maxI) {
+      maxI = i;
+    }
+    if (j < minJ) {
+      minJ = j;
+    }
+    if (j > maxJ) {
+      maxJ = j;
+    }
+  };
+  root.walk(function (node) {
+    if (!node || !node.model) {
+      return;
+    }
+    var model = node.model;
+    if (Array.isArray(model.moveProps) && model.moveProps.length) {
+      model.moveProps.forEach(function (prop) {
+        if (prop && prop.value) {
+          addCoord(prop.value);
+        }
+      });
+    }
+    if (Array.isArray(model.setupProps) && model.setupProps.length) {
+      model.setupProps.forEach(function (prop) {
+        if (!prop || !prop.values || (prop.token !== "AB" && prop.token !== "AW")) {
+          return;
+        }
+        prop.values.forEach(function (value) {
+          addCoord(value);
+        });
+      });
+    }
+  });
+  var boardMax = Math.max(0, (size || 0) - 1);
+  var bounds = null;
+  if (!Number.isFinite(minI) || !Number.isFinite(maxI)) {
+    bounds = {
+      minI: 0,
+      maxI: boardMax,
+      minJ: 0,
+      maxJ: boardMax,
+    };
+  } else {
+    bounds = {
+      minI: Math.max(0, minI),
+      maxI: Math.max(0, maxI),
+      minJ: Math.max(0, minJ),
+      maxJ: Math.max(0, maxJ),
+    };
+  }
+  state.spotlightProblemBoundsKey = key;
+  state.spotlightProblemBounds = bounds;
+  return bounds;
+}
+
 function getSpotlightBounds(mat, size) {
+  var problemBounds = getSpotlightProblemBounds(size);
+  if (problemBounds) {
+    return problemBounds;
+  }
   var minI = Infinity;
   var maxI = -Infinity;
   var minJ = Infinity;
@@ -173,6 +263,37 @@ function getSpotlightBounds(mat, size) {
   };
 }
 
+function pickSpotlightVelocity(speed, rangeI, rangeJ) {
+  if (!Number.isFinite(speed) || speed <= 0) {
+    return { i: 0, j: 0 };
+  }
+  if (rangeI <= 0 && rangeJ <= 0) {
+    return { i: 0, j: 0 };
+  }
+  if (rangeI <= 0) {
+    return { i: 0, j: (Math.random() < 0.5 ? -1 : 1) * speed };
+  }
+  if (rangeJ <= 0) {
+    return { i: (Math.random() < 0.5 ? -1 : 1) * speed, j: 0 };
+  }
+  var minComponent = speed * 0.35;
+  var maxComponentSq = speed * speed - minComponent * minComponent;
+  if (!Number.isFinite(maxComponentSq) || maxComponentSq <= 0) {
+    var diag = speed / Math.sqrt(2);
+    return {
+      i: (Math.random() < 0.5 ? -1 : 1) * diag,
+      j: (Math.random() < 0.5 ? -1 : 1) * diag,
+    };
+  }
+  var maxComponent = Math.sqrt(maxComponentSq);
+  var compI = minComponent + Math.random() * (maxComponent - minComponent);
+  var compJ = Math.sqrt(speed * speed - compI * compI);
+  return {
+    i: (Math.random() < 0.5 ? -1 : 1) * compI,
+    j: (Math.random() < 0.5 ? -1 : 1) * compJ,
+  };
+}
+
 function ensureSpotlightState(bounds, radiusUnits) {
   var key =
     bounds.minI +
@@ -197,10 +318,10 @@ function ensureSpotlightState(bounds, radiusUnits) {
     var rangeJ = Math.max(0, maxJ - minJ);
     var posI = rangeI > 0 ? minI + Math.random() * rangeI : centerI;
     var posJ = rangeJ > 0 ? minJ + Math.random() * rangeJ : centerJ;
-    var angle = Math.random() * Math.PI * 2;
     var speed = getSpotlightSpeed(state.spotlightLevel);
-    var velI = rangeI > 0 ? Math.cos(angle) * speed : 0;
-    var velJ = rangeJ > 0 ? Math.sin(angle) * speed : 0;
+    var velocity = pickSpotlightVelocity(speed, rangeI, rangeJ);
+    var velI = velocity.i;
+    var velJ = velocity.j;
     state.spotlightPos = { i: posI, j: posJ };
     state.spotlightVel = { i: velI, j: velJ };
     state.spotlightBoundsKey = key;
