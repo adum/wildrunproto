@@ -1294,7 +1294,7 @@ select {
 }
 
 .coin-burst__slot--speed-solve {
-  transform: translateX(6px);
+  transform: translateX(18px);
 }
 
 .coin-burst__value {
