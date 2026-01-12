@@ -26,6 +26,8 @@ var startOverlay = document.getElementById("startOverlay");
 var startGameBtn = document.getElementById("startGameBtn");
 var startPassiveSection = document.getElementById("startPassiveSection");
 var startPassiveList = document.getElementById("startPassiveList");
+var startBestRun = document.getElementById("startBestRun");
+var startBestRunValue = document.getElementById("startBestRunValue");
 var resetStateBtn = document.getElementById("resetStateBtn");
 var advanceOverlay = document.getElementById("advanceOverlay");
 var advanceLabel = document.getElementById("advanceLabel");
@@ -327,12 +329,14 @@ var CHALLENGE_DEFS = {
 var problemIndex = buildProblemIndex(problems);
 var PASSIVE_STORAGE_KEY = "wildrun.passives";
 var BANKED_STORAGE_KEY = "wildrun.bankedCoins";
+var BEST_RUN_STORAGE_KEY = "wildrun.bestRunLevel";
 
 var game = {
   started: false,
   levelNumber: 0,
   bossCount: 0,
   mapIndex: 0,
+  bestRunLevel: 0,
   difficulty: null,
   difficultyLabel: "",
   levelActive: false,
@@ -350,6 +354,7 @@ var game = {
 };
 game.passives = loadStoredPassives();
 state.bankedCoins = loadBankedCoins();
+game.bestRunLevel = loadBestRunLevel();
 
 app.handlers.onPuzzleSolved = function () {
   if (!game.started || !game.levelActive) {
@@ -430,12 +435,16 @@ function getPlayConfig() {
     : hintPool.slice();
   var shopPassivePool = Array.isArray(shop.passivePool)
     ? shop.passivePool.slice()
-    : ["timeExtend", "secondChance", "freeUpgrades", "bigMoney", "shopaholic"];
+    : [];
   var passiveShop = config.passiveShop || {};
   var passiveShopPrices = passiveShop.prices || {};
   var passiveShopPassivePool = Array.isArray(passiveShop.passivePool)
     ? passiveShop.passivePool.slice()
-    : shopPassivePool.slice();
+    : passivePool.slice();
+  var passiveShopPriceExponent = toNumber(passiveShop.priceExponent, 1.2);
+  if (!Number.isFinite(passiveShopPriceExponent) || passiveShopPriceExponent <= 0) {
+    passiveShopPriceExponent = 1.2;
+  }
   return {
     startDifficulty: config.startDifficulty || "30kyu",
     difficultyStep: toNumber(config.difficultyStep, 1),
@@ -496,9 +505,10 @@ function getPlayConfig() {
       },
     },
     passiveShop: {
-      passiveCount: Math.max(0, toNumber(passiveShop.passiveCount, 2)),
+      passiveCount: Math.max(0, toNumber(passiveShop.passiveCount, 1)),
       upgradeCount: Math.max(0, toNumber(passiveShop.upgradeCount, 1)),
       passivePool: passiveShopPassivePool,
+      priceExponent: passiveShopPriceExponent,
       prices: {
         passives: passiveShopPrices.passives || shopPrices.passives || {},
         upgrades: passiveShopPrices.upgrades || {},
@@ -529,7 +539,31 @@ function getShopPrice(priceMap, id) {
   return Math.max(0, Math.round(value));
 }
 
-function getPassiveUpgradePrice(passivePrices, upgradePrices, id, level) {
+function getPassivePriceScale(passiveCount, exponent) {
+  var count = Math.max(0, Math.round(passiveCount || 0));
+  var exp = Number(exponent);
+  if (!Number.isFinite(exp) || exp <= 0) {
+    exp = 1;
+  }
+  var scale = Math.pow(exp, count);
+  if (!Number.isFinite(scale) || scale <= 0) {
+    return 1;
+  }
+  return scale;
+}
+
+function getScaledPrice(base, scale) {
+  if (!Number.isFinite(base)) {
+    return null;
+  }
+  var price = base * scale;
+  if (!Number.isFinite(price)) {
+    return null;
+  }
+  return Math.max(0, Math.round(price));
+}
+
+function getPassiveUpgradePrice(passivePrices, upgradePrices, id, level, scale) {
   var base = getShopPrice(upgradePrices, id);
   if (base === null) {
     base = getShopPrice(passivePrices, id);
@@ -539,7 +573,7 @@ function getPassiveUpgradePrice(passivePrices, upgradePrices, id, level) {
   }
   var safeLevel = Math.max(1, Math.round(level || 1));
   var multiplier = safeLevel * safeLevel;
-  return Math.max(0, Math.round(base * multiplier));
+  return getScaledPrice(base * multiplier, scale);
 }
 
 function getLevelBoundsSafe(levelKey, fallbackMin, fallbackMax) {
@@ -652,6 +686,22 @@ function loadBankedCoins() {
   return Math.round(value);
 }
 
+function loadBestRunLevel() {
+  var storage = getStorage();
+  if (!storage) {
+    return 0;
+  }
+  var raw = storage.getItem(BEST_RUN_STORAGE_KEY);
+  if (raw === null || raw === undefined || raw === "") {
+    return 0;
+  }
+  var value = Number(raw);
+  if (!Number.isFinite(value) || value <= 0) {
+    return 0;
+  }
+  return Math.max(1, Math.round(value));
+}
+
 function persistBankedCoins() {
   var storage = getStorage();
   if (!storage) {
@@ -666,6 +716,38 @@ function persistBankedCoins() {
     storage.setItem(BANKED_STORAGE_KEY, String(banked));
   } catch (error) {
     // Ignore storage failures (quota/private mode).
+  }
+}
+
+function persistBestRunLevel() {
+  var storage = getStorage();
+  if (!storage) {
+    return;
+  }
+  var best = Math.max(0, Math.round(game.bestRunLevel || 0));
+  if (best <= 0) {
+    storage.removeItem(BEST_RUN_STORAGE_KEY);
+    return;
+  }
+  try {
+    storage.setItem(BEST_RUN_STORAGE_KEY, String(best));
+  } catch (error) {
+    // Ignore storage failures (quota/private mode).
+  }
+}
+
+function updateBestRunLevel(level) {
+  var next = Math.max(0, Math.round(level || 0));
+  if (next <= 0) {
+    game.bestRunLevel = 0;
+    persistBestRunLevel();
+    renderStartBestRun();
+    return;
+  }
+  if (!game.bestRunLevel || next > game.bestRunLevel) {
+    game.bestRunLevel = next;
+    persistBestRunLevel();
+    renderStartBestRun();
   }
 }
 
@@ -1218,6 +1300,19 @@ function renderStartPassives() {
   renderPassiveChips(startPassiveList, game.passives, false);
 }
 
+function renderStartBestRun() {
+  if (!startBestRun || !startBestRunValue) {
+    return;
+  }
+  var best = Math.max(0, Math.round(game.bestRunLevel || 0));
+  if (best <= 0) {
+    startBestRun.classList.add("is-hidden");
+    return;
+  }
+  startBestRun.classList.remove("is-hidden");
+  startBestRunValue.textContent = "Level " + best;
+}
+
 function renderHints() {
   if (!hintList) {
     return;
@@ -1400,6 +1495,10 @@ function buildShopInventory(config, shopType) {
         return passive.id;
       })
     );
+    var passivePriceScale = getPassivePriceScale(
+      game.passives.length,
+      shopConfig.priceExponent
+    );
     var passivePool = Array.isArray(shopConfig.passivePool)
       ? shopConfig.passivePool
       : [];
@@ -1419,9 +1518,10 @@ function buildShopInventory(config, shopType) {
     );
     var newPassives = pickRandom(passiveCandidates, passiveTargetCount).map(
       function (id) {
+        var base = getShopPrice(passivePrices, id);
         return {
           id: id,
-          price: getShopPrice(passivePrices, id),
+          price: getScaledPrice(base, passivePriceScale),
           purchased: false,
         };
       }
@@ -1440,7 +1540,8 @@ function buildShopInventory(config, shopType) {
           passivePrices,
           upgradePrices,
           passive.id,
-          nextLevel
+          nextLevel,
+          passivePriceScale
         );
         if (price === null) {
           return null;
@@ -2194,6 +2295,7 @@ function startNewMap() {
     return;
   }
   game.mapIndex += 1;
+  updateBestRunLevel(game.mapIndex);
   game.map = buildMap(config);
   game.currentNode = null;
   if (!game.map) {
@@ -2598,6 +2700,7 @@ function showStartOverlay() {
   }
   setDifficultyVisible(false);
   renderStartPassives();
+  renderStartBestRun();
   hideMapOverlay();
   hideTreasureOverlay();
   hideShopOverlay();
@@ -2725,8 +2828,8 @@ if (resetStateBtn) {
       event.stopPropagation();
     }
     var confirmMessage =
-      "Reset state? This clears all saved passives and banked coins. " +
-      "Starting a new game will grant one random passive again.";
+      "Reset state? This clears all saved passives, banked coins, and your " +
+      "best run. Starting a new game will grant one random passive again.";
     if (!window.confirm(confirmMessage)) {
       return;
     }
@@ -2734,13 +2837,16 @@ if (resetStateBtn) {
     persistPassives();
     state.bankedCoins = 0;
     persistBankedCoins();
+    game.bestRunLevel = 0;
+    persistBestRunLevel();
     if (app.passives && app.passives.resetPassives) {
       app.passives.resetPassives();
     }
     renderPassives();
     renderStartPassives();
+    renderStartBestRun();
     app.ui.updateHud();
-    logEvent("Passives reset.");
+    logEvent("State reset.");
   });
 }
 
@@ -2943,6 +3049,7 @@ initAdminPanel();
 app.ui.updateHud();
 renderPassives();
 renderStartPassives();
+renderStartBestRun();
 
 function getCoinAwardBreakdown() {
   var config = getPlayConfig();

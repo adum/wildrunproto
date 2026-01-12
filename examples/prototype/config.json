@@ -239,13 +239,7 @@
         "diagReveal",
         "eliminateRandom"
       ],
-      "passivePool": [
-        "timeExtend",
-        "secondChance",
-        "freeUpgrades",
-        "bigMoney",
-        "shopaholic"
-      ],
+      "passivePool": [],
       "prices": {
         "hints": {
           "firstMove": 30,
@@ -258,32 +252,35 @@
           "diagReveal": 45,
           "eliminateRandom": 30
         },
-        "passives": {
-          "timeExtend": 120,
-          "secondChance": 140,
-          "freeUpgrades": 100,
-          "bigMoney": 120,
-          "shopaholic": 120
-        }
+        "passives": {}
       }
     },
     "passiveShop": {
-      "passiveCount": 2,
+      "passiveCount": 1,
       "upgradeCount": 1,
+      "priceExponent": 1.2,
       "passivePool": [
         "timeExtend",
         "secondChance",
         "freeUpgrades",
         "bigMoney",
-        "shopaholic"
+        "shopaholic",
+        "friendlyCapture",
+        "enemyCapture",
+        "majorCapture",
+        "lineOfDeath"
       ],
       "prices": {
         "passives": {
-          "timeExtend": 120,
-          "secondChance": 140,
-          "freeUpgrades": 100,
-          "bigMoney": 120,
-          "shopaholic": 120
+          "timeExtend": 200,
+          "secondChance": 200,
+          "freeUpgrades": 200,
+          "bigMoney": 200,
+          "shopaholic": 200,
+          "friendlyCapture": 200,
+          "enemyCapture": 200,
+          "majorCapture": 200,
+          "lineOfDeath": 200
         },
         "upgrades": {}
       }

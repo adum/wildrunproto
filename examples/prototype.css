@@ -1093,7 +1093,8 @@ select {
   gap: 6px;
 }
 
-.start-banked {
+.start-banked,
+.start-best {
   display: inline-flex;
   align-items: center;
   gap: 8px;
@@ -1105,9 +1106,14 @@ select {
   color: var(--muted);
 }
 
-.start-banked__value {
+.start-banked__value,
+.start-best__value {
   font-weight: 700;
   color: #4a3829;
+}
+
+.start-best.is-hidden {
+  display: none;
 }
 
 .play-overlay--shop .play-overlay__panel {
