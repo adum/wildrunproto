@@ -113,6 +113,8 @@ var DEFAULT_CONFIG = {
       maxWidth: 5,
       allowVoid: true,
       maxAttempts: 60,
+      shopMinCount: 1,
+      passiveShopMinLevel: 2,
       weights: {
         problem: 6,
         boss: 1,
@@ -245,14 +247,14 @@ var DEFAULT_CONFIG = {
       ],
       prices: {
         hints: {
-          firstMove: 6,
-          multipleChoice: 8,
-          multishot: 8,
-          neighbor: 5,
-          rowReveal: 7,
-          colReveal: 7,
-          diagReveal: 9,
-          eliminateRandom: 6,
+          firstMove: 30,
+          multipleChoice: 40,
+          multishot: 40,
+          neighbor: 25,
+          rowReveal: 35,
+          colReveal: 35,
+          diagReveal: 45,
+          eliminateRandom: 30,
         },
         passives: {
           timeExtend: 120,

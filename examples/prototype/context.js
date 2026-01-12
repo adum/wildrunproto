@@ -21,6 +21,7 @@ export const elements = {
   coinsBoxEl: document.getElementById("coinsBox"),
   bankedCoinsEl: document.getElementById("bankedCoinsValue"),
   bankedCoinsBoxEl: document.getElementById("bankedCoinsBox"),
+  startBankedCoinsEl: document.getElementById("startBankedCoinsValue"),
   comboEl: document.getElementById("combo"),
   sgfSelect: document.getElementById("sgfSelect"),
   hintOneBtn: document.getElementById("hintOne"),
@@ -392,6 +393,7 @@ export function updateHud() {
   var coinsBoxEl = elements.coinsBoxEl;
   var bankedCoinsEl = elements.bankedCoinsEl;
   var bankedCoinsBoxEl = elements.bankedCoinsBoxEl;
+  var startBankedCoinsEl = elements.startBankedCoinsEl;
   var shouldFlash = state.lastLives !== null && state.lives < state.lastLives;
   renderLivesHearts();
   if (comboEl) {
@@ -410,6 +412,11 @@ export function updateHud() {
     if (bankedCoinsBoxEl) {
       bankedCoinsBoxEl.setAttribute("aria-label", "Banked coins: " + banked);
     }
+  }
+  if (startBankedCoinsEl) {
+    startBankedCoinsEl.textContent = String(
+      Math.max(0, Math.round(state.bankedCoins || 0))
+    );
   }
   state.lastLives = state.lives;
   if (shouldFlash) {

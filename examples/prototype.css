@@ -1074,6 +1074,23 @@ select {
   gap: 6px;
 }
 
+.start-banked {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border-radius: 10px;
+  background: rgba(244, 238, 231, 0.9);
+  border: 1px solid rgba(190, 170, 150, 0.5);
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.start-banked__value {
+  font-weight: 700;
+  color: #4a3829;
+}
+
 .play-overlay--shop .play-overlay__panel {
   min-width: 420px;
   max-width: 520px;

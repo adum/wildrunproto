@@ -271,6 +271,14 @@ function layoutNodes(nodes) {
 
 function createMap(config, options) {
   var maxAttempts = options && options.maxAttempts ? options.maxAttempts : 60;
+  var minShopCount = 1;
+  if (config && Object.prototype.hasOwnProperty.call(config, "shopMinCount")) {
+    minShopCount = Math.round(Number(config.shopMinCount));
+  }
+  if (!Number.isFinite(minShopCount)) {
+    minShopCount = 1;
+  }
+  minShopCount = Math.max(0, Math.min(1, minShopCount));
   for (var attempt = 0; attempt < maxAttempts; attempt += 1) {
     var voidChance = getVoidChance(config.weights, config.allowVoid);
     var counts = buildRowCounts(config.height, config.maxWidth, voidChance);
@@ -333,6 +341,47 @@ function createMap(config, options) {
       });
     }
 
+    function ensureMinShopCount(nodes, count) {
+      if (!count) {
+        return;
+      }
+      var matches = nodes.filter(function (node) {
+        return node.type === "shop";
+      });
+      if (matches.length >= count) {
+        return;
+      }
+      var candidates = nodes.filter(function (node) {
+        return node.type === "empty" || node.type === "problem";
+      });
+      if (!candidates.length) {
+        candidates = nodes.filter(function (node) {
+          return node.type === "treasure";
+        });
+      }
+      if (!candidates.length) {
+        candidates = nodes.filter(function (node) {
+          return node.type === "boss";
+        });
+      }
+      if (!candidates.length) {
+        candidates = nodes.filter(function (node) {
+          return (
+            node.type !== "start" &&
+            node.type !== "levelBoss" &&
+            node.type !== "passiveShop" &&
+            node.type !== "shop"
+          );
+        });
+      }
+      while (matches.length < count && candidates.length) {
+        var index = Math.floor(Math.random() * candidates.length);
+        var chosen = candidates.splice(index, 1)[0];
+        applyNodeType(chosen, "shop");
+        matches.push(chosen);
+      }
+    }
+
     for (var row = 0; row < config.height; row += 1) {
       var rowNodes = [];
       var range = ranges[row];
@@ -380,6 +429,7 @@ function createMap(config, options) {
       continue;
     }
 
+    ensureMinShopCount(nodes, minShopCount);
     enforceUniqueType(nodes, 'shop');
     enforceUniqueType(nodes, 'passiveShop');
 

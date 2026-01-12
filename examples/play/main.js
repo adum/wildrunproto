@@ -441,6 +441,14 @@ function getPlayConfig() {
       maxWidth: Math.max(2, toNumber(mapConfig.maxWidth, 5)),
       allowVoid: mapConfig.allowVoid !== false,
       maxAttempts: Math.max(10, toNumber(mapConfig.maxAttempts, 60)),
+      passiveShopMinLevel: Math.max(
+        1,
+        toNumber(mapConfig.passiveShopMinLevel, 2)
+      ),
+      shopMinCount: Math.max(
+        0,
+        Math.min(1, Math.round(toNumber(mapConfig.shopMinCount, 1)))
+      ),
       weights: {
         problem: Math.max(0, toNumber(mapWeights.problem, 6)),
         boss: Math.max(0, toNumber(mapWeights.boss, 1)),
@@ -2121,8 +2129,23 @@ function buildMap(config) {
   if (!playMap) {
     return null;
   }
-  var map = playMap.createMap(config.map, {
-    maxAttempts: config.map.maxAttempts,
+  var mapConfig = config.map;
+  var mapLevel = Math.max(1, game.mapIndex || 1);
+  var passiveShopMinLevel = Math.max(
+    1,
+    toNumber(mapConfig.passiveShopMinLevel, 1)
+  );
+  if (
+    mapLevel < passiveShopMinLevel &&
+    mapConfig.weights &&
+    mapConfig.weights.passiveShop > 0
+  ) {
+    mapConfig = Object.assign({}, mapConfig, {
+      weights: Object.assign({}, mapConfig.weights, { passiveShop: 0 }),
+    });
+  }
+  var map = playMap.createMap(mapConfig, {
+    maxAttempts: mapConfig.maxAttempts,
   });
   if (!map) {
     map = playMap.createFallbackMap(config.map.height);
