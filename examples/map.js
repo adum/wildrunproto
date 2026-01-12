@@ -1,3 +1,8 @@
+import {
+  createMap as createPlayMap,
+  createFallbackMap as createPlayFallbackMap
+} from './play/map-ui.js';
+
 const mapCanvas = document.getElementById('mapCanvas');
 const mapStatus = document.getElementById('mapStatus');
 const mapInfoTitle = document.getElementById('mapInfoTitle');
@@ -33,7 +38,6 @@ const HEX_HEIGHT = HEX_SIZE * 2;
 const HEX_H_SPACING = HEX_WIDTH;
 const HEX_V_SPACING = HEX_SIZE * 1.5;
 const CANVAS_PADDING = 28;
-const MAX_ATTEMPTS = 50;
 const ICON_SOURCES = {
   problem: './img/problem0.svg',
   boss: './img/boss_problem0.svg',
@@ -140,331 +144,19 @@ function getConfig() {
   };
 }
 
-function getVoidChance(weights, allowVoid) {
-  if (!allowVoid) {
-    return 0;
+function applyTypeDefs(map) {
+  if (!map || !map.nodes) {
+    return;
   }
-  const total =
-    weights.problem +
-    weights.boss +
-    weights.empty +
-    weights.shop +
-    weights.treasure +
-    weights.void;
-  if (!total) {
-    return 0;
-  }
-  return weights.void / total;
-}
-
-function pickWeighted(candidates, weights) {
-  const total = weights.reduce(function (sum, value) {
-    return sum + value;
-  }, 0);
-  if (!total) {
-    return candidates[0];
-  }
-  var roll = Math.random() * total;
-  for (let i = 0; i < candidates.length; i += 1) {
-    roll -= weights[i];
-    if (roll <= 0) {
-      return candidates[i];
+  map.nodes.forEach(function (node) {
+    var def = TYPE_DEFS[node.type];
+    if (!def) {
+      return;
     }
-  }
-  return candidates[candidates.length - 1];
-}
-
-function buildRowCounts(height, maxWidth, voidChance) {
-  const counts = [1];
-  if (height <= 1) {
-    return counts;
-  }
-  if (height === 2) {
-    return [1, 1];
-  }
-
-  counts.push(Math.min(maxWidth, 2));
-
-  for (let row = 2; row < height - 1; row += 1) {
-    const prev = counts[row - 1];
-    const remaining = height - 1 - row;
-    const candidates = [-1, 0, 1]
-      .map(function (step) {
-        return prev + step;
-      })
-      .filter(function (next) {
-        if (next < 1 || next > maxWidth) {
-          return false;
-        }
-        return Math.abs(next - 1) <= remaining;
-      });
-    if (!candidates.length) {
-      counts.push(1);
-      continue;
-    }
-    const weights = candidates.map(function (next) {
-      return 1 + voidChance * (maxWidth - next);
-    });
-    counts.push(pickWeighted(candidates, weights));
-  }
-  counts.push(1);
-  return counts;
-}
-
-function buildRowRanges(counts) {
-  const ranges = [{ start: 0, width: 1 }];
-  if (counts.length === 1) {
-    return ranges;
-  }
-
-  if (counts[1] === 1) {
-    ranges.push({ start: 0, width: 1 });
-  } else {
-    ranges.push({ start: -1, width: counts[1] });
-  }
-
-  for (let row = 2; row < counts.length; row += 1) {
-    const prev = ranges[row - 1];
-    const width = counts[row];
-    const prevL = prev.start;
-    const prevR = prev.start + prev.width - 1;
-    const minL = Math.max(prevL - 1, prevR - width);
-    const maxL = Math.min(prevL, prevR - width + 1);
-    if (minL > maxL) {
-      return null;
-    }
-    const start = Math.floor(Math.random() * (maxL - minL + 1)) + minL;
-    ranges.push({ start: start, width: width });
-  }
-
-  return ranges;
-}
-
-function pickType(weights, allowVoid) {
-  const weighted = [
-    { key: 'problem', weight: weights.problem },
-    { key: 'boss', weight: weights.boss },
-    { key: 'empty', weight: weights.empty },
-    { key: 'shop', weight: weights.shop },
-    { key: 'treasure', weight: weights.treasure }
-  ];
-  if (allowVoid) {
-    weighted.push({ key: 'void', weight: weights.void });
-  }
-  const total = weighted.reduce(function (sum, entry) {
-    return sum + entry.weight;
-  }, 0);
-  if (!total) {
-    return 'empty';
-  }
-  var roll = Math.random() * total;
-  for (let i = 0; i < weighted.length; i += 1) {
-    roll -= weighted[i].weight;
-    if (roll <= 0) {
-      return weighted[i].key;
-    }
-  }
-  return weighted[weighted.length - 1].key;
-}
-
-function buildMap(config) {
-  for (let attempt = 0; attempt < MAX_ATTEMPTS; attempt += 1) {
-    const voidChance = getVoidChance(config.weights, config.allowVoid);
-    const counts = buildRowCounts(config.height, config.maxWidth, voidChance);
-    const ranges = buildRowRanges(counts);
-    if (!ranges) {
-      continue;
-    }
-    const nodes = [];
-    const nodeById = new Map();
-    const rows = [];
-    let valid = true;
-
-    function addNode(q, row, forcedType) {
-      let type = forcedType || 'empty';
-      if (!forcedType) {
-        if (row === 0) {
-          type = 'start';
-        } else if (row === config.height - 1) {
-          type = 'levelBoss';
-        } else {
-          type = pickType(config.weights, false);
-        }
-      }
-      const id = q + ',' + row;
-      const def = TYPE_DEFS[type] || TYPE_DEFS.empty;
-      const node = {
-        id: id,
-        q: q,
-        r: row,
-        type: type,
-        label: def.label,
-        description: def.description,
-        icon: def.icon
-      };
-      nodes.push(node);
-      nodeById.set(id, node);
-      return node;
-    }
-
-    for (let row = 0; row < config.height; row += 1) {
-      const rowNodes = [];
-      const range = ranges[row];
-      if (row === 1 && config.height > 2) {
-        if (range.start > -1 || range.start + range.width - 1 < 0) {
-          valid = false;
-          break;
-        }
-      }
-      const requiredQs =
-        row === 1 && config.height > 2 ? new Set([-1, 0]) : new Set();
-      for (let i = 0; i < range.width; i += 1) {
-        const q = range.start + i;
-        let keep = true;
-        if (row > 0 && row < config.height - 1) {
-          if (requiredQs.has(q)) {
-            keep = true;
-          } else if (config.allowVoid && Math.random() < voidChance) {
-            keep = false;
-          }
-        }
-        if (!keep) {
-          continue;
-        }
-        rowNodes.push(addNode(q, row));
-      }
-      if (!rowNodes.length) {
-        const fallbackQ = range.start + Math.floor(range.width / 2);
-        rowNodes.push(addNode(fallbackQ, row));
-      }
-      rows.push(rowNodes);
-    }
-
-    if (!valid) {
-      continue;
-    }
-
-    const startId = nodes.find(function (node) {
-      return node.type === 'start';
-    }).id;
-    const endId = nodes.find(function (node) {
-      return node.type === 'levelBoss';
-    }).id;
-
-    const map = {
-      nodes: nodes,
-      nodeById: nodeById,
-      rows: rows,
-      startId: startId,
-      endId: endId
-    };
-
-    const startNode = map.nodeById.get(map.startId);
-    const startBranches = getNeighbors(startNode, map).filter(function (neighbor) {
-      return neighbor.r === startNode.r + 1;
-    });
-    if (config.height > 2 && startBranches.length < 2) {
-      continue;
-    }
-
-    if (!hasRequiredLinks(map)) {
-      continue;
-    }
-
-    if (hasForwardPath(map)) {
-      return map;
-    }
-  }
-
-  return null;
-}
-
-function buildFallbackMap(height) {
-  const nodes = [];
-  const nodeById = new Map();
-  const rows = [];
-  for (let row = 0; row < height; row += 1) {
-    let qs = [0];
-    if (row === 1 && height > 2) {
-      qs = [-1, 0];
-    } else if (row > 1) {
-      qs = [-1];
-    }
-    const rowNodes = [];
-    qs.forEach(function (q) {
-      const type =
-        row === 0 ? 'start' : row === height - 1 ? 'levelBoss' : 'empty';
-      const id = q + ',' + row;
-      const def = TYPE_DEFS[type] || TYPE_DEFS.empty;
-      const node = {
-        id: id,
-        q: q,
-        r: row,
-        type: type,
-        label: def.label,
-        description: def.description,
-        icon: def.icon
-      };
-      nodes.push(node);
-      nodeById.set(id, node);
-      rowNodes.push(node);
-    });
-    rows.push(rowNodes);
-  }
-  const endNode = nodes.find(function (node) {
-    return node.type === 'levelBoss';
+    node.label = def.label;
+    node.description = def.description;
+    node.icon = def.icon;
   });
-  return {
-    nodes: nodes,
-    nodeById: nodeById,
-    rows: rows,
-    startId: '0,0',
-    endId: endNode ? endNode.id : '0,' + (height - 1)
-  };
-}
-
-function hasForwardPath(map) {
-  const queue = [map.startId];
-  const seen = new Set(queue);
-  while (queue.length) {
-    const id = queue.shift();
-    if (id === map.endId) {
-      return true;
-    }
-    const node = map.nodeById.get(id);
-    const neighbors = getNeighbors(node, map).filter(function (neighbor) {
-      return neighbor.r >= node.r;
-    });
-    neighbors.forEach(function (neighbor) {
-      if (!seen.has(neighbor.id)) {
-        seen.add(neighbor.id);
-        queue.push(neighbor.id);
-      }
-    });
-  }
-  return false;
-}
-
-function hasRequiredLinks(map) {
-  const height = map.rows.length;
-  for (let i = 0; i < map.nodes.length; i += 1) {
-    const node = map.nodes[i];
-    if (node.r > 0) {
-      const parentLeft = map.nodeById.get(node.q + ',' + (node.r - 1));
-      const parentRight = map.nodeById.get((node.q + 1) + ',' + (node.r - 1));
-      if (!parentLeft && !parentRight) {
-        return false;
-      }
-    }
-    if (node.r < height - 1) {
-      const childLeft = map.nodeById.get(node.q + ',' + (node.r + 1));
-      const childRight = map.nodeById.get((node.q - 1) + ',' + (node.r + 1));
-      if (!childLeft && !childRight) {
-        return false;
-      }
-    }
-  }
-  return true;
 }
 
 function getNeighbors(node, map) {
@@ -792,22 +484,23 @@ function regenerateMap() {
   updateValues();
   const config = getConfig();
   let statusMessage = 'Map ready. Select a neighbor.';
-  var map = buildMap(config);
+  var map = createPlayMap(config);
   if (!map && config.allowVoid) {
     const safeConfig = Object.assign({}, config, { allowVoid: false });
-    map = buildMap(safeConfig);
+    map = createPlayMap(safeConfig);
     if (map) {
       statusMessage = 'Voids trimmed for a valid path.';
     }
   }
   if (!map) {
-    map = buildMap(Object.assign({}, config, { allowVoid: false }));
+    map = createPlayMap(Object.assign({}, config, { allowVoid: false }));
   }
   if (!map) {
-    map = buildFallbackMap(config.height);
+    map = createPlayFallbackMap(config.height);
     statusMessage = 'Fallback map generated.';
   }
 
+  applyTypeDefs(map);
   resetState(map);
   renderMap(config, true);
   updateInfo(state.map.nodeById.get(state.currentId), false);

@@ -283,6 +283,14 @@ function createMap(config, options) {
     var rows = [];
     var valid = true;
 
+    function applyNodeType(node, type) {
+      var def = TYPE_DEFS[type] || TYPE_DEFS.empty;
+      node.type = type;
+      node.label = def.label;
+      node.description = def.description;
+      node.icon = def.icon;
+    }
+
     function addNode(q, row, forcedType) {
       var type = forcedType || 'empty';
       if (!forcedType) {
@@ -295,19 +303,34 @@ function createMap(config, options) {
         }
       }
       var id = q + ',' + row;
-      var def = TYPE_DEFS[type] || TYPE_DEFS.empty;
       var node = {
         id: id,
         q: q,
         r: row,
         type: type,
-        label: def.label,
-        description: def.description,
-        icon: def.icon
+        label: "",
+        description: "",
+        icon: ""
       };
+      applyNodeType(node, type);
       nodes.push(node);
       nodeById.set(id, node);
       return node;
+    }
+
+    function enforceUniqueType(nodes, type) {
+      var matches = nodes.filter(function (node) {
+        return node.type === type;
+      });
+      if (matches.length <= 1) {
+        return;
+      }
+      var keep = matches[Math.floor(Math.random() * matches.length)];
+      matches.forEach(function (node) {
+        if (node !== keep) {
+          applyNodeType(node, 'empty');
+        }
+      });
     }
 
     for (var row = 0; row < config.height; row += 1) {
@@ -356,6 +379,9 @@ function createMap(config, options) {
     if (!startNode || !endNode) {
       continue;
     }
+
+    enforceUniqueType(nodes, 'shop');
+    enforceUniqueType(nodes, 'passiveShop');
 
     var map = {
       nodes: nodes,
@@ -909,4 +935,4 @@ function createPlayMap(options) {
   };
 }
 
-export { createPlayMap };
+export { createPlayMap, createMap, createFallbackMap };

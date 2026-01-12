@@ -502,12 +502,17 @@ function getShopPrice(priceMap, id) {
   return Math.max(0, Math.round(value));
 }
 
-function getPassiveUpgradePrice(passivePrices, upgradePrices, id) {
-  var upgrade = getShopPrice(upgradePrices, id);
-  if (upgrade !== null) {
-    return upgrade;
+function getPassiveUpgradePrice(passivePrices, upgradePrices, id, level) {
+  var base = getShopPrice(upgradePrices, id);
+  if (base === null) {
+    base = getShopPrice(passivePrices, id);
   }
-  return getShopPrice(passivePrices, id);
+  if (base === null) {
+    return null;
+  }
+  var safeLevel = Math.max(1, Math.round(level || 1));
+  var multiplier = safeLevel * safeLevel;
+  return Math.max(0, Math.round(base * multiplier));
 }
 
 function getLevelBoundsSafe(levelKey, fallbackMin, fallbackMax) {
@@ -1400,17 +1405,19 @@ function buildShopInventory(config, shopType) {
         if (passive.level >= bounds.max) {
           return null;
         }
+        var nextLevel = passive.level + 1;
         var price = getPassiveUpgradePrice(
           passivePrices,
           upgradePrices,
-          passive.id
+          passive.id,
+          nextLevel
         );
         if (price === null) {
           return null;
         }
         return {
           id: passive.id,
-          level: passive.level + 1,
+          level: nextLevel,
           price: price,
           purchased: false,
           upgrade: true,

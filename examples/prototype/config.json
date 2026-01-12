@@ -253,11 +253,11 @@
           "eliminateRandom": 6
         },
         "passives": {
-          "timeExtend": 12,
-          "secondChance": 14,
-          "freeUpgrades": 10,
-          "bigMoney": 12,
-          "shopaholic": 12
+          "timeExtend": 120,
+          "secondChance": 140,
+          "freeUpgrades": 100,
+          "bigMoney": 120,
+          "shopaholic": 120
         }
       }
     },
@@ -273,11 +273,11 @@
       ],
       "prices": {
         "passives": {
-          "timeExtend": 12,
-          "secondChance": 14,
-          "freeUpgrades": 10,
-          "bigMoney": 12,
-          "shopaholic": 12
+          "timeExtend": 120,
+          "secondChance": 140,
+          "freeUpgrades": 100,
+          "bigMoney": 120,
+          "shopaholic": 120
         },
         "upgrades": {}
       }
