@@ -16,6 +16,15 @@ function getNumber(value, fallback) {
   return fallback;
 }
 
+function getMoveCoord(node) {
+  var moveProp =
+    node && node.model && node.model.moveProps ? node.model.moveProps[0] : null;
+  if (!moveProp || !moveProp.value || moveProp.value.length < 2) {
+    return null;
+  }
+  return moveProp.value;
+}
+
 function clampLevel(levelKey, level, fallbackMin, fallbackMax) {
   if (configUtils && configUtils.clampLevel) {
     return configUtils.clampLevel(levelKey, level, fallbackMin, fallbackMax);
@@ -718,6 +727,106 @@ function hintFirstMove() {
   app.board.updateBoard();
 }
 
+function collectSecondPlayerMoves(firstMoves) {
+  var results = [];
+  if (!firstMoves || !firstMoves.length) {
+    return results;
+  }
+  firstMoves.forEach(function (move) {
+    var firstNode = move.node;
+    if (!firstNode || !firstNode.children || firstNode.children.length === 0) {
+      return;
+    }
+    firstNode.children.forEach(function (replyNode) {
+      if (!replyNode || !replyNode.children || replyNode.children.length === 0) {
+        return;
+      }
+      replyNode.children.forEach(function (secondNode) {
+        if (!secondNode || !GB.inRightPath(secondNode)) {
+          return;
+        }
+        var coord = getMoveCoord(secondNode);
+        if (coord) {
+          results.push(coord);
+        }
+      });
+    });
+  });
+  return results;
+}
+
+function hintFirstOrSecond() {
+  if (state.lives <= 0) {
+    ui.setStatus("Out of lives. Reset to continue.", "error");
+    return;
+  }
+
+  app.board.updateChildMoves();
+  if (state.childMoves.length === 0) {
+    ui.logMessage("No moves available to hint.");
+    return;
+  }
+
+  var rightMoves = state.childMoves.filter(function (move) {
+    return GB.inRightPath(move.node);
+  });
+  if (rightMoves.length === 0) {
+    ui.logMessage("No solution moves to hint.");
+    return;
+  }
+
+  var firstPick = rightMoves[Math.floor(Math.random() * rightMoves.length)];
+  var options = [];
+  var used = new Set();
+  function addOption(coord) {
+    if (!coord || used.has(coord)) {
+      return;
+    }
+    used.add(coord);
+    options.push(coord);
+  }
+
+  addOption(firstPick.sgf);
+  var secondMoves = collectSecondPlayerMoves(rightMoves);
+  if (secondMoves.length > 0) {
+    secondMoves.forEach(addOption);
+  } else {
+    var fallback = pickRandomNearbyIntersection(firstPick.sgf);
+    if (fallback) {
+      addOption(fallback);
+    }
+  }
+
+  if (!options.length) {
+    ui.logMessage("No moves available to hint.");
+    return;
+  }
+
+  var choice = options[Math.floor(Math.random() * options.length)];
+  state.hintMoves = { correct: [], wrong: [] };
+  state.hintNeighborStones = [];
+  state.hintMode = "single";
+  resetRowHint();
+  resetColumnHint();
+  resetDiagonalHint();
+
+  var mat = state.currentMat;
+  if (!mat) {
+    var size = GB.extractBoardSize(state.currentNode, 19);
+    var res = GB.calcMatAndMarkup(state.currentNode, size);
+    mat = res.mat;
+  }
+  var idx = utils.sgfToIndex(choice);
+  if (idx && mat && mat[idx.i][idx.j] !== GB.Ki.Empty) {
+    state.hintNeighborStones = [choice];
+  } else {
+    state.hintMoves = { correct: [choice], wrong: [] };
+  }
+
+  ui.logMessage("First or Second hint: " + utils.sgfToA1(choice));
+  app.board.updateBoard();
+}
+
 function hintTwoMoves() {
   if (state.lives <= 0) {
     ui.setStatus("Out of lives. Reset to continue.", "error");
@@ -1177,6 +1286,70 @@ function pickRandomNearbyWrongMove(correctSgf, extraExclude) {
   return candidates[Math.floor(Math.random() * candidates.length)];
 }
 
+function pickRandomNearbyIntersection(anchorSgf, extraExclude) {
+  var size = GB.extractBoardSize(state.currentNode, 19);
+  var idx = utils.sgfToIndex(anchorSgf);
+  if (!idx) {
+    return null;
+  }
+
+  var exclude = new Set([anchorSgf]);
+  if (extraExclude) {
+    if (Array.isArray(extraExclude)) {
+      extraExclude.forEach(function (coord) {
+        exclude.add(coord);
+      });
+    } else if (extraExclude.forEach) {
+      extraExclude.forEach(function (coord) {
+        exclude.add(coord);
+      });
+    }
+  }
+
+  function collectCandidates(radius) {
+    var candidates = [];
+    for (var di = -radius; di <= radius; di += 1) {
+      for (var dj = -radius; dj <= radius; dj += 1) {
+        if (di === 0 && dj === 0) {
+          continue;
+        }
+        var i = idx.i + di;
+        var j = idx.j + dj;
+        if (i < 0 || j < 0 || i >= size || j >= size) {
+          continue;
+        }
+        var coord = GB.SGF_LETTERS[i] + GB.SGF_LETTERS[j];
+        if (exclude.has(coord)) {
+          continue;
+        }
+        candidates.push(coord);
+      }
+    }
+    return candidates;
+  }
+
+  var candidates = [];
+  for (var radius = 1; radius <= 3 && candidates.length === 0; radius += 1) {
+    candidates = collectCandidates(radius);
+  }
+
+  if (candidates.length === 0) {
+    for (var x = 0; x < size; x += 1) {
+      for (var y = 0; y < size; y += 1) {
+        var sgf = GB.SGF_LETTERS[x] + GB.SGF_LETTERS[y];
+        if (!exclude.has(sgf)) {
+          candidates.push(sgf);
+        }
+      }
+    }
+  }
+
+  if (candidates.length === 0) {
+    return null;
+  }
+  return candidates[Math.floor(Math.random() * candidates.length)];
+}
+
 app.hints.resetRowHint = resetRowHint;
 app.hints.resetColumnHint = resetColumnHint;
 app.hints.resetDiagonalHint = resetDiagonalHint;
@@ -1203,6 +1376,7 @@ app.hints.clearTemporaryState = clearTemporaryState;
 app.hints.setCurrentNode = setCurrentNode;
 app.hints.applyHintMarkup = applyHintMarkup;
 app.hints.hintFirstMove = hintFirstMove;
+app.hints.hintFirstOrSecond = hintFirstOrSecond;
 app.hints.hintTwoMoves = hintTwoMoves;
 app.hints.hintMultishot = hintMultishot;
 app.hints.hintWaveNeighbor = hintWaveNeighbor;

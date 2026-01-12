@@ -128,6 +128,7 @@
       "coinMax": 12,
       "hintPool": [
         "firstMove",
+        "firstOrSecond",
         "multipleChoice",
         "multishot",
         "neighbor",
@@ -228,6 +229,7 @@
       "passiveCount": 0,
       "hintPool": [
         "firstMove",
+        "firstOrSecond",
         "multipleChoice",
         "multishot",
         "neighbor",
@@ -246,6 +248,7 @@
       "prices": {
         "hints": {
           "firstMove": 30,
+          "firstOrSecond": 30,
           "multipleChoice": 40,
           "multishot": 40,
           "neighbor": 25,
@@ -286,6 +289,7 @@
     },
     "hintPool": [
       "firstMove",
+      "firstOrSecond",
       "multipleChoice",
       "multishot",
       "neighbor",

@@ -25,6 +25,7 @@ export const elements = {
   comboEl: document.getElementById("combo"),
   sgfSelect: document.getElementById("sgfSelect"),
   hintOneBtn: document.getElementById("hintOne"),
+  hintFirstOrSecondBtn: document.getElementById("hintFirstOrSecond"),
   hintTwoBtn: document.getElementById("hintTwo"),
   hintTwoLevelInput: document.getElementById("hintTwoLevel"),
   hintTwoLevelValue: document.getElementById("hintTwoLevelValue"),

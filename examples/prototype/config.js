@@ -130,6 +130,7 @@ var DEFAULT_CONFIG = {
       coinMax: 12,
       hintPool: [
         "firstMove",
+        "firstOrSecond",
         "multipleChoice",
         "multishot",
         "neighbor",
@@ -230,6 +231,7 @@ var DEFAULT_CONFIG = {
       passiveCount: 0,
       hintPool: [
         "firstMove",
+        "firstOrSecond",
         "multipleChoice",
         "multishot",
         "neighbor",
@@ -248,6 +250,7 @@ var DEFAULT_CONFIG = {
       prices: {
         hints: {
           firstMove: 30,
+          firstOrSecond: 30,
           multipleChoice: 40,
           multishot: 40,
           neighbor: 25,
@@ -288,6 +291,7 @@ var DEFAULT_CONFIG = {
     },
     hintPool: [
       "firstMove",
+      "firstOrSecond",
       "multipleChoice",
       "multishot",
       "neighbor",

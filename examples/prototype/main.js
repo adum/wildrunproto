@@ -55,6 +55,12 @@ if (elements.sgfSelect) {
 if (elements.hintOneBtn) {
   elements.hintOneBtn.addEventListener("click", app.hints.hintFirstMove);
 }
+if (elements.hintFirstOrSecondBtn) {
+  elements.hintFirstOrSecondBtn.addEventListener(
+    "click",
+    app.hints.hintFirstOrSecond
+  );
+}
 if (elements.hintTwoBtn) {
   elements.hintTwoBtn.addEventListener("click", app.hints.hintTwoMoves);
 }

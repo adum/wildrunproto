@@ -151,6 +151,13 @@ var HINT_DEFS = {
       app.hints.hintFirstMove();
     },
   },
+  firstOrSecond: {
+    label: "First or Second",
+    tooltip: "Shows either the first correct move or your second move.",
+    action: function () {
+      app.hints.hintFirstOrSecond();
+    },
+  },
   multipleChoice: {
     label: "Multiple Choice",
     tooltip: "Options: L1 4, L2 3, L3 2.",
