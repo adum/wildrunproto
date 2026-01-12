@@ -148,6 +148,11 @@ var PASSIVE_DEFS = {
     tooltip: "Indicator: any correct line plays a player stone on the edge.",
     indicatorKey: "lineOfDeathDetected",
   },
+  underStones: {
+    label: "Under Stones",
+    tooltip: "Indicator: any correct line plays a move on a previously used spot.",
+    indicatorKey: "underStonesDetected",
+  },
 };
 
 var HINT_DEFS = {

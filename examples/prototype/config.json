@@ -146,7 +146,8 @@
         "friendlyCapture",
         "enemyCapture",
         "majorCapture",
-        "lineOfDeath"
+        "lineOfDeath",
+        "underStones"
       ]
     },
     "challengeCombos": {
@@ -268,7 +269,8 @@
         "friendlyCapture",
         "enemyCapture",
         "majorCapture",
-        "lineOfDeath"
+        "lineOfDeath",
+        "underStones"
       ],
       "prices": {
         "passives": {
@@ -280,7 +282,8 @@
           "friendlyCapture": 200,
           "enemyCapture": 200,
           "majorCapture": 200,
-          "lineOfDeath": 200
+          "lineOfDeath": 200,
+          "underStones": 200
         },
         "upgrades": {}
       }
@@ -305,7 +308,8 @@
       "friendlyCapture",
       "enemyCapture",
       "majorCapture",
-      "lineOfDeath"
+      "lineOfDeath",
+      "underStones"
     ],
     "challengePool": [
       "gray",

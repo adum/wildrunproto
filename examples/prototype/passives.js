@@ -341,11 +341,13 @@ function updateCaptureIndicators() {
   var hasEnemyEl = !!elements.enemyCaptureIndicator;
   var hasMajorEl = !!elements.majorCaptureIndicator;
   var hasLineDeathEl = !!elements.lineOfDeathIndicator;
+  var hasUnderStonesEl = !!elements.underStonesIndicator;
   if (!state.rootNode) {
     state.friendlyCaptureDetected = false;
     state.enemyCaptureDetected = false;
     state.majorCaptureDetected = false;
     state.lineOfDeathDetected = false;
+    state.underStonesDetected = false;
     if (hasFriendlyEl) {
       elements.friendlyCaptureIndicator.classList.remove("is-active");
     }
@@ -358,6 +360,9 @@ function updateCaptureIndicators() {
     if (hasLineDeathEl) {
       elements.lineOfDeathIndicator.classList.remove("is-active");
     }
+    if (hasUnderStonesEl) {
+      elements.underStonesIndicator.classList.remove("is-active");
+    }
     return;
   }
 
@@ -369,6 +374,7 @@ function updateCaptureIndicators() {
   var enemyFound = false;
   var majorFound = false;
   var lineDeathFound = false;
+  var underStonesFound = false;
 
   function getMat(node) {
     if (!node) {
@@ -437,11 +443,81 @@ function updateCaptureIndicators() {
     );
   }
 
-  function walk(node, capturedTotal) {
+  function coordKey(i, j) {
+    return i + "," + j;
+  }
+
+  function addMatToHistory(mat, history) {
+    if (!mat || !history) {
+      return;
+    }
+    for (var i = 0; i < mat.length; i += 1) {
+      var row = mat[i];
+      if (!row) {
+        continue;
+      }
+      for (var j = 0; j < row.length; j += 1) {
+        if (row[j] !== GB.Ki.Empty) {
+          history.add(coordKey(i, j));
+        }
+      }
+    }
+  }
+
+  function addSetupPropsToHistory(node, history) {
+    if (!node || !node.model || !history) {
+      return;
+    }
+    var setupProps = node.model.setupProps;
+    if (!Array.isArray(setupProps) || setupProps.length === 0) {
+      return;
+    }
+    setupProps.forEach(function (prop) {
+      if (!prop || !prop.values || (prop.token !== "AB" && prop.token !== "AW")) {
+        return;
+      }
+      prop.values.forEach(function (value) {
+        if (!value || value.length < 2) {
+          return;
+        }
+        var i = GB.SGF_LETTERS.indexOf(value[0]);
+        var j = GB.SGF_LETTERS.indexOf(value[1]);
+        if (i < 0 || j < 0 || i >= size || j >= size) {
+          return;
+        }
+        history.add(coordKey(i, j));
+      });
+    });
+  }
+
+  function getMoveInfo(node) {
+    if (!node || !node.model || !node.model.moveProps) {
+      return null;
+    }
+    var moveProp = node.model.moveProps[0];
+    if (!moveProp || !moveProp.value || moveProp.value.length < 2) {
+      return null;
+    }
+    var i = GB.SGF_LETTERS.indexOf(moveProp.value[0]);
+    var j = GB.SGF_LETTERS.indexOf(moveProp.value[1]);
+    if (i < 0 || j < 0 || i >= size || j >= size) {
+      return null;
+    }
+    var color = moveProp.token === "W" ? GB.Ki.White : GB.Ki.Black;
+    return { key: coordKey(i, j), color: color };
+  }
+
+  function walk(node, capturedTotal, history) {
     if (!node) {
       return;
     }
-    if (majorFound && friendlyFound && enemyFound && lineDeathFound) {
+    if (
+      majorFound &&
+      friendlyFound &&
+      enemyFound &&
+      lineDeathFound &&
+      underStonesFound
+    ) {
       return;
     }
     if (!node.children || node.children.length === 0) {
@@ -459,21 +535,38 @@ function updateCaptureIndicators() {
       if (!lineDeathFound && isPlayerEdgeMove(child)) {
         lineDeathFound = true;
       }
+      var nextHistory = history ? new Set(history) : new Set();
+      addSetupPropsToHistory(child, nextHistory);
+      var moveInfo = getMoveInfo(child);
+      if (moveInfo) {
+        if (
+          !underStonesFound &&
+          moveInfo.color === playerColor &&
+          nextHistory.has(moveInfo.key)
+        ) {
+          underStonesFound = true;
+        }
+        nextHistory.add(moveInfo.key);
+      }
       var parentMat = getMat(node);
       var mat = getMat(child);
       var captured = countCaptures(parentMat, mat);
-      walk(child, capturedTotal + captured);
+      walk(child, capturedTotal + captured, nextHistory);
     });
     if (!rightChildFound && capturedTotal >= 5) {
       majorFound = true;
     }
   }
 
-  walk(state.rootNode, 0);
+  var initialHistory = new Set();
+  addMatToHistory(getMat(state.rootNode), initialHistory);
+  addSetupPropsToHistory(state.rootNode, initialHistory);
+  walk(state.rootNode, 0, initialHistory);
   state.friendlyCaptureDetected = friendlyFound;
   state.enemyCaptureDetected = enemyFound;
   state.majorCaptureDetected = majorFound;
   state.lineOfDeathDetected = lineDeathFound;
+  state.underStonesDetected = underStonesFound;
   if (hasFriendlyEl) {
     if (friendlyFound) {
       elements.friendlyCaptureIndicator.classList.add("is-active");
@@ -531,6 +624,21 @@ function updateCaptureIndicators() {
       elements.lineOfDeathIndicator.setAttribute(
         "aria-label",
         "No line of death detected"
+      );
+    }
+  }
+  if (hasUnderStonesEl) {
+    if (underStonesFound) {
+      elements.underStonesIndicator.classList.add("is-active");
+      elements.underStonesIndicator.setAttribute(
+        "aria-label",
+        "Under stones detected"
+      );
+    } else {
+      elements.underStonesIndicator.classList.remove("is-active");
+      elements.underStonesIndicator.setAttribute(
+        "aria-label",
+        "No under stones detected"
       );
     }
   }

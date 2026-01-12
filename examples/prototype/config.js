@@ -149,6 +149,7 @@ var DEFAULT_CONFIG = {
         "enemyCapture",
         "majorCapture",
         "lineOfDeath",
+        "underStones",
       ],
     },
     challengeCombos: {
@@ -271,6 +272,7 @@ var DEFAULT_CONFIG = {
         "enemyCapture",
         "majorCapture",
         "lineOfDeath",
+        "underStones",
       ],
       prices: {
         passives: {
@@ -283,6 +285,7 @@ var DEFAULT_CONFIG = {
           enemyCapture: 200,
           majorCapture: 200,
           lineOfDeath: 200,
+          underStones: 200,
         },
         upgrades: {},
       },
@@ -308,6 +311,7 @@ var DEFAULT_CONFIG = {
       "enemyCapture",
       "majorCapture",
       "lineOfDeath",
+      "underStones",
     ],
     challengePool: [
       "gray",
