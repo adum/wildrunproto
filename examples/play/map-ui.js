@@ -59,6 +59,48 @@ const HEX_H_SPACING = HEX_WIDTH;
 const HEX_V_SPACING = HEX_SIZE * 1.5;
 const CANVAS_PADDING = 20;
 
+var clickSoundState = {
+  ctx: null,
+  lastAt: 0
+};
+
+function playMapClickSound() {
+  if (typeof window === 'undefined') {
+    return;
+  }
+  var AudioContext = window.AudioContext || window.webkitAudioContext;
+  if (!AudioContext) {
+    return;
+  }
+  var now = Date.now();
+  if (now - clickSoundState.lastAt < 60) {
+    return;
+  }
+  clickSoundState.lastAt = now;
+  if (!clickSoundState.ctx) {
+    try {
+      clickSoundState.ctx = new AudioContext();
+    } catch (err) {
+      return;
+    }
+  }
+  var ctx = clickSoundState.ctx;
+  if (ctx.state === 'suspended') {
+    ctx.resume().catch(function () {});
+  }
+  var osc = ctx.createOscillator();
+  var gain = ctx.createGain();
+  osc.type = 'triangle';
+  osc.frequency.setValueAtTime(420, ctx.currentTime);
+  gain.gain.setValueAtTime(0.0001, ctx.currentTime);
+  gain.gain.exponentialRampToValueAtTime(0.025, ctx.currentTime + 0.01);
+  gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 0.08);
+  osc.connect(gain);
+  gain.connect(ctx.destination);
+  osc.start(ctx.currentTime);
+  osc.stop(ctx.currentTime + 0.09);
+}
+
 function getVoidChance(weights, allowVoid) {
   if (!allowVoid) {
     return 0;
@@ -846,6 +888,7 @@ function createPlayMap(options) {
     if (!target || !canvas.contains(target)) {
       return;
     }
+    playMapClickSound();
     var node = mapState.map.nodeById.get(target.dataset.id);
     if (!node) {
       return;

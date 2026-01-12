@@ -93,6 +93,48 @@ const neighborDirs = [
   { q: 1, r: -1 }
 ];
 
+const clickSoundState = {
+  ctx: null,
+  lastAt: 0
+};
+
+function playMapClickSound() {
+  if (typeof window === 'undefined') {
+    return;
+  }
+  const AudioContext = window.AudioContext || window.webkitAudioContext;
+  if (!AudioContext) {
+    return;
+  }
+  const now = Date.now();
+  if (now - clickSoundState.lastAt < 60) {
+    return;
+  }
+  clickSoundState.lastAt = now;
+  if (!clickSoundState.ctx) {
+    try {
+      clickSoundState.ctx = new AudioContext();
+    } catch (err) {
+      return;
+    }
+  }
+  const ctx = clickSoundState.ctx;
+  if (ctx.state === 'suspended') {
+    ctx.resume().catch(function () {});
+  }
+  const osc = ctx.createOscillator();
+  const gain = ctx.createGain();
+  osc.type = 'triangle';
+  osc.frequency.setValueAtTime(420, ctx.currentTime);
+  gain.gain.setValueAtTime(0.0001, ctx.currentTime);
+  gain.gain.exponentialRampToValueAtTime(0.025, ctx.currentTime + 0.01);
+  gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 0.08);
+  osc.connect(gain);
+  gain.connect(ctx.destination);
+  osc.start(ctx.currentTime);
+  osc.stop(ctx.currentTime + 0.09);
+}
+
 const state = {
   map: null,
   currentId: null,
@@ -512,6 +554,7 @@ function handleHexClick(event) {
   if (!hex || !mapCanvas.contains(hex)) {
     return;
   }
+  playMapClickSound();
   const node = state.map.nodeById.get(hex.dataset.id);
   if (!node) {
     return;
