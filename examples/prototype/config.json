@@ -145,7 +145,8 @@
         "shopaholic",
         "friendlyCapture",
         "enemyCapture",
-        "majorCapture"
+        "majorCapture",
+        "lineOfDeath"
       ]
     },
     "challengeCombos": {
@@ -306,7 +307,8 @@
       "shopaholic",
       "friendlyCapture",
       "enemyCapture",
-      "majorCapture"
+      "majorCapture",
+      "lineOfDeath"
     ],
     "challengePool": [
       "gray",

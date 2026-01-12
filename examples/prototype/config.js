@@ -148,6 +148,7 @@ var DEFAULT_CONFIG = {
         "friendlyCapture",
         "enemyCapture",
         "majorCapture",
+        "lineOfDeath",
       ],
     },
     challengeCombos: {
@@ -309,6 +310,7 @@ var DEFAULT_CONFIG = {
       "friendlyCapture",
       "enemyCapture",
       "majorCapture",
+      "lineOfDeath",
     ],
     challengePool: [
       "gray",

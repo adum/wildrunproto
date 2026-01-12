@@ -5,6 +5,7 @@ var state = app.state;
 var elements = app.elements;
 var refs = app.refs;
 var configUtils = app.configUtils;
+var utils = app.utils;
 
 function getNumber(value, fallback) {
   var num = Number(value);
@@ -339,10 +340,12 @@ function updateCaptureIndicators() {
   var hasFriendlyEl = !!elements.friendlyCaptureIndicator;
   var hasEnemyEl = !!elements.enemyCaptureIndicator;
   var hasMajorEl = !!elements.majorCaptureIndicator;
+  var hasLineDeathEl = !!elements.lineOfDeathIndicator;
   if (!state.rootNode) {
     state.friendlyCaptureDetected = false;
     state.enemyCaptureDetected = false;
     state.majorCaptureDetected = false;
+    state.lineOfDeathDetected = false;
     if (hasFriendlyEl) {
       elements.friendlyCaptureIndicator.classList.remove("is-active");
     }
@@ -351,6 +354,9 @@ function updateCaptureIndicators() {
     }
     if (hasMajorEl) {
       elements.majorCaptureIndicator.classList.remove("is-active");
+    }
+    if (hasLineDeathEl) {
+      elements.lineOfDeathIndicator.classList.remove("is-active");
     }
     return;
   }
@@ -362,6 +368,7 @@ function updateCaptureIndicators() {
   var friendlyFound = false;
   var enemyFound = false;
   var majorFound = false;
+  var lineDeathFound = false;
 
   function getMat(node) {
     if (!node) {
@@ -406,11 +413,35 @@ function updateCaptureIndicators() {
     return count;
   }
 
+  function isPlayerEdgeMove(node) {
+    if (!node || !node.model || !node.model.moveProps) {
+      return false;
+    }
+    var moveProp = node.model.moveProps[0];
+    if (!moveProp || !moveProp.value || moveProp.value.length < 2) {
+      return false;
+    }
+    var color = moveProp.token === "W" ? GB.Ki.White : GB.Ki.Black;
+    if (color !== playerColor) {
+      return false;
+    }
+    var idx = utils ? utils.sgfToIndex(moveProp.value) : null;
+    if (!idx) {
+      return false;
+    }
+    return (
+      idx.i === 0 ||
+      idx.j === 0 ||
+      idx.i === size - 1 ||
+      idx.j === size - 1
+    );
+  }
+
   function walk(node, capturedTotal) {
     if (!node) {
       return;
     }
-    if (majorFound && friendlyFound && enemyFound) {
+    if (majorFound && friendlyFound && enemyFound && lineDeathFound) {
       return;
     }
     if (!node.children || node.children.length === 0) {
@@ -425,6 +456,9 @@ function updateCaptureIndicators() {
         return;
       }
       rightChildFound = true;
+      if (!lineDeathFound && isPlayerEdgeMove(child)) {
+        lineDeathFound = true;
+      }
       var parentMat = getMat(node);
       var mat = getMat(child);
       var captured = countCaptures(parentMat, mat);
@@ -439,6 +473,7 @@ function updateCaptureIndicators() {
   state.friendlyCaptureDetected = friendlyFound;
   state.enemyCaptureDetected = enemyFound;
   state.majorCaptureDetected = majorFound;
+  state.lineOfDeathDetected = lineDeathFound;
   if (hasFriendlyEl) {
     if (friendlyFound) {
       elements.friendlyCaptureIndicator.classList.add("is-active");
@@ -481,6 +516,21 @@ function updateCaptureIndicators() {
       elements.majorCaptureIndicator.setAttribute(
         "aria-label",
         "No major capture detected"
+      );
+    }
+  }
+  if (hasLineDeathEl) {
+    if (lineDeathFound) {
+      elements.lineOfDeathIndicator.classList.add("is-active");
+      elements.lineOfDeathIndicator.setAttribute(
+        "aria-label",
+        "Line of death detected"
+      );
+    } else {
+      elements.lineOfDeathIndicator.classList.remove("is-active");
+      elements.lineOfDeathIndicator.setAttribute(
+        "aria-label",
+        "No line of death detected"
       );
     }
   }

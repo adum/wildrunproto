@@ -141,6 +141,11 @@ var PASSIVE_DEFS = {
     tooltip: "Indicator: any correct line captures 5+ stones.",
     indicatorKey: "majorCaptureDetected",
   },
+  lineOfDeath: {
+    label: "Line of Death",
+    tooltip: "Indicator: any correct line plays a player stone on the edge.",
+    indicatorKey: "lineOfDeathDetected",
+  },
 };
 
 var HINT_DEFS = {
