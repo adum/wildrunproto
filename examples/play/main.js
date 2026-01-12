@@ -350,8 +350,15 @@ app.handlers.onPuzzleSolved = function () {
     difficulty: game.difficultyLabel || formatDifficulty(game.difficulty),
     node: game.currentNode ? game.currentNode.type : null,
   });
-  advanceAfterSolve();
   var node = game.currentNode;
+  if (node && app.board && app.board.playVictoryAccent) {
+    if (node.type === "levelBoss") {
+      app.board.playVictoryAccent(2);
+    } else if (node.type === "boss") {
+      app.board.playVictoryAccent(1);
+    }
+  }
+  advanceAfterSolve();
   if (node && node.type === "levelBoss") {
     logEvent("Level boss cleared. Generating new map.");
     startNewMap();
@@ -1257,6 +1264,9 @@ function renderHints() {
       applyHintLevel(hintId, getHintTypeLevel(hintId));
       def.action();
       hintItem.used = true;
+      if (app.board && app.board.playHintSound) {
+        app.board.playHintSound();
+      }
       renderHints();
     });
     hintList.appendChild(button);
@@ -1555,6 +1565,9 @@ function renderShopList(listEl, items, defs, type) {
           renderPassives();
         }
         item.purchased = true;
+      }
+      if (app.board && app.board.playShopSound) {
+        app.board.playShopSound();
       }
       app.ui.updateHud();
       renderShop();
@@ -2458,6 +2471,9 @@ function renderTreasureOptions(options) {
     button.appendChild(title);
     button.appendChild(desc);
     button.addEventListener("click", function () {
+      if (app.board && app.board.playTreasureSound) {
+        app.board.playTreasureSound();
+      }
       option.apply();
       hideTreasureOverlay();
       showMapOverlay();

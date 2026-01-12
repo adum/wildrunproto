@@ -7,6 +7,129 @@ var ui = app.ui;
 var utils = app.utils;
 var configUtils = app.configUtils;
 
+var soundState = {
+  ctx: null,
+  lastClickAt: 0,
+};
+
+function getAudioContext() {
+  if (typeof window === "undefined") {
+    return null;
+  }
+  var AudioContext = window.AudioContext || window.webkitAudioContext;
+  if (!AudioContext) {
+    return null;
+  }
+  if (!soundState.ctx) {
+    try {
+      soundState.ctx = new AudioContext();
+    } catch (err) {
+      return null;
+    }
+  }
+  if (soundState.ctx.state === "suspended") {
+    soundState.ctx.resume().catch(function () {});
+  }
+  return soundState.ctx;
+}
+
+function playBoardClickSound() {
+  var now = Date.now();
+  if (now - soundState.lastClickAt < 50) {
+    return;
+  }
+  soundState.lastClickAt = now;
+  var ctx = getAudioContext();
+  if (!ctx) {
+    return;
+  }
+  var osc = ctx.createOscillator();
+  var gain = ctx.createGain();
+  osc.type = "sine";
+  osc.frequency.setValueAtTime(360, ctx.currentTime);
+  gain.gain.setValueAtTime(0.0001, ctx.currentTime);
+  gain.gain.exponentialRampToValueAtTime(0.03, ctx.currentTime + 0.01);
+  gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 0.07);
+  osc.connect(gain);
+  gain.connect(ctx.destination);
+  osc.start(ctx.currentTime);
+  osc.stop(ctx.currentTime + 0.08);
+}
+
+function scheduleTone(ctx, freq, start, duration, peak, type) {
+  var osc = ctx.createOscillator();
+  var gain = ctx.createGain();
+  osc.type = type || "triangle";
+  osc.frequency.setValueAtTime(freq, start);
+  gain.gain.setValueAtTime(0.0001, start);
+  gain.gain.exponentialRampToValueAtTime(peak, start + 0.02);
+  gain.gain.exponentialRampToValueAtTime(0.0001, start + duration);
+  osc.connect(gain);
+  gain.connect(ctx.destination);
+  osc.start(start);
+  osc.stop(start + duration + 0.01);
+}
+
+function playVictorySound() {
+  var ctx = getAudioContext();
+  if (!ctx) {
+    return;
+  }
+  var now = ctx.currentTime;
+  scheduleTone(ctx, 523.25, now, 0.12, 0.05);
+  scheduleTone(ctx, 659.25, now + 0.12, 0.16, 0.05);
+}
+
+function playVictoryAccent(level) {
+  var ctx = getAudioContext();
+  if (!ctx) {
+    return;
+  }
+  var intensity = Number(level);
+  if (!Number.isFinite(intensity)) {
+    intensity = 1;
+  }
+  var now = ctx.currentTime + 0.24;
+  var peak = intensity >= 2 ? 0.08 : 0.06;
+  scheduleTone(ctx, 783.99, now, 0.1, peak);
+  scheduleTone(ctx, 987.77, now + 0.1, 0.12, peak);
+  if (intensity >= 2) {
+    scheduleTone(ctx, 1174.66, now + 0.22, 0.16, peak);
+  }
+}
+
+function playHintSound() {
+  var ctx = getAudioContext();
+  if (!ctx) {
+    return;
+  }
+  var now = ctx.currentTime;
+  scheduleTone(ctx, 560, now, 0.08, 0.03, "sine");
+  scheduleTone(ctx, 720, now + 0.06, 0.1, 0.035, "sine");
+}
+
+function playShopSound() {
+  var ctx = getAudioContext();
+  if (!ctx) {
+    return;
+  }
+  var now = ctx.currentTime;
+  scheduleTone(ctx, 523.25, now, 0.08, 0.05, "triangle");
+  scheduleTone(ctx, 659.25, now + 0.05, 0.1, 0.05, "triangle");
+  scheduleTone(ctx, 783.99, now + 0.1, 0.14, 0.05, "triangle");
+}
+
+function playTreasureSound() {
+  var ctx = getAudioContext();
+  if (!ctx) {
+    return;
+  }
+  var now = ctx.currentTime;
+  scheduleTone(ctx, 660, now, 0.1, 0.04, "triangle");
+  scheduleTone(ctx, 880, now + 0.07, 0.12, 0.05, "triangle");
+  scheduleTone(ctx, 1175, now + 0.14, 0.16, 0.055, "triangle");
+}
+
 function getNumber(value, fallback) {
   var num = Number(value);
   if (Number.isFinite(num)) {
@@ -349,6 +472,7 @@ function evaluatePosition() {
         null,
         getSpeedSolveMark()
       );
+      playVictorySound();
       if (app.handlers.onPuzzleSolved) {
         app.handlers.onPuzzleSolved();
       }
@@ -770,6 +894,8 @@ function handleMoveSelection(i, j) {
     return;
   }
 
+  playBoardClickSound();
+
   if (state.mysteryTimerActive) {
     app.timers.stopMysteryTimer(false);
   }
@@ -802,3 +928,7 @@ app.board.eliminateRandomMove = eliminateRandomMove;
 app.board.resetSpeedSolveTracking = resetSpeedSolveTracking;
 app.board.ensureSpeedSolveStart = ensureSpeedSolveStart;
 app.board.getSpeedSolveMark = getSpeedSolveMark;
+app.board.playVictoryAccent = playVictoryAccent;
+app.board.playHintSound = playHintSound;
+app.board.playShopSound = playShopSound;
+app.board.playTreasureSound = playTreasureSound;
