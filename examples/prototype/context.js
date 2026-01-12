@@ -239,6 +239,7 @@ export const state = {
   hintMode: "none",
   extraAllowedMoves: new Set(),
   lastNodeId: null,
+  lastMistakeEndId: null,
   childMoves: [],
   childMoveMap: new Map(),
 };
@@ -421,6 +422,9 @@ export function updateHud() {
   }
   state.lastLives = state.lives;
   if (shouldFlash) {
+    if (app && app.board && app.board.playLifeLossSound) {
+      app.board.playLifeLossSound();
+    }
     flashLivesBox();
   }
 }

@@ -1983,6 +1983,7 @@ function loadProblem(problem, difficultyLabelText) {
   );
   state.combo = 0;
   state.lastNodeId = null;
+  state.lastMistakeEndId = null;
   if (app.board && app.board.resetSpeedSolveTracking) {
     app.board.resetSpeedSolveTracking();
   }

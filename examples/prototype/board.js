@@ -130,6 +130,16 @@ function playTreasureSound() {
   scheduleTone(ctx, 1175, now + 0.14, 0.16, 0.055, "triangle");
 }
 
+function playLifeLossSound() {
+  var ctx = getAudioContext();
+  if (!ctx) {
+    return;
+  }
+  var now = ctx.currentTime;
+  scheduleTone(ctx, 220, now, 0.12, 0.06, "sine");
+  scheduleTone(ctx, 175, now + 0.08, 0.18, 0.05, "sine");
+}
+
 function flashTimerButton(button) {
   if (!button) {
     return;
@@ -151,6 +161,10 @@ function getNumber(value, fallback) {
     return num;
   }
   return fallback;
+}
+
+function getNodeId(node) {
+  return node && node.model && node.model.id ? node.model.id : null;
 }
 
 function clampLevel(levelKey, level, fallbackMin, fallbackMax) {
@@ -492,7 +506,19 @@ function evaluatePosition() {
         app.handlers.onPuzzleSolved();
       }
     } else {
-      ui.setStatus("Line over. Reset to try again.", "error");
+      var nodeId = getNodeId(state.currentNode);
+      if (!nodeId || state.lastMistakeEndId !== nodeId) {
+        state.lives -= 1;
+        state.combo = 0;
+        state.lastMistakeEndId = nodeId || null;
+        ui.updateHud();
+        ui.logMessage("Mistake branch ended: lost a life.");
+      }
+      if (state.lives <= 0) {
+        ui.setStatus("Out of lives. Reset to continue.", "error");
+      } else {
+        ui.setStatus("Line over. Reset to try again.", "error");
+      }
       if (app.handlers.onPuzzleFailed) {
         app.handlers.onPuzzleFailed();
       }
@@ -565,6 +591,7 @@ function resetPuzzle() {
   app.passives.resetPassives();
   app.hints.setCurrentNode(state.rootNode);
   state.combo = 0;
+  state.lastMistakeEndId = null;
   app.hints.clearTemporaryState();
   autoPlayOpponent();
   updateBoard();
@@ -591,6 +618,7 @@ function loadSgf(key) {
   state.playerColor = GB.getFirstToMoveColorFromRoot(sgf.root, GB.Ki.Black);
   state.combo = 0;
   state.lastNodeId = null;
+  state.lastMistakeEndId = null;
   if (app.passives && app.passives.updateCaptureIndicators) {
     app.passives.updateCaptureIndicators();
   }
@@ -719,7 +747,7 @@ function applyMoveAt(i, j) {
   var chosen = state.childMoveMap.get(coord);
   var isBlocked = state.blockedMoves.has(coord);
   var isCorrect = chosen && GB.inRightPath(chosen.node);
-  var isWrong = isBlocked || !chosen || (chosen && !isCorrect);
+  var immediateFailure = isBlocked || !chosen;
 
   if (state.secondChanceActive) {
     if (isCorrect) {
@@ -727,7 +755,7 @@ function applyMoveAt(i, j) {
         app.passives.clearSecondChanceTimer();
       }
       ui.logMessage("Second chance used: " + utils.sgfToA1(coord));
-    } else {
+    } else if (immediateFailure) {
       if (app.passives && app.passives.clearSecondChanceTimer) {
         app.passives.clearSecondChanceTimer();
       }
@@ -751,8 +779,10 @@ function applyMoveAt(i, j) {
       }
       evaluatePosition();
       return false;
+    } else if (app.passives && app.passives.clearSecondChanceTimer) {
+      app.passives.clearSecondChanceTimer();
     }
-  } else if (isWrong && app.passives && app.passives.startSecondChance) {
+  } else if (immediateFailure && app.passives && app.passives.startSecondChance) {
     var duration = app.passives.startSecondChance(function () {
       state.lives -= 1;
       state.combo = 0;
@@ -767,21 +797,16 @@ function applyMoveAt(i, j) {
     }
   }
 
-  if (isBlocked) {
+  if (immediateFailure) {
     state.lives -= 1;
     state.combo = 0;
     ui.updateHud();
-    ui.logMessage("Eliminated move selected: " + utils.sgfToA1(coord));
-    evaluatePosition();
-    return false;
-  }
-
-  if (!chosen) {
-    state.lives -= 1;
-    state.combo = 0;
-    ui.updateHud();
-    ui.logMessage("Wrong move (not in tree): " + utils.sgfToA1(coord));
-    if (app.effects && app.effects.triggerBadMoveShatter) {
+    if (isBlocked) {
+      ui.logMessage("Eliminated move selected: " + utils.sgfToA1(coord));
+    } else {
+      ui.logMessage("Wrong move (not in tree): " + utils.sgfToA1(coord));
+    }
+    if (!chosen && app.effects && app.effects.triggerBadMoveShatter) {
       app.effects.triggerBadMoveShatter(i, j, turn);
     }
     evaluatePosition();
@@ -799,9 +824,8 @@ function applyMoveAt(i, j) {
     state.combo += 1;
     ui.logMessage("Correct move: " + utils.sgfToA1(coord));
   } else {
-    state.lives -= 1;
     state.combo = 0;
-    ui.logMessage("Wrong move: " + utils.sgfToA1(coord));
+    ui.logMessage("Wrong branch move: " + utils.sgfToA1(coord));
   }
 
   ui.updateHud();
@@ -953,3 +977,4 @@ app.board.playVictoryAccent = playVictoryAccent;
 app.board.playHintSound = playHintSound;
 app.board.playShopSound = playShopSound;
 app.board.playTreasureSound = playTreasureSound;
+app.board.playLifeLossSound = playLifeLossSound;
