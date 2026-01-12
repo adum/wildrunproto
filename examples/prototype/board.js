@@ -546,6 +546,18 @@ function evaluatePosition() {
   app.timers.syncSpeedTimer();
 }
 
+function handleImmediateFailure() {
+  if (state.lives <= 0) {
+    ui.setStatus("Out of lives. Reset to continue.", "error");
+  } else {
+    ui.setStatus("Line over. Reset to try again.", "error");
+  }
+  app.timers.stopSpeedTimer(false);
+  if (app.handlers.onPuzzleFailed) {
+    app.handlers.onPuzzleFailed();
+  }
+}
+
 function pickOpponentMove() {
   if (state.childMoves.length === 0) {
     return null;
@@ -777,7 +789,7 @@ function applyMoveAt(i, j) {
       if (!chosen && app.effects && app.effects.triggerBadMoveShatter) {
         app.effects.triggerBadMoveShatter(i, j, turn);
       }
-      evaluatePosition();
+      handleImmediateFailure();
       return false;
     } else if (app.passives && app.passives.clearSecondChanceTimer) {
       app.passives.clearSecondChanceTimer();
@@ -788,7 +800,7 @@ function applyMoveAt(i, j) {
       state.combo = 0;
       ui.updateHud();
       ui.logMessage("Second chance expired: lost a life.");
-      evaluatePosition();
+      handleImmediateFailure();
     });
     if (duration) {
       ui.setStatus("Second chance! Play the correct move.");
@@ -809,7 +821,7 @@ function applyMoveAt(i, j) {
     if (!chosen && app.effects && app.effects.triggerBadMoveShatter) {
       app.effects.triggerBadMoveShatter(i, j, turn);
     }
-    evaluatePosition();
+    handleImmediateFailure();
     return false;
   }
 

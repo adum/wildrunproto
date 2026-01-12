@@ -109,8 +109,8 @@ var DEFAULT_CONFIG = {
       speedSolveMultiplier: 2,
     },
     map: {
-      height: 7,
-      maxWidth: 5,
+      height: 8,
+      maxWidth: 6,
       allowVoid: true,
       maxAttempts: 60,
       shopMinCount: 1,

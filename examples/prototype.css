@@ -1058,6 +1058,46 @@ select {
   min-width: 160px;
 }
 
+.play-overlay--start .play-overlay__cta--start {
+  position: relative;
+  min-width: 200px;
+  padding: 10px 18px;
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  border-color: rgba(190, 110, 40, 0.8);
+  color: #2b1b12;
+  background: linear-gradient(135deg, #ffb24d 0%, #ffd98b 52%, #ff9f3a 100%);
+  box-shadow: 0 12px 24px rgba(255, 157, 60, 0.35),
+    inset 0 0 0 1px rgba(255, 250, 240, 0.6);
+  overflow: hidden;
+  animation: startPulse 2.4s ease-in-out infinite;
+}
+
+.play-overlay--start .play-overlay__cta--start::before {
+  content: "";
+  position: absolute;
+  top: -80%;
+  left: -50%;
+  width: 60%;
+  height: 260%;
+  background: linear-gradient(
+    120deg,
+    rgba(255, 255, 255, 0),
+    rgba(255, 255, 255, 0.5),
+    rgba(255, 255, 255, 0)
+  );
+  transform: rotate(20deg);
+  animation: startShine 3.2s ease-in-out infinite;
+  pointer-events: none;
+}
+
+.play-overlay--start .play-overlay__cta--start:hover {
+  transform: translateY(-2px) scale(1.01);
+  box-shadow: 0 16px 28px rgba(255, 157, 60, 0.45),
+    inset 0 0 0 1px rgba(255, 250, 240, 0.7);
+}
+
 .play-overlay__cta--secondary {
   min-width: 160px;
   background: rgba(120, 110, 100, 0.12);
@@ -1114,6 +1154,35 @@ select {
 
 .start-best.is-hidden {
   display: none;
+}
+
+@keyframes startPulse {
+  0%,
+  100% {
+    transform: translateY(0);
+    box-shadow: 0 12px 24px rgba(255, 157, 60, 0.35),
+      inset 0 0 0 1px rgba(255, 250, 240, 0.6);
+  }
+  50% {
+    transform: translateY(-1px);
+    box-shadow: 0 16px 30px rgba(255, 157, 60, 0.45),
+      inset 0 0 0 1px rgba(255, 250, 240, 0.7);
+  }
+}
+
+@keyframes startShine {
+  0%,
+  60% {
+    left: -60%;
+    opacity: 0;
+  }
+  70% {
+    opacity: 0.6;
+  }
+  100% {
+    left: 140%;
+    opacity: 0;
+  }
 }
 
 .play-overlay--shop .play-overlay__panel {

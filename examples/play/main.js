@@ -2459,36 +2459,13 @@ function pickUpgradableHint() {
   return candidates[Math.floor(Math.random() * candidates.length)];
 }
 
-function pickUpgradablePassive() {
-  var candidates = game.passives.filter(function (passive) {
-    var bounds = getPassiveLevelBounds(passive.id);
-    return passive.level < bounds.max;
-  });
-  if (!candidates.length) {
-    return null;
-  }
-  return candidates[Math.floor(Math.random() * candidates.length)];
-}
-
 function buildTreasureUpgradeOption(config) {
   return {
     title: "Upgrade",
-    desc: "Level up a random hint or passive.",
+    desc: "Level up a hint (or gain a new passive).",
     apply: function () {
       var hintTarget = pickUpgradableHint();
-      var passiveTarget = pickUpgradablePassive();
-      var options = [];
-      if (hintTarget) {
-        options.push({ type: "hint", target: hintTarget });
-      }
-      if (passiveTarget) {
-        options.push({ type: "passive", target: passiveTarget });
-      }
-      var choice =
-        options.length > 0
-          ? options[Math.floor(Math.random() * options.length)]
-          : null;
-      if (!choice) {
+      if (!hintTarget) {
         var ownedPassives = new Set(
           game.passives.map(function (passive) {
             return passive.id;
@@ -2512,34 +2489,15 @@ function buildTreasureUpgradeOption(config) {
         buildTreasureHintOption(config).apply();
         return;
       }
-      if (choice.type === "hint") {
-        var updatedLevel = setHintTypeLevel(
-          choice.target.id,
-          getHintTypeLevel(choice.target.id) + 1
-        );
-        renderHints();
-        flashUpgradedItem("hint", choice.target.id);
-        logEvent("Treasure claimed: hint upgrade.", {
-          hint: choice.target.id,
-          level: updatedLevel,
-        });
-        return;
-      }
-      var updated = ensurePassiveLevel(
-        choice.target.id,
-        choice.target.level + 1
+      var updatedLevel = setHintTypeLevel(
+        hintTarget.id,
+        getHintTypeLevel(hintTarget.id) + 1
       );
-      if (updated) {
-        choice.target.level = updated.level;
-      }
-      persistPassives();
-      renderStartPassives();
-      applyPassives();
-      renderPassives();
-      flashUpgradedItem("passive", choice.target.id);
-      logEvent("Treasure claimed: passive upgrade.", {
-        passive: choice.target.id,
-        level: choice.target.level,
+      renderHints();
+      flashUpgradedItem("hint", hintTarget.id);
+      logEvent("Treasure claimed: hint upgrade.", {
+        hint: hintTarget.id,
+        level: updatedLevel,
       });
     },
   };
@@ -2548,7 +2506,8 @@ function buildTreasureUpgradeOption(config) {
 function buildTreasureOptions(config) {
   var coinMin = config.treasure.coinMin;
   var coinMax = config.treasure.coinMax;
-  var coinAmount = randomInt(coinMin, coinMax);
+  var mapLevel = Math.max(1, game.mapIndex || 1);
+  var coinAmount = randomInt(coinMin, coinMax) * mapLevel;
   var coinOption = {
     title: coinAmount + " Coins",
     desc: "Pocket a stash of extra coins.",
