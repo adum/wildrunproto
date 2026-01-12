@@ -130,6 +130,21 @@ function playTreasureSound() {
   scheduleTone(ctx, 1175, now + 0.14, 0.16, 0.055, "triangle");
 }
 
+function flashTimerButton(button) {
+  if (!button) {
+    return;
+  }
+  if (button._flashTimeout) {
+    clearTimeout(button._flashTimeout);
+  }
+  button.classList.remove("is-flashing");
+  void button.offsetWidth;
+  button.classList.add("is-flashing");
+  button._flashTimeout = setTimeout(function () {
+    button.classList.remove("is-flashing");
+  }, 520);
+}
+
 function getNumber(value, fallback) {
   var num = Number(value);
   if (Number.isFinite(num)) {
@@ -875,6 +890,12 @@ function handleMoveSelection(i, j) {
   ) {
     ui.setStatus("Reveal & start timer to begin.");
     ui.logMessage("Reveal & start the timer before playing.");
+    if (state.challengeMystery && !state.mysteryRevealed) {
+      flashTimerButton(refs.mysteryBtn);
+    }
+    if (state.challengeEnigma && !state.enigmaRevealed) {
+      flashTimerButton(refs.enigmaBtn);
+    }
     return;
   }
 

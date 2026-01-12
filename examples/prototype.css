@@ -90,6 +90,25 @@ body.play-mode {
   z-index: 13;
 }
 
+.board-control.is-flashing {
+  animation: boardControlFlash 0.45s ease;
+}
+
+@keyframes boardControlFlash {
+  0% {
+    transform: translateY(0) scale(1);
+    box-shadow: 0 0 0 rgba(255, 196, 120, 0);
+  }
+  50% {
+    transform: translateY(-1px) scale(1.06);
+    box-shadow: 0 0 18px rgba(255, 196, 120, 0.6);
+  }
+  100% {
+    transform: translateY(0) scale(1);
+    box-shadow: 0 0 0 rgba(255, 196, 120, 0);
+  }
+}
+
 #mysteryTimerBtn {
   right: 10px;
   top: 10px;
