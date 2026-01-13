@@ -238,6 +238,15 @@ if (elements.challengeSpyglassBtn) {
     app.ui.logMessage("Challenge enabled: Spy Glass.");
   });
 }
+if (elements.challengeLinelessBtn) {
+  elements.challengeLinelessBtn.addEventListener("click", function () {
+    if (state.challengeLineless) {
+      return;
+    }
+    app.challenges.setLinelessPlay(true);
+    app.ui.logMessage("Challenge enabled: Lineless.");
+  });
+}
 if (elements.passiveTimeExtendBtn) {
   elements.passiveTimeExtendBtn.addEventListener("click", function () {
     if (state.passiveTimeExtend) {

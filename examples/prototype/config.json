@@ -161,7 +161,8 @@
       "frost": ["infection", "fire", "flip", "spotlight", "spyglass"],
       "flip": ["infection", "fire", "frost", "spotlight", "spyglass"],
       "spotlight": ["fire", "frost", "flip", "spyglass"],
-      "spyglass": ["fire", "frost", "flip", "spotlight"]
+      "spyglass": ["fire", "frost", "flip", "spotlight"],
+      "lineless": []
     },
     "shop": {
       "frequency": 3,
@@ -261,7 +262,8 @@
       "frost",
       "flip",
       "spotlight",
-      "spyglass"
+      "spyglass",
+      "lineless"
     ]
   }
 }

@@ -11,6 +11,7 @@ var soundState = {
   ctx: null,
   lastClickAt: 0,
 };
+var boardLineCache = {};
 
 function getAudioContext() {
   if (typeof window === "undefined") {
@@ -178,6 +179,71 @@ function getNodeId(node) {
   return node && node.model && node.model.id ? node.model.id : null;
 }
 
+function getThemeValue(themeOptions, theme, key, fallback) {
+  if (!themeOptions || !key) {
+    return fallback;
+  }
+  var themeConfig = themeOptions[theme] || {};
+  if (Object.prototype.hasOwnProperty.call(themeConfig, key)) {
+    return themeConfig[key];
+  }
+  var defaultConfig = themeOptions.default || {};
+  if (Object.prototype.hasOwnProperty.call(defaultConfig, key)) {
+    return defaultConfig[key];
+  }
+  return fallback;
+}
+
+function setBoardLinesVisible(visible) {
+  if (!refs.board) {
+    return;
+  }
+  var theme = refs.board.options.theme;
+  var themeOptions = refs.board.options.themeOptions || {};
+  if (!boardLineCache[theme]) {
+    boardLineCache[theme] = {
+      boardLineColor: getThemeValue(
+        themeOptions,
+        theme,
+        "boardLineColor",
+        "#000000"
+      ),
+      activeColor: getThemeValue(
+        themeOptions,
+        theme,
+        "activeColor",
+        "#000000"
+      ),
+      inactiveColor: getThemeValue(
+        themeOptions,
+        theme,
+        "inactiveColor",
+        "#000000"
+      ),
+    };
+  }
+  var nextThemeConfig = Object.assign({}, themeOptions[theme] || {});
+  if (visible) {
+    var cached = boardLineCache[theme];
+    if (cached) {
+      nextThemeConfig.boardLineColor = cached.boardLineColor;
+      nextThemeConfig.activeColor = cached.activeColor;
+      nextThemeConfig.inactiveColor = cached.inactiveColor;
+    }
+  } else {
+    nextThemeConfig.boardLineColor = "rgba(0, 0, 0, 0)";
+    nextThemeConfig.activeColor = "rgba(0, 0, 0, 0)";
+    nextThemeConfig.inactiveColor = "rgba(0, 0, 0, 0)";
+  }
+  refs.board.setOptions({
+    themeOptions: Object.assign({}, themeOptions, {
+      [theme]: nextThemeConfig,
+    }),
+  });
+  refs.board.render();
+  refs.board.renderInteractive();
+}
+
 function clampLevel(levelKey, level, fallbackMin, fallbackMax) {
   if (configUtils && configUtils.clampLevel) {
     return configUtils.clampLevel(levelKey, level, fallbackMin, fallbackMax);
@@ -267,13 +333,16 @@ function initBoard(boardSize) {
   refs.board = new GB.GhostBan({
     boardSize: boardSize,
     interactive: true,
-    coordinate: true,
+    coordinate: false,
     zoom: true,
     extent: 3,
     theme: GB.Theme.Flat,
     padding: 24,
   });
   refs.board.init(app.elements.mount);
+  if (state.challengeLineless) {
+    setBoardLinesVisible(false);
+  }
   app.challenges.updateChallengeControls();
   refs.grayCanvas = document.createElement("canvas");
   refs.grayCanvas.id = "ghostban-gray";
@@ -996,6 +1065,7 @@ app.board.eliminateRandomMove = eliminateRandomMove;
 app.board.resetSpeedSolveTracking = resetSpeedSolveTracking;
 app.board.ensureSpeedSolveStart = ensureSpeedSolveStart;
 app.board.getSpeedSolveMark = getSpeedSolveMark;
+app.board.setBoardLinesVisible = setBoardLinesVisible;
 app.board.playVictoryAccent = playVictoryAccent;
 app.board.playHintSound = playHintSound;
 app.board.playShopSound = playShopSound;

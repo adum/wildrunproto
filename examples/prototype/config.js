@@ -164,6 +164,7 @@ var DEFAULT_CONFIG = {
       flip: ["infection", "fire", "frost", "spotlight", "spyglass"],
       spotlight: ["fire", "frost", "flip", "spyglass"],
       spyglass: ["fire", "frost", "flip", "spotlight"],
+      lineless: [],
     },
     shop: {
       frequency: 3,
@@ -264,6 +265,7 @@ var DEFAULT_CONFIG = {
       "flip",
       "spotlight",
       "spyglass",
+      "lineless",
     ],
   },
 };

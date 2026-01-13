@@ -247,6 +247,14 @@ function setSpyglassPlay(active) {
   }
 }
 
+function setLinelessPlay(active) {
+  state.challengeLineless = active;
+  if (app.board && app.board.setBoardLinesVisible) {
+    app.board.setBoardLinesVisible(!active);
+  }
+  updateChallengeControls();
+}
+
 function updateChallengeControls() {
   if (elements.challengeGrayBtn) {
     if (state.challengeGray) {
@@ -347,6 +355,15 @@ function updateChallengeControls() {
       elements.challengeSpyglassBtn.disabled = false;
     }
   }
+  if (elements.challengeLinelessBtn) {
+    if (state.challengeLineless) {
+      elements.challengeLinelessBtn.classList.add("active");
+      elements.challengeLinelessBtn.disabled = true;
+    } else {
+      elements.challengeLinelessBtn.classList.remove("active");
+      elements.challengeLinelessBtn.disabled = false;
+    }
+  }
 }
 
 function resetChallenges() {
@@ -397,6 +414,10 @@ function resetChallenges() {
   state.spyglassPos = null;
   state.spyglassPointer = null;
   app.spyglass.stopSpyglassAnimation();
+  state.challengeLineless = false;
+  if (app.board && app.board.setBoardLinesVisible) {
+    app.board.setBoardLinesVisible(true);
+  }
   if (refs.ghostAnimId) {
     cancelAnimationFrame(refs.ghostAnimId);
     refs.ghostAnimId = null;
@@ -423,6 +444,7 @@ app.challenges.setFrostPlay = setFrostPlay;
 app.challenges.setFlipPlay = setFlipPlay;
 app.challenges.setSpotlightPlay = setSpotlightPlay;
 app.challenges.setSpyglassPlay = setSpyglassPlay;
+app.challenges.setLinelessPlay = setLinelessPlay;
 app.challenges.updateChallengeControls = updateChallengeControls;
 app.challenges.resetChallenges = resetChallenges;
 app.challenges.updateInfectionLevelUI = updateInfectionLevelUI;

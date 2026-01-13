@@ -329,6 +329,13 @@ var CHALLENGE_DEFS = {
       app.challenges.setSpyglassPlay(true);
     },
   },
+  lineless: {
+    label: "Lineless",
+    tooltip: "Hide board grid lines and star points.",
+    enable: function () {
+      app.challenges.setLinelessPlay(true);
+    },
+  },
 };
 
 var problemIndex = buildProblemIndex(problems);
