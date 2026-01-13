@@ -151,78 +151,17 @@
       ]
     },
     "challengeCombos": {
-      "gray": [
-        "ghost",
-        "mystery",
-        "enigma",
-        "infection",
-        "speed",
-        "fire",
-        "frost",
-        "flip",
-        "spotlight",
-        "spyglass"
-      ],
-      "ghost": [
-        "gray",
-        "mystery",
-        "enigma",
-        "infection",
-        "speed",
-        "fire",
-        "frost",
-        "flip",
-        "spotlight",
-        "spyglass"
-      ],
-      "mystery": [
-        "gray",
-        "ghost",
-        "infection",
-        "speed",
-        "fire",
-        "frost",
-        "flip",
-        "spotlight",
-        "spyglass"
-      ],
-      "enigma": [
-        "gray",
-        "ghost",
-        "infection",
-        "speed",
-        "fire",
-        "frost",
-        "flip",
-        "spotlight",
-        "spyglass"
-      ],
-      "infection": [
-        "gray",
-        "ghost",
-        "mystery",
-        "enigma",
-        "speed",
-        "spotlight",
-        "spyglass"
-      ],
-      "speed": [
-        "gray",
-        "ghost",
-        "mystery",
-        "enigma",
-        "infection",
-        "fire",
-        "frost",
-        "flip",
-        "spotlight",
-        "spyglass"
-      ],
-      "fire": ["gray", "ghost", "mystery", "enigma", "speed"],
-      "frost": ["gray", "ghost", "mystery", "enigma", "speed"],
-      "flip": ["gray", "ghost", "mystery", "enigma", "speed"],
-      "spotlight": ["gray", "ghost", "mystery", "enigma", "infection", "speed"],
-      "spyglass": ["gray", "ghost", "mystery", "enigma", "infection", "speed"]
+      "gray": [],
+      "ghost": [],
+      "mystery": ["enigma"],
+      "enigma": ["mystery"],
+      "infection": ["fire", "frost", "flip"],
+      "speed": [],
+      "fire": ["infection", "frost", "flip", "spotlight", "spyglass"],
+      "frost": ["infection", "fire", "flip", "spotlight", "spyglass"],
+      "flip": ["infection", "fire", "frost", "spotlight", "spyglass"],
+      "spotlight": ["fire", "frost", "flip", "spyglass"],
+      "spyglass": ["fire", "frost", "flip", "spotlight"]
     },
     "shop": {
       "frequency": 3,

@@ -2172,13 +2172,13 @@ function isComboAllowed(primary, candidate, combos) {
   }
   var listA = combos[primary];
   if (Array.isArray(listA)) {
-    if (listA.indexOf("*") === -1 && listA.indexOf(candidate) === -1) {
+    if (listA.indexOf("*") !== -1 || listA.indexOf(candidate) !== -1) {
       return false;
     }
   }
   var listB = combos[candidate];
   if (Array.isArray(listB)) {
-    if (listB.indexOf("*") === -1 && listB.indexOf(primary) === -1) {
+    if (listB.indexOf("*") !== -1 || listB.indexOf(primary) !== -1) {
       return false;
     }
   }
@@ -2704,6 +2704,9 @@ function hideStartOverlay() {
 }
 
 function endGame() {
+  if (app.board && app.board.playRunFailSound) {
+    app.board.playRunFailSound();
+  }
   game.started = false;
   game.levelActive = false;
   game.levelNumber = 0;

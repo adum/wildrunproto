@@ -140,6 +140,17 @@ function playLifeLossSound() {
   scheduleTone(ctx, 175, now + 0.08, 0.18, 0.05, "sine");
 }
 
+function playRunFailSound() {
+  var ctx = getAudioContext();
+  if (!ctx) {
+    return;
+  }
+  var now = ctx.currentTime;
+  scheduleTone(ctx, 196, now, 0.14, 0.05, "triangle");
+  scheduleTone(ctx, 147, now + 0.12, 0.2, 0.06, "triangle");
+  scheduleTone(ctx, 110, now + 0.24, 0.28, 0.06, "sine");
+}
+
 function flashTimerButton(button) {
   if (!button) {
     return;
@@ -990,3 +1001,4 @@ app.board.playHintSound = playHintSound;
 app.board.playShopSound = playShopSound;
 app.board.playTreasureSound = playTreasureSound;
 app.board.playLifeLossSound = playLifeLossSound;
+app.board.playRunFailSound = playRunFailSound;
