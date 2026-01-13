@@ -158,7 +158,7 @@ var PASSIVE_DEFS = {
 var HINT_DEFS = {
   firstMove: {
     label: "First Move",
-    tooltip: "Marks the next correct move.",
+    tooltip: "Marks the next correct move in the line.",
     action: function () {
       app.hints.hintFirstMove();
     },
@@ -172,14 +172,14 @@ var HINT_DEFS = {
   },
   multipleChoice: {
     label: "Multiple Choice",
-    tooltip: "Options: L1 4, L2 3, L3 2.",
+    tooltip: "Shows candidate moves; fewer as level rises.",
     action: function () {
       app.hints.hintTwoMoves();
     },
   },
   multishot: {
     label: "Multishot",
-    tooltip: "Picks: L1 2, L2 3, L3 4.",
+    tooltip: "Place multiple moves; correct one auto-plays.",
     action: function () {
       app.hints.hintMultishot();
     },
@@ -193,28 +193,28 @@ var HINT_DEFS = {
   },
   rowReveal: {
     label: "Row Reveal",
-    tooltip: "Band width: L1 3 rows, L2 2, L3 1.",
+    tooltip: "Reveals row containing a solution; width shrinks with level.",
     action: function () {
       app.hints.hintRowReveal();
     },
   },
   colReveal: {
     label: "Column Reveal",
-    tooltip: "Band width: L1 3 cols, L2 2, L3 1.",
+    tooltip: "Reveals column containing a solution; width shrinks with level.",
     action: function () {
       app.hints.hintColumnReveal();
     },
   },
   diagReveal: {
     label: "Diagonal Reveal",
-    tooltip: "Band width: L1 3 diags, L2 2, L3 1.",
+    tooltip: "Reveals diagonal containing a solution; width shrinks with level.",
     action: function () {
       app.hints.hintDiagonalReveal();
     },
   },
   eliminateRandom: {
     label: "Eliminate Random Move",
-    tooltip: "Decoys: L1 +2, L2 +1, L3 +0 (min 1 if no wrong moves).",
+    tooltip: "Eliminates wrong/decoy moves; more at higher levels.",
     action: function () {
       app.board.eliminateRandomMove();
     },
