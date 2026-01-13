@@ -38,12 +38,16 @@ const HEX_HEIGHT = HEX_SIZE * 2;
 const HEX_H_SPACING = HEX_WIDTH;
 const HEX_V_SPACING = HEX_SIZE * 1.5;
 const CANVAS_PADDING = 28;
+function resolveIcon(path) {
+  return new URL(path, import.meta.url).href;
+}
+
 const ICON_SOURCES = {
-  problem: './img/problem0.svg',
-  boss: './img/boss_problem0.svg',
-  levelBoss: './img/levelboss_problem0.svg',
-  shop: './img/shop0.svg',
-  treasure: './img/treasure2.svg'
+  problem: resolveIcon('./img/problem0.svg'),
+  boss: resolveIcon('./img/boss_problem0.svg'),
+  levelBoss: resolveIcon('./img/levelboss_problem0.svg'),
+  shop: resolveIcon('./img/shop0.svg'),
+  treasure: resolveIcon('./img/treasure2.svg')
 };
 
 const TYPE_DEFS = {

@@ -1,11 +1,15 @@
+function resolveIcon(path) {
+  return new URL(path, import.meta.url).href;
+}
+
 const ICON_SOURCES = {
-  problem: './img/problem0.svg',
-  boss: './img/boss_problem0.svg',
-  levelBoss: './img/levelboss_problem0.svg',
-  shop: './img/shop0.svg',
-  passiveShop: './img/shop-passive.svg?v=2',
-  treasure: './img/treasure2.svg',
-  start: './img/info-circle.svg'
+  problem: resolveIcon('../img/problem0.svg'),
+  boss: resolveIcon('../img/boss_problem0.svg'),
+  levelBoss: resolveIcon('../img/levelboss_problem0.svg'),
+  shop: resolveIcon('../img/shop0.svg'),
+  passiveShop: resolveIcon('../img/shop-passive.svg?v=2'),
+  treasure: resolveIcon('../img/treasure2.svg'),
+  start: resolveIcon('../img/info-circle.svg')
 };
 
 const TYPE_DEFS = {
