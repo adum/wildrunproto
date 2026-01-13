@@ -11,6 +11,7 @@
   "scripts": {
     "build": "rollup -c && tsc --emitDeclarationOnly",
     "build:pages": "yarn build && node scripts/build-pages.js",
+    "pages": "yarn build:pages",
     "watch": "rollup -w -c",
     "lint": "gts lint",
     "test": "jest",
