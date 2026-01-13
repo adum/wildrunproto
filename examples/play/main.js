@@ -2474,30 +2474,10 @@ function pickUpgradableHint() {
 function buildTreasureUpgradeOption(config) {
   return {
     title: "Upgrade",
-    desc: "Level up a hint (or gain a new passive).",
+    desc: "Level up a hint.",
     apply: function () {
       var hintTarget = pickUpgradableHint();
       if (!hintTarget) {
-        var ownedPassives = new Set(
-          game.passives.map(function (passive) {
-            return passive.id;
-          })
-        );
-        var passivePool = config.treasure.passivePool.filter(function (id) {
-          var def = PASSIVE_DEFS[id];
-          return def && !def.indicatorKey && !ownedPassives.has(id);
-        });
-        if (passivePool.length && Math.random() < 0.5) {
-          var passiveId =
-            passivePool[Math.floor(Math.random() * passivePool.length)];
-          ensurePassiveLevel(passiveId, 1);
-          persistPassives();
-          renderStartPassives();
-          applyPassives();
-          renderPassives();
-          logEvent("Treasure claimed: passive.", { passive: passiveId, level: 1 });
-          return;
-        }
         buildTreasureHintOption(config).apply();
         return;
       }
