@@ -247,6 +247,10 @@ body.play-mode {
   z-index: 3;
 }
 
+#ghostban-fadeout {
+  z-index: 3;
+}
+
 #ghostban-enigma {
   z-index: 4;
 }
@@ -672,6 +676,7 @@ select {
 .enigma-row,
 .infection-row,
 .speed-row,
+.fadeout-row,
 .fire-row,
 .frost-row,
 .flip-row,
@@ -740,6 +745,7 @@ select {
 .enigma-level,
 .infection-level,
 .speed-level,
+.fadeout-level,
 .fire-level,
 .frost-level,
 .flip-level,
@@ -763,6 +769,7 @@ select {
 .enigma-level label,
 .infection-level label,
 .speed-level label,
+.fadeout-level label,
 .fire-level label,
 .frost-level label,
 .flip-level label,
@@ -782,6 +789,7 @@ select {
 .enigma-level input[type="range"],
 .infection-level input[type="range"],
 .speed-level input[type="range"],
+.fadeout-level input[type="range"],
 .fire-level input[type="range"],
 .frost-level input[type="range"],
 .flip-level input[type="range"],
@@ -805,6 +813,7 @@ select {
 .enigma-level__value,
 .infection-level__value,
 .speed-level__value,
+.fadeout-level__value,
 .fire-level__value,
 .frost-level__value,
 .flip-level__value,

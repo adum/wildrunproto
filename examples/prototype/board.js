@@ -349,6 +349,11 @@ function initBoard(boardSize) {
   refs.grayCanvas.style.position = "absolute";
   refs.grayCanvas.style.pointerEvents = "none";
   app.elements.mount.appendChild(refs.grayCanvas);
+  refs.fadeOutCanvas = document.createElement("canvas");
+  refs.fadeOutCanvas.id = "ghostban-fadeout";
+  refs.fadeOutCanvas.style.position = "absolute";
+  refs.fadeOutCanvas.style.pointerEvents = "none";
+  app.elements.mount.appendChild(refs.fadeOutCanvas);
   refs.ghostCanvas = document.createElement("canvas");
   refs.ghostCanvas.id = "ghostban-ghost";
   refs.ghostCanvas.style.position = "absolute";
@@ -548,6 +553,9 @@ function updateBoard() {
   app.overlays.renderGrayStones(state.currentMat);
   app.timers.updateMysteryUI();
   app.overlays.renderEnigmaOverlay();
+  if (app.fadeout && app.fadeout.startFadeOutAnimation) {
+    app.fadeout.startFadeOutAnimation();
+  }
   app.timers.updateEnigmaUI();
   app.fire.startFireAnimation();
   app.frost.startFrostAnimation();
@@ -911,6 +919,9 @@ function applyMoveAt(i, j) {
     recordSpeedSolveMove();
     app.challenges.recordInfection(i, j, true);
     state.speedMoveCount += 1;
+    if (app.fadeout && app.fadeout.resetFadeOutCycle) {
+      app.fadeout.resetFadeOutCycle();
+    }
   }
   if (isCorrect) {
     state.combo += 1;

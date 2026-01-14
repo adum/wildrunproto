@@ -1,6 +1,7 @@
 import { app } from "../prototype/context.js";
 import "../prototype/config.js";
 import "../prototype/ghost.js";
+import "../prototype/fadeout.js";
 import "../prototype/fire.js";
 import "../prototype/frost.js";
 import "../prototype/flip.js";
@@ -277,6 +278,16 @@ var CHALLENGE_DEFS = {
     },
     enable: function () {
       app.challenges.setSpeedPlay(true);
+    },
+  },
+  fadeout: {
+    label: "Fade Out",
+    tooltip: "Fade delay 5s, -1s/level (min 2s); duration L1 30s, -5s/level (min 5s).",
+    setLevel: function (level) {
+      app.fadeout.setFadeOutLevel(level);
+    },
+    enable: function () {
+      app.challenges.setFadeOutPlay(true);
     },
   },
   fire: {
@@ -2039,6 +2050,9 @@ function getChallengeLevelKey(challengeId) {
   }
   if (challengeId === "speed") {
     return "speed";
+  }
+  if (challengeId === "fadeout") {
+    return "fadeout";
   }
   if (challengeId === "fire") {
     return "fire";

@@ -1,6 +1,7 @@
 import { app } from "./context.js";
 import "./config.js";
 import "./ghost.js";
+import "./fadeout.js";
 import "./fire.js";
 import "./frost.js";
 import "./flip.js";
@@ -193,6 +194,15 @@ if (elements.challengeSpeedBtn) {
     app.ui.logMessage("Challenge enabled: Speed play.");
   });
 }
+if (elements.challengeFadeOutBtn) {
+  elements.challengeFadeOutBtn.addEventListener("click", function () {
+    if (state.challengeFadeOut) {
+      return;
+    }
+    app.challenges.setFadeOutPlay(true);
+    app.ui.logMessage("Challenge enabled: Fade Out.");
+  });
+}
 if (elements.challengeFireBtn) {
   elements.challengeFireBtn.addEventListener("click", function () {
     if (state.challengeFire) {
@@ -326,6 +336,14 @@ if (elements.speedLevelInput) {
       return;
     }
     app.timers.setSpeedLevel(event.target.value);
+  });
+}
+if (elements.fadeOutLevelInput) {
+  elements.fadeOutLevelInput.addEventListener("input", function (event) {
+    if (!event || !event.target) {
+      return;
+    }
+    app.fadeout.setFadeOutLevel(event.target.value);
   });
 }
 if (elements.fireLevelInput) {
@@ -464,6 +482,9 @@ window.addEventListener("resize", function () {
   app.hints.positionMultishotIndicator();
   app.overlays.renderGrayStones(state.currentMat);
   app.overlays.renderEnigmaOverlay();
+  if (app.fadeout && app.fadeout.startFadeOutAnimation) {
+    app.fadeout.startFadeOutAnimation();
+  }
   app.fire.startFireAnimation();
   app.frost.startFrostAnimation();
   app.flip.startFlipAnimation();

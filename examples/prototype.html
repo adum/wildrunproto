@@ -374,6 +374,31 @@
                       >
                     </div>
                   </div>
+                  <div class="fadeout-row">
+                    <button
+                      id="challengeFadeOut"
+                      class="button button--challenge"
+                      type="button"
+                      title="Fade to gray L1 30s, -5s/level (min 5s); delay 5s, -1s/level (min 2s)."
+                    >
+                      Fade Out
+                    </button>
+                    <div class="fadeout-level">
+                      <label for="fadeOutLevel">Level</label>
+                      <input
+                        id="fadeOutLevel"
+                        type="range"
+                        min="1"
+                        max="10"
+                        step="1"
+                        value="1"
+                        title="Controls fade duration (L1=30s, -5s per level, min 5s). Delay before fade: 5s, -1s per level (min 2s)."
+                      />
+                      <span id="fadeOutLevelValue" class="fadeout-level__value"
+                        >1</span
+                      >
+                    </div>
+                  </div>
                   <div class="fire-row">
                     <button
                       id="challengeFire"

@@ -7,6 +7,7 @@ var DEFAULT_CONFIG = {
     enigma: { min: 1, max: 10 },
     infection: { min: 1, max: 4 },
     speed: { min: 1, max: 10 },
+    fadeout: { min: 1, max: 10 },
     fire: { min: 1, max: 10 },
     frost: { min: 1, max: 10 },
     flip: { min: 1, max: 10 },
@@ -45,6 +46,15 @@ var DEFAULT_CONFIG = {
     revealSeconds: 2,
     revealDecrementPerLevel: 1,
     revealMinSeconds: 0,
+  },
+  fadeout: {
+    baseSeconds: 30,
+    decrementPerLevel: 5,
+    minSeconds: 5,
+    delaySeconds: 5,
+    delayDecrementPerLevel: 1,
+    delayMinSeconds: 2,
+    pixelationMaxSize: 8,
   },
   fireSnake: {
     speed: 5,
@@ -159,6 +169,7 @@ var DEFAULT_CONFIG = {
       enigma: ["mystery"],
       infection: ["fire", "frost", "flip"],
       speed: [],
+      fadeout: [],
       fire: ["infection", "frost", "flip", "spotlight", "spyglass"],
       frost: ["infection", "fire", "flip", "spotlight", "spyglass"],
       flip: ["infection", "fire", "frost", "spotlight", "spyglass"],
@@ -260,6 +271,7 @@ var DEFAULT_CONFIG = {
       "enigma",
       "infection",
       "speed",
+      "fadeout",
       "fire",
       "frost",
       "flip",
@@ -380,6 +392,7 @@ function applyConfigToUI() {
   applyLevelRange(elements.enigmaLevelInput, "enigma");
   applyLevelRange(elements.infectionLevelInput, "infection");
   applyLevelRange(elements.speedLevelInput, "speed");
+  applyLevelRange(elements.fadeOutLevelInput, "fadeout");
   applyLevelRange(elements.fireLevelInput, "fire");
   applyLevelRange(elements.frostLevelInput, "frost");
   applyLevelRange(elements.flipLevelInput, "flip");
@@ -440,6 +453,15 @@ function applyConfigToUI() {
     app.timers.setSpeedLevel(speedValue);
   } else if (app.timers && app.timers.updateSpeedLevelUI) {
     app.timers.updateSpeedLevelUI();
+  }
+
+  if (app.fadeout && app.fadeout.setFadeOutLevel) {
+    var fadeOutValue = elements.fadeOutLevelInput
+      ? elements.fadeOutLevelInput.value
+      : state.fadeOutLevel;
+    app.fadeout.setFadeOutLevel(fadeOutValue);
+  } else if (app.fadeout && app.fadeout.updateFadeOutLevelUI) {
+    app.fadeout.updateFadeOutLevelUI();
   }
 
   if (app.fire && app.fire.setFireLevel) {

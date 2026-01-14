@@ -174,6 +174,24 @@ function setSpeedPlay(active) {
   app.timers.updateSpeedUI();
 }
 
+function setFadeOutPlay(active) {
+  state.challengeFadeOut = active;
+  if (active) {
+    if (app.fadeout && app.fadeout.resetFadeOutCycle) {
+      app.fadeout.resetFadeOutCycle();
+    } else if (app.fadeout && app.fadeout.startFadeOutAnimation) {
+      state.fadeOutStartAt = performance.now();
+      app.fadeout.startFadeOutAnimation();
+    }
+  } else {
+    state.fadeOutStartAt = 0;
+    if (app.fadeout && app.fadeout.stopFadeOutAnimation) {
+      app.fadeout.stopFadeOutAnimation();
+    }
+  }
+  updateChallengeControls();
+}
+
 function setFirePlay(active) {
   state.challengeFire = active;
   state.fireStartAt = active ? performance.now() : 0;
@@ -310,6 +328,15 @@ function updateChallengeControls() {
       elements.challengeSpeedBtn.disabled = false;
     }
   }
+  if (elements.challengeFadeOutBtn) {
+    if (state.challengeFadeOut) {
+      elements.challengeFadeOutBtn.classList.add("active");
+      elements.challengeFadeOutBtn.disabled = true;
+    } else {
+      elements.challengeFadeOutBtn.classList.remove("active");
+      elements.challengeFadeOutBtn.disabled = false;
+    }
+  }
   if (elements.challengeFireBtn) {
     if (state.challengeFire) {
       elements.challengeFireBtn.classList.add("active");
@@ -386,6 +413,11 @@ function resetChallenges() {
   state.challengeSpeed = false;
   state.speedMoveCount = 0;
   app.timers.stopSpeedTimer(false);
+  state.challengeFadeOut = false;
+  state.fadeOutStartAt = 0;
+  if (app.fadeout && app.fadeout.stopFadeOutAnimation) {
+    app.fadeout.stopFadeOutAnimation();
+  }
   state.challengeFire = false;
   state.fireStartAt = 0;
   state.firePath = [];
@@ -439,6 +471,7 @@ app.challenges.setMysteryPlay = setMysteryPlay;
 app.challenges.setEnigmaPlay = setEnigmaPlay;
 app.challenges.setInfectionPlay = setInfectionPlay;
 app.challenges.setSpeedPlay = setSpeedPlay;
+app.challenges.setFadeOutPlay = setFadeOutPlay;
 app.challenges.setFirePlay = setFirePlay;
 app.challenges.setFrostPlay = setFrostPlay;
 app.challenges.setFlipPlay = setFlipPlay;
