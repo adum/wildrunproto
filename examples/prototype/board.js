@@ -445,6 +445,13 @@ function initBoard(boardSize) {
   refs.speedTimerEl.style.display = "none";
   app.elements.mount.appendChild(refs.speedTimerEl);
 
+  refs.fadeOutTimerEl = document.createElement("div");
+  refs.fadeOutTimerEl.id = "fadeOutCountdown";
+  refs.fadeOutTimerEl.className = "board-control";
+  refs.fadeOutTimerEl.setAttribute("aria-live", "polite");
+  refs.fadeOutTimerEl.style.display = "none";
+  app.elements.mount.appendChild(refs.fadeOutTimerEl);
+
   refs.secondChanceTimerEl = document.createElement("div");
   refs.secondChanceTimerEl.id = "secondChanceCountdown";
   refs.secondChanceTimerEl.className = "board-control";

@@ -217,6 +217,28 @@ body.play-mode {
   pointer-events: none;
 }
 
+#fadeOutCountdown {
+  left: 10px;
+  top: 146px;
+  min-width: 36px;
+  padding: 6px 10px;
+  border-radius: 6px;
+  font-weight: 700;
+  font-size: 13px;
+  line-height: 1;
+  text-align: center;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #fff6dd;
+  background: rgba(20, 15, 10, 0.88);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  box-shadow: 0 6px 12px rgba(30, 20, 10, 0.35);
+  font-family: "Press Start 2P", "VT323", "Courier New", monospace;
+  -webkit-font-smoothing: none;
+  text-shadow: 1px 1px 0 rgba(0, 0, 0, 0.9);
+  pointer-events: none;
+}
+
 #multishotCounter {
   left: 0;
   top: 0;

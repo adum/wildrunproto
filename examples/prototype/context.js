@@ -119,6 +119,7 @@ export const refs = {
   enigmaBtn: null,
   enigmaTimerEl: null,
   speedTimerEl: null,
+  fadeOutTimerEl: null,
   secondChanceTimerEl: null,
   multishotCounterEl: null,
   ghostAnimId: null,
