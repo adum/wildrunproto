@@ -45,3 +45,6 @@
   - Open `examples/play.html` for the full run flow.
   - Open `examples/map.html` for map generation only.
 - Prototype events log to the on-page event log; play events log to the browser console. Make sure interactions still update the board and overlays as expected.
+- Cloudflare Pages build output:
+  - Run `yarn build:pages` (or `yarn pages`) to generate `dist/`.
+  - Set Cloudflare Pages output directory to `dist`.
